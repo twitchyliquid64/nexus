@@ -93,7 +93,7 @@ func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
 func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = $1 AND revoked IS FALSE;
+		SELECT id(), uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = $1 AND revoked = FALSE;
 	`, sid)
 	if err != nil {
 		return nil, err

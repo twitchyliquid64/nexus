@@ -1,0 +1,45 @@
+<html>
+<head>
+    <title>Nexus</title>
+
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+    </style>
+
+    <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+
+    <script type="text/javascript" src="/static/js/app.js"></script>
+</head>
+<body ng-app="nexus" ng-controller="BodyController" ng-cloak>
+  <nav class="light-blue lighten-2" role="navigation">
+    <div class="nav-wrapper"><a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus</a>
+      <ul class="right hide-on-med-and-down">
+        <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')">Home</a></li>
+      </ul>
+
+      <ul id="nav-mobile" class="side-nav">
+        <li><a href="#" ng-click="changePage('home')">Home</a></li>
+      </ul>
+      <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+  </nav>
+
+  <div>
+  </div>
+</body>

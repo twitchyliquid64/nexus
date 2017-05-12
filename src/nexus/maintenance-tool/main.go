@@ -74,7 +74,7 @@ func main() {
 	ctx := context.Background()
 
 	fmt.Printf("Attempting open of db: %q: ", *dbFlag)
-	db, err := data.Init(context.Background(), "ql", *dbFlag)
+	db, err := data.Init(ctx, "ql", *dbFlag)
 	if err != nil {
 		die(fmt.Sprintf("ERROR!\nError: %s", err.Error()))
 	}
