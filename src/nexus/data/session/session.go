@@ -64,7 +64,30 @@ type DAO struct {
 	Created    time.Time
 	AccessWeb  bool
 	AccessAPI  bool
-	AuthedVia  AuthKind
+	AuthedVia  string
+	Revoked    bool
+}
+
+// GetAllForUser is called to get all sessions for a given uid.
+func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked FROM sessions WHERE uid = $1;
+	`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*DAO
+	for res.Next() {
+		var o DAO
+		o.UID = uid
+		if err := res.Scan(&o.SessionUID, &o.SID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia, &o.Revoked); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+	return output, nil
 }
 
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
@@ -81,6 +104,7 @@ func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
 		return nil, ErrInvalidSession
 	}
 	var o DAO
+	o.SID = sid
 	return &o, res.Scan(&o.SessionUID, &o.UID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia)
 }
 

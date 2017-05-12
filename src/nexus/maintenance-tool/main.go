@@ -7,8 +7,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
+
+	"github.com/olekukonko/tablewriter"
 
 	"nexus/data"
 	"nexus/data/session"
@@ -28,6 +32,7 @@ var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"CREATEUSER":    createUserCommand,
 	"RESETAUTH":     resetAuthCommand,
 	"CREATESESSION": createSession,
+	"LISTSESSIONS":  listSessions,
 }
 
 func printCommands() {
@@ -83,7 +88,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	} else {
-		fmt.Println("SUCCESS.")
+		fmt.Println("OK.")
 	}
 }
 
@@ -139,4 +144,41 @@ func createSession(ctx context.Context, db *sql.DB) error {
 		fmt.Printf("\nSession = %q\n", sid)
 	}
 	return err
+}
+
+func listSessions(ctx context.Context, db *sql.DB) error {
+	if *usernameFlag == "" {
+		die("Error: createSession needs username flag: --username <username>")
+	}
+
+	uid, displayName, _, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+
+	sessions, err := session.GetAllForUser(ctx, uid, db)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\nShowing sessions for %q (uid=%d)\n", displayName, uid)
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"#", "SID", "Creation time", "Web?", "API?", "Revoked", "Authentication method"})
+	table.SetFooter([]string{"", "", "", "", "", "Total", strconv.Itoa(len(sessions)) + tablewriter.ConditionString(len(sessions) != 1, " sessions", " session")})
+	table.SetAutoMergeCells(true)
+	table.SetBorder(false)
+	table.SetRowLine(true)
+	for i, session := range sessions {
+		var row []string
+		row = append(row, strconv.Itoa(i+1))
+		row = append(row, session.SID)
+		row = append(row, session.Created.Format(time.Stamp))
+		row = append(row, tablewriter.ConditionString(session.AccessWeb, "yes", "no"))
+		row = append(row, tablewriter.ConditionString(session.AccessAPI, "yes", "no"))
+		row = append(row, tablewriter.ConditionString(session.Revoked, "yes", "no"))
+		row = append(row, string(session.AuthedVia))
+		table.Append(row)
+	}
+	table.Render()
+	return nil
 }
