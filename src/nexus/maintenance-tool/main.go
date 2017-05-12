@@ -6,11 +6,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"nexus/data"
-	"nexus/data/user"
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"nexus/data"
+	"nexus/data/session"
+	"nexus/data/user"
 )
 
 func die(msg string) {
@@ -23,8 +25,9 @@ var nameFlag = flag.String("name", "", "")
 var usernameFlag = flag.String("username", "", "")
 
 var commandTable = map[string]func(context.Context, *sql.DB) error{
-	"CREATEUSER": createUserCommand,
-	"RESETAUTH":  resetAuthCommand,
+	"CREATEUSER":    createUserCommand,
+	"RESETAUTH":     resetAuthCommand,
+	"CREATESESSION": createSession,
 }
 
 func printCommands() {
@@ -92,7 +95,7 @@ func createUserCommand(ctx context.Context, db *sql.DB) error {
 		die("Error: createuser needs username flag: --username <username>")
 	}
 
-	uid, displayName, createdAt, err := user.GetUser(ctx, *usernameFlag, db)
+	uid, displayName, createdAt, err := user.Get(ctx, *usernameFlag, db)
 	if err == nil {
 		fmt.Println("Error: User already exists!")
 		fmt.Printf("  uid=%d, display_name=%q, created_at=%q\n", uid, displayName, createdAt)
@@ -101,7 +104,7 @@ func createUserCommand(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	return user.CreateUser(ctx, *usernameFlag, *nameFlag, db)
+	return user.Create(ctx, *usernameFlag, *nameFlag, db)
 }
 
 func resetAuthCommand(ctx context.Context, db *sql.DB) error {
@@ -113,10 +116,27 @@ func resetAuthCommand(ctx context.Context, db *sql.DB) error {
 		return errors.New("Password too short (6 char minimum)")
 	}
 
-	uid, _, _, err := user.GetUser(ctx, *usernameFlag, db)
+	uid, _, _, err := user.Get(ctx, *usernameFlag, db)
 	if err != nil {
 		return err
 	}
 
 	return user.SetAuth(ctx, uid, flag.Arg(1), db)
+}
+
+func createSession(ctx context.Context, db *sql.DB) error {
+	if *usernameFlag == "" {
+		die("Error: createSession needs username flag: --username <username>")
+	}
+
+	uid, _, _, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+
+	sid, err := session.Create(ctx, uid, true, true, session.Admin, db)
+	if err == nil {
+		fmt.Printf("\nSession = %q\n", sid)
+	}
+	return err
 }

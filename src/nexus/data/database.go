@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"nexus/data/session"
 	"nexus/data/user"
 
 	"github.com/cznic/ql"
@@ -10,6 +11,7 @@ import (
 
 var tables = []databaseTable{
 	&user.Table{},
+	&session.Table{},
 }
 
 type databaseTable interface {

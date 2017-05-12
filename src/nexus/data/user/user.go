@@ -16,7 +16,7 @@ var ErrUserDoesntExist = errors.New("user does not exist")
 // Table (user) implements the databaseTable interface.
 type Table struct{}
 
-// Called to create necessary structures in the database.
+// Setup is called on initialization to create necessary structures in the database.
 func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -39,8 +39,8 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-// GetUser returns the details of a user
-func GetUser(ctx context.Context, username string, db *sql.DB) (UID int, displayName string, createdAt time.Time, err error) {
+// Get returns the details of a user
+func Get(ctx context.Context, username string, db *sql.DB) (UID int, displayName string, createdAt time.Time, err error) {
 	res, err := db.QueryContext(ctx, `
 		SELECT id(), display_name, created_at FROM users WHERE username = $1;
 	`, username)
@@ -75,8 +75,8 @@ func SetAuth(ctx context.Context, uid int, passwd string, db *sql.DB) error {
 	return tx.Commit()
 }
 
-// CreateUser creates a user in the datastore.
-func CreateUser(ctx context.Context, username, displayName string, db *sql.DB) error {
+// Create creates a user in the datastore.
+func Create(ctx context.Context, username, displayName string, db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
