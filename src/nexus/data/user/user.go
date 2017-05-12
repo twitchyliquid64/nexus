@@ -14,12 +14,11 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(`
-	CREATE TABLE IF NOT EXISTS users (
+	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS users (
 	  username STRING NOT NULL,
 	  display_name STRING,
-	  created_at TIMESTAMP NOT NULL,
-	  passhash_if_no_auth_methods STRING
+	  created_at TIME NOT NULL,
+	  passhash_if_no_auth_methods STRING,
 	);
 	`)
 	if err != nil {
