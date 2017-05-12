@@ -2,7 +2,6 @@ var app = angular.module('nexus', ['ui.materialize']);
 
 app.controller('BodyController', ["$scope", function ($scope) {
     $scope.page = "home";
-    $scope.dataService = dataService;
     $scope.changePage = function(pageName){
         $scope.page = pageName;
     };
