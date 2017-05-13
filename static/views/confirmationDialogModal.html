@@ -1,0 +1,12 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='confirmationDialogModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="confirmationDialogModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4>{{title}}</h4>
+    <p>{{content}}</p>
+
+  <div class="modal-footer">
+    <a ng-repeat="action in actions" href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onPress(action)"><span>{{action.text}}</span></a>
+  </div>
+</div>

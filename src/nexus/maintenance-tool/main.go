@@ -108,7 +108,7 @@ func createUserCommand(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	return user.Create(ctx, *usernameFlag, *nameFlag, db)
+	return user.CreateBasic(ctx, *usernameFlag, *nameFlag, db)
 }
 
 func booleanPrompt(question string) bool {

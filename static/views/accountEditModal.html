@@ -1,0 +1,59 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='accountEditModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="accountEditModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4 ng-if="!isEditMode">Create Account</h4>
+    <h4 ng-if="isEditMode">Edit Account</h4>
+
+    <div class="fields-container">
+      <div class="row" style="margin-bottom: 2px;"><!-- Type selector -->
+        <div class="col s12">
+          <span style="margin-right: 25px;">
+            <input class="with-gap" name="acc_typeSelector" type="radio" id="personSelector" ng-click="account.IsRobot=false" ng-checked="account.IsRobot==false" />
+            <label for="personSelector">Person</label>
+          </span>
+          <span>
+            <input class="with-gap" name="acc_typeSelector" type="radio" id="robotSelector" ng-click="account.IsRobot=true" ng-checked="account.IsRobot==true" />
+            <label for="robotSelector">Robot</label>
+          </span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 2px;"> <!-- Name -->
+        <div class="input-field col s4">
+          <input id="username_accSelector" type="text" ng-model="account.Username" ng-class="usernameVldn" ng-keyup="$event.keyCode == 13 && onFinish()">
+          <label for="username_accSelector">Username</label>
+        </div>
+        <div class="input-field col s8">
+          <input id="name_accSelector" type="text" ng-model="account.DisplayName" ng-class="nameVldn" ng-keyup="$event.keyCode == 13 && onFinish()">
+          <label for="name_accSelector">Display Name</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 2px;"> <!-- Admin permissions -->
+        <div class="input-field col s4">
+          <input type="checkbox" id="accAdmin_selector" ng-click="account.AdminPerms.Accounts=!account.AdminPerms.Accounts" ng-checked="account.AdminPerms.Accounts==true" />
+          <label for="accAdmin_selector">Accounts admin</label>
+        </div>
+        <div class="input-field col s4">
+          <input type="checkbox" id="dataAdmin_selector" ng-click="account.AdminPerms.Data=!account.AdminPerms.Data" ng-checked="account.AdminPerms.Data==true" />
+          <label for="dataAdmin_selector">Data admin</label>
+        </div>
+        <div class="input-field col s4">
+          <input type="checkbox" id="integrationsAdmin_selector" ng-click="account.AdminPerms.Integrations=!account.AdminPerms.Integrations" ng-checked="account.AdminPerms.Integrations==true" />
+          <label for="integrationsAdmin_selector">Integration admin</label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <div ng-if="isEditMode" style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
+      <span>UID={{account.UID}}</span>, Account created <span am-time-ago="account.CreatedAt"></span>
+    </div>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onFinish()"><span ng-if="!isEditMode">Create</span><span ng-if="isEditMode">Save</span></a>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onCancel()"><span>Cancel</span></a>
+  </div>
+</div>

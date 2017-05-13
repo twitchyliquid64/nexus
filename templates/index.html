@@ -31,6 +31,7 @@
 
     <script type="text/javascript" src="/static/js/app.js"></script>
     <script type="text/javascript" src="/static/js/accounts.js"></script>
+    <script type="text/javascript" src="/static/js/accountEditModal.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -63,26 +64,38 @@
               <th>Display Name</th>
               <th>Created</th>
               <th>Admin Permissions</th>
+              <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr ng-repeat="user in accounts" ng-click="alert('kik')">
-            <td>{{user.UID}}</td>
-            <td>
-              <i class="material-icons left" ng-if="user.IsRobot">developer_board</i>
-              {{user.Username}}</td>
-            <td>{{user.DisplayName}}</td>
+          <tr ng-repeat="user in accounts">
+            <td ng-click="edit(user)" style="cursor: pointer;">{{user.UID}}</td>
+            <td ng-click="edit(user)" style="cursor: pointer;">{{user.Username}}<i class="material-icons right" ng-if="user.IsRobot">developer_board</i></td>
+            <td ng-click="edit(user)" style="cursor: pointer;">{{user.DisplayName}}</td>
             <td am-time-ago="user.CreatedAt"></td>
             <td>
               <i class="material-icons left" ng-if="user.AdminPerms.Accounts">supervisor_account</i>
               <i class="material-icons left" ng-if="user.AdminPerms.Data">storage</i>
               <i class="material-icons left" ng-if="user.AdminPerms.Integrations">import_export</i>
             </td>
+            <td>
+              <a class="btn-floating" href="#" ng-click="delete(user.UID)"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" href="#" ng-click="changeAuth(user)"><i class="material-icons">vpn_key</i></a>
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <div class="fixed-action-btn">
+        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Account" ng-click="createAccount()">
+          <i class="large material-icons">add</i>
+        </a>
+      </div>
     </div>
+
+    <account-edit-modal></account-edit-modal>
   </div>
 
+  <confirmation-dialog-modal></confirmation-dialog-modal>
 </body>

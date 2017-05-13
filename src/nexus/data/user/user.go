@@ -26,7 +26,7 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS users (
 	  username STRING NOT NULL,
 	  display_name STRING,
-	  created_at TIME NOT NULL,
+	  created_at TIME NOT NULL DEFAULT now(),
 	  passhash_if_no_auth_methods BLOB,
 
 		can_admin_accounts BOOL NOT NULL DEFAULT FALSE,
@@ -59,6 +59,24 @@ type DAO struct {
 		Data         bool
 		Integrations bool
 	}
+}
+
+// Update takes the DAO and updates the attributes of the given user. Keyed by UID.
+func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+	UPDATE users SET
+		username=$2, display_name=$3,
+		can_admin_accounts=$4, can_admin_data=$5, can_admin_integrations=$6, is_robot_account=$7
+
+	WHERE id() = $1`, usr.UID, usr.Username, usr.DisplayName, usr.AdminPerms.Accounts, usr.AdminPerms.Data, usr.AdminPerms.Integrations, usr.IsRobot)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // GetByUID looks up the details of an account based on an accounts' UID.
@@ -156,8 +174,43 @@ func SetAuth(ctx context.Context, uid int, passwd string, accAdmin, dataAdmin, i
 	return tx.Commit()
 }
 
-// Create creates a user in the datastore.
-func Create(ctx context.Context, username, displayName string, db *sql.DB) error {
+// Delete deletes a user by UID.
+func Delete(ctx context.Context, uid int, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		DELETE FROM users
+			WHERE id() = $1;`, uid)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// Create takes the DAO makes a new user with that information.
+func Create(ctx context.Context, usr *DAO, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO
+			users (username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account)
+			VALUES (
+				$1, $2,
+				now(),
+				$3, $4, $5, $6
+			);`, usr.Username, usr.DisplayName, usr.AdminPerms.Accounts, usr.AdminPerms.Data, usr.AdminPerms.Integrations, usr.IsRobot)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// CreateBasic creates a user in the datastore.
+func CreateBasic(ctx context.Context, username, displayName string, db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
