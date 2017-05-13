@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
-	"nexus/data/session"
 	"nexus/data/user"
 	"nexus/serv/util"
 )
@@ -27,12 +25,7 @@ func (h *AccountsWebHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 // HandleListAccountsV1 handles web requests to list all accounts in the system.
 func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
-	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
-		http.Redirect(response, request, "/login", 303)
-		return
-	} else if err != nil {
-		log.Printf("AuthInfo() Error: %s", err)
-		http.Error(response, "Internal server error", 500)
+	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
@@ -42,17 +35,15 @@ func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, 
 	}
 
 	accounts, err := user.GetAll(request.Context(), h.DB)
-	if err != nil {
-		log.Printf("user.GetAll() Error: %s", err)
-		http.Error(response, "Internal server error", 500)
+	if util.InternalHandlerError("user.GetAll()", response, request, err) {
 		return
 	}
+
 	b, err := json.Marshal(accounts)
-	if err != nil {
-		log.Printf("JSON Error: %s", err)
-		http.Error(response, "Internal server error (JSON encoder)", 500)
+	if util.InternalHandlerError("json.Marshal([]*user.DAO)", response, request, err) {
 		return
 	}
+
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(b)
 }

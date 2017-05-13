@@ -2,6 +2,7 @@ package util
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"nexus/data/session"
 	"nexus/data/user"
@@ -36,4 +37,18 @@ func getCookieByName(cookie []*http.Cookie, name string) string {
 		}
 	}
 	return result
+}
+
+// UnauthenticatedOrError sanely handles the logging and HTTP response for both errors and unauthenticated requests.
+// Returns true if request handling should halt (error or unauth)
+func UnauthenticatedOrError(response http.ResponseWriter, request *http.Request, err error) bool {
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return true
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return true
+	}
+	return false
 }

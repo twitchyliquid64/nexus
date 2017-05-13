@@ -70,24 +70,18 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			return
 		}
 		ok, err := user.CheckBasicAuth(ctx, request.FormValue("user"), request.FormValue("password"), h.DB)
-		if err != nil {
-			http.Error(response, "Internal server error", 500)
-			log.Printf("CheckBasicAuth() Error: %s", err)
+		if util.InternalHandlerError("user.CheckBasicAuth()", response, request, err) {
 			return
 		}
 		if ok {
 			log.Printf("Got correct basicpass credentials for %s, creating session", request.FormValue("user"))
 			usr, err := user.Get(ctx, request.FormValue("user"), h.DB)
-			if err != nil {
-				http.Error(response, "Internal server error", 500)
-				log.Printf("user.Get() Error: %s", err)
+			if util.InternalHandlerError("user.Get()", response, request, err) {
 				return
 			}
 
 			sid, err := session.Create(ctx, usr.UID, true, false, session.AuthPass, h.DB)
-			if err != nil {
-				http.Error(response, "Internal server error", 500)
-				log.Printf("session.Create() Error: %s", err)
+			if util.InternalHandlerError("session.Create()", response, request, err) {
 				return
 			}
 			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid})
