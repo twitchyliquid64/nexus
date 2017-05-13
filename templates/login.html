@@ -9,12 +9,6 @@
     <link rel="stylesheet" href="/static/css/general.css">
 
     <style type="text/css">
-    /**
-     * Hide when Angular is not yet loaded and initialized
-     */
-    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
-      display: none !important;
-    }
 
     body {
       display: flex;
@@ -46,16 +40,10 @@
     }
     </style>
 
-    <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
     <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
-    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
-    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
-
-
-    <script type="text/javascript" src="/static/js/app.js"></script>
 </head>
-<body ng-app="nexus" ng-controller="LoginController" ng-cloak>
+<body>
 
   <div class="section"></div>
     <main>
@@ -63,7 +51,7 @@
         <h2 class="light-blue-text darken-3"><b>Nexus</b></h2>
         <div class="section"></div>
 
-        <h5 class="light-blue-text darken-3">Please, login into your account</h5>
+        <h5 class="light-blue-text darken-3">Please login into your account</h5>
         <div class="section"></div>
 
         <div class="container">
@@ -77,14 +65,14 @@
 
               <div class='row'>
                 <div class='input-field col s12'>
-                  <input class='validate' type='text' name='user' id='user' ng-model="username" />
+                  <input class='validate' type='text' name='user' id='user' />
                   <label for='user'>Enter your username</label>
                 </div>
               </div>
 
               <div class='row'>
                 <div class='input-field col s12'>
-                  <input class='validate' type='password' name='password' id='password' ng-model="password" />
+                  <input class='validate' type='password' name='password' id='password' />
                   <label for='password'>Enter your password</label>
                 </div>
                 <label style='float: right; display: none;'>
@@ -95,7 +83,7 @@
               <br />
               <center>
                 <div class='row'>
-                  <button type='submit' name='btn_login' class='col s12 btn btn-large waves-effect light-blue darken-2' ng-click="doLogin()">Login</button>
+                  <button type='submit' name='btn_login' class='col s12 btn btn-large waves-effect light-blue darken-2'>Login</button>
                 </div>
               </center>
             </form>

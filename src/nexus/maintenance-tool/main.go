@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -100,10 +99,10 @@ func createUserCommand(ctx context.Context, db *sql.DB) error {
 		die("Error: createuser needs username flag: --username <username>")
 	}
 
-	uid, displayName, createdAt, err := user.Get(ctx, *usernameFlag, db)
+	usr, err := user.Get(ctx, *usernameFlag, db)
 	if err == nil {
 		fmt.Println("Error: User already exists!")
-		fmt.Printf("  uid=%d, display_name=%q, created_at=%q\n", uid, displayName, createdAt)
+		fmt.Printf("  uid=%d, display_name=%q, created_at=%q\n", usr.UID, usr.DisplayName, usr.CreatedAt)
 		die("")
 	} else if err != user.ErrUserDoesntExist {
 		return err
@@ -112,21 +111,43 @@ func createUserCommand(ctx context.Context, db *sql.DB) error {
 	return user.Create(ctx, *usernameFlag, *nameFlag, db)
 }
 
+func booleanPrompt(question string) bool {
+	for {
+		r := prompt(question + " [y/N]")
+		switch r {
+		case "N":
+			return false
+		case "":
+			return false
+		case "y":
+			return true
+		}
+	}
+}
+
+func prompt(question string) string {
+	fmt.Print(question + ": ")
+	var input string
+	fmt.Scanln(&input)
+	return input
+}
+
 func resetAuthCommand(ctx context.Context, db *sql.DB) error {
 	if *usernameFlag == "" {
 		die("Error: resetauth needs username flag: --username <username>")
 	}
 
-	if len(flag.Arg(1)) < 6 {
-		return errors.New("Password too short (6 char minimum)")
-	}
-
-	uid, _, _, err := user.Get(ctx, *usernameFlag, db)
+	usr, err := user.Get(ctx, *usernameFlag, db)
 	if err != nil {
 		return err
 	}
 
-	return user.SetAuth(ctx, uid, flag.Arg(1), db)
+	pw := prompt("Users password")
+	accAdmin := booleanPrompt("Allowed to manage accounts?")
+	dataAdmin := booleanPrompt("Allowed to manage data?")
+	integrationAdmin := booleanPrompt("Allowed to manage integrations?")
+
+	return user.SetAuth(ctx, usr.UID, pw, accAdmin, dataAdmin, integrationAdmin, db)
 }
 
 func createSession(ctx context.Context, db *sql.DB) error {
@@ -134,12 +155,12 @@ func createSession(ctx context.Context, db *sql.DB) error {
 		die("Error: createSession needs username flag: --username <username>")
 	}
 
-	uid, _, _, err := user.Get(ctx, *usernameFlag, db)
+	usr, err := user.Get(ctx, *usernameFlag, db)
 	if err != nil {
 		return err
 	}
 
-	sid, err := session.Create(ctx, uid, true, true, session.Admin, db)
+	sid, err := session.Create(ctx, usr.UID, true, true, session.Admin, db)
 	if err == nil {
 		fmt.Printf("\nSession = %q\n", sid)
 	}
@@ -151,16 +172,16 @@ func listSessions(ctx context.Context, db *sql.DB) error {
 		die("Error: createSession needs username flag: --username <username>")
 	}
 
-	uid, displayName, _, err := user.Get(ctx, *usernameFlag, db)
+	usr, err := user.Get(ctx, *usernameFlag, db)
 	if err != nil {
 		return err
 	}
 
-	sessions, err := session.GetAllForUser(ctx, uid, db)
+	sessions, err := session.GetAllForUser(ctx, usr.UID, db)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\nShowing sessions for %q (uid=%d)\n", displayName, uid)
+	fmt.Printf("\nShowing sessions for %q (uid=%d)\n", usr.DisplayName, usr.UID)
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"#", "SID", "Creation time", "Web?", "API?", "Revoked", "Authentication method"})

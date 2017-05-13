@@ -4,21 +4,27 @@ import (
 	"database/sql"
 	"net/http"
 	"nexus/data/session"
+	"nexus/data/user"
 )
 
 // AuthInfo returns the session, username, displayname of the logged-in user.
-func AuthInfo(r *http.Request, db *sql.DB) (*session.DAO, string, string, error) {
+func AuthInfo(r *http.Request, db *sql.DB) (*session.DAO, *user.DAO, error) {
 	sidCookie, err := r.Cookie("sid")
 	if err != nil {
-		return nil, "", "", err
+		return nil, nil, err
 	}
 
 	session, err := session.Get(r.Context(), sidCookie.Value, db)
 	if err != nil {
-		return nil, "", "", err
+		return nil, nil, err
 	}
 
-	return session, "", "", nil
+	usr, err := user.GetByUID(r.Context(), session.UID, db)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return session, usr, nil
 }
 
 func getCookieByName(cookie []*http.Cookie, name string) string {

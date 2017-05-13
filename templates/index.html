@@ -24,10 +24,13 @@
     <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
 
 
     <script type="text/javascript" src="/static/js/app.js"></script>
+    <script type="text/javascript" src="/static/js/accounts.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -37,7 +40,7 @@
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
         <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
         <li ng-class="{active: page == 'data'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
-        <li ng-class="{active: page == 'data'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">import_export</i> Integrations</a></li>
+        <li ng-class="{active: page == 'integration'}"><a href="#" ng-click="changePage('integration')"><i class="material-icons left">import_export</i> Integrations</a></li>
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
@@ -47,6 +50,39 @@
     <li><a href="#" ng-click="changePage('home')">Home</a></li>
   </ul>
 
-  <div>
+  <div ng-show="page == 'accounts'" class="container">
+    <h3>Accounts</h3>
+    <div ng-controller="AccountViewController">
+      <loader loading="loading" error="error"></loader>
+
+      <table class="highlight">
+        <thead>
+          <tr>
+              <th>UID</th>
+              <th>Username</th>
+              <th>Display Name</th>
+              <th>Created</th>
+              <th>Admin Permissions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="user in accounts" ng-click="alert('kik')">
+            <td>{{user.UID}}</td>
+            <td>
+              <i class="material-icons left" ng-if="user.IsRobot">developer_board</i>
+              {{user.Username}}</td>
+            <td>{{user.DisplayName}}</td>
+            <td am-time-ago="user.CreatedAt"></td>
+            <td>
+              <i class="material-icons left" ng-if="user.AdminPerms.Accounts">supervisor_account</i>
+              <i class="material-icons left" ng-if="user.AdminPerms.Data">storage</i>
+              <i class="material-icons left" ng-if="user.AdminPerms.Integrations">import_export</i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
+
 </body>

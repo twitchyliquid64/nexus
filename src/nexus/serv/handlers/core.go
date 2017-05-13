@@ -40,8 +40,13 @@ func (h *CoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.D
 
 // HandleIndex handles a HTTP request to /.
 func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Request) {
-	_, _, _, err := util.AuthInfo(request, h.DB)
-	if err == session.ErrInvalidSession {
+	if request.URL.Path != "/" {
+		http.Error(response, "Not Found", 404)
+		return
+	}
+
+	_, _, err := util.AuthInfo(request, h.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
 		http.Redirect(response, request, "/login", 303)
 		return
 	} else if err != nil {
@@ -64,7 +69,6 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.Error(response, "Could not parse form", 400)
 			return
 		}
-		log.Println(request.Form)
 		ok, err := user.CheckBasicAuth(ctx, request.FormValue("user"), request.FormValue("password"), h.DB)
 		if err != nil {
 			http.Error(response, "Internal server error", 500)
@@ -73,20 +77,21 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 		}
 		if ok {
 			log.Printf("Got correct basicpass credentials for %s, creating session", request.FormValue("user"))
-			uid, _, _, err := user.Get(ctx, request.FormValue("user"), h.DB)
+			usr, err := user.Get(ctx, request.FormValue("user"), h.DB)
 			if err != nil {
 				http.Error(response, "Internal server error", 500)
 				log.Printf("user.Get() Error: %s", err)
 				return
 			}
 
-			sid, err := session.Create(ctx, uid, true, false, session.AuthPass, h.DB)
+			sid, err := session.Create(ctx, usr.UID, true, false, session.AuthPass, h.DB)
 			if err != nil {
 				http.Error(response, "Internal server error", 500)
 				log.Printf("session.Create() Error: %s", err)
 				return
 			}
 			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid})
+			http.Redirect(response, request, "/", 303)
 		} else {
 			http.Redirect(response, request, "/login", 303) //303 = must GET
 		}
