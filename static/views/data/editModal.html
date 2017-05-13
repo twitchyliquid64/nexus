@@ -1,0 +1,57 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='dataEditModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="dataEditModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4 ng-if="!isEditMode">Create Datastore</h4>
+    <h4 ng-if="isEditMode">Edit Datastore</h4>
+
+    <div class="fields-container">
+      <div class="row" style="margin-bottom: 3px;"><!-- Type selector -->
+        <div class="col s12">
+          <span style="margin-right: 25px;">
+            <input class="with-gap" name="data_typeSelector" type="radio" id="dbSelector" ng-click="ds.Kind='DB'" ng-checked="ds.Kind=='DB'" />
+            <label for="dbSelector">Database</label>
+          </span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 6px;"> <!-- Name -->
+        <div class="input-field col s12">
+          <input id="name_accSelector2" type="text" ng-model="ds.Name" ng-class="nameVldn" ng-keyup="$event.keyCode == 13 && onFinish()">
+          <label for="name_accSelector2">Name</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 2px;"> <!-- Columns -->
+        <label>Add columns</label>
+        <a class="btn-floating" ng-click="newCol(3)"><i class="material-icons">text_fields</i></a>
+        <a class="btn-floating" ng-click="newCol(0)"><i class="material-icons">format_list_numbered</i></a>
+        <a class="btn-floating" ng-click="newCol(4)"><i class="material-icons">texture</i></a>
+      </div>
+      <div class="row" style="margin-bottom: 2px;" ng-repeat="col in cols"> <!-- Columns Actual -->
+        <div class="input-field col s6">
+          <input id="c_name_{{$index}}" ng-model="col.Name" type="text">
+          <label for="c_name_{{$index}}">Name</label>
+        </div>
+        <div class="input-field col s3">
+          <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number">
+          <label for="c_order_{{$index}}">Ordering</label>
+        </div>
+        <div class="col s3 input-field" style="height: 3rem;">
+          <a class="btn-floating red" ng-click="deleteCol($index)"><i class="material-icons left">delete</i></a>
+        </div>
+        <span class="badge blue" style="color: white;">{{kind(col.Datatype)}}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <div ng-if="isEditMode" style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
+      <span>UID={{account.UID}}</span>, Datastore created <span am-time-ago="account.CreatedAt"></span>
+    </div>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onFinish()"><span ng-if="!isEditMode">Create</span><span ng-if="isEditMode">Save</span></a>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onCancel()"><span>Cancel</span></a>
+  </div>
+</div>

@@ -30,8 +30,10 @@
 
 
     <script type="text/javascript" src="/static/js/app.js"></script>
-    <script type="text/javascript" src="/static/js/accounts.js"></script>
-    <script type="text/javascript" src="/static/js/accountEditModal.js"></script>
+    <script type="text/javascript" src="/static/js/accounts/accounts.js"></script>
+    <script type="text/javascript" src="/static/js/accounts/accountEditModal.js"></script>
+    <script type="text/javascript" src="/static/js/data/controller.js"></script>
+    <script type="text/javascript" src="/static/js/data/editModal.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -89,12 +91,47 @@
 
       <div class="fixed-action-btn">
         <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Account" ng-click="createAccount()">
-          <i class="large material-icons">add</i>
+          <i class="large material-icons">person_add</i>
         </a>
       </div>
     </div>
 
     <account-edit-modal></account-edit-modal>
+  </div>
+
+  <div ng-show="page == 'data'" class="container">
+    <h3>Datastores</h3>
+    <div ng-controller="DatastoreController">
+      <loader loading="loading" error="error"></loader>
+
+      <table class="highlight">
+        <thead>
+          <tr>
+              <th>UID</th>
+              <th>Name</th>
+              <th>Created</th>
+              <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="user in datastores">
+            <td ng-click="edit(user)" style="cursor: pointer;">{{user.UID}}</td>
+            <td ng-click="edit(user)" style="cursor: pointer;">{{user.Name}}</td>
+            <td am-time-ago="user.CreatedAt"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="fixed-action-btn">
+        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Datastore" ng-click="create()">
+          <i class="large material-icons">add</i>
+        </a>
+      </div>
+    </div>
+
+    <datastore-edit-modal></datastore-edit-modal>
   </div>
 
   <confirmation-dialog-modal></confirmation-dialog-modal>

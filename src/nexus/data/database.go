@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"nexus/data/datastore"
 	"nexus/data/session"
 	"nexus/data/user"
 
@@ -12,6 +13,8 @@ import (
 var tables = []databaseTable{
 	&user.Table{},
 	&session.Table{},
+	&datastore.MetaTable{},
+	&datastore.ColumnMetaTable{},
 }
 
 type databaseTable interface {
