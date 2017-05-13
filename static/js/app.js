@@ -16,10 +16,10 @@ app.directive('loader', function($rootScope){
     },
     //restrict E means its can only be used as an element.
     restrict: 'E',
-    template: '<div class="progress" ng-show="loading"><div class="indeterminate"></div></div>  <blockquote ng-show="error"><h5>Network Error</h5>' +
+    template: '<div class="progress" ng-show="loading"><div class="indeterminate"></div></div>  <blockquote ng-show="error"><h5>Error</h5>' +
         '<ul class="collection">' +
         '<li class="collection-item"><b>Error code</b>: {{error.status}}</li>' +
-        '<li class="collection-item"><b>Explanation</b>: {{error.statusText}}</li>' +
+        '<li class="collection-item"><b>Explanation</b>: <span ng-if="error.status==-1">Network Error or server offline</span>{{error.statusText}}</li>' +
         '<li class="collection-item"><b>The server said</b>: {{error.data}}</li>' +
         '</ul></blockquote>',
     link: function($scope, elem, attrs) {
