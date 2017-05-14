@@ -3,6 +3,8 @@ package datastore
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"strings"
 )
 
 // DoDelete implements all the logic to delete a datastore.
@@ -30,6 +32,12 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		tx.Rollback()
 		return err
 	}
+
+	_, err = tx.Exec("DROP TABLE ds_" + strconv.Itoa(ds.UID) + ";")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	return tx.Commit()
 }
 
@@ -52,6 +60,18 @@ func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
 			tx.Rollback()
 			return err
 		}
+	}
+
+	createQuery := "CREATE TABLE ds_" + strconv.Itoa(storeUID) + " (\n"
+	for _, col := range ds.Cols {
+		createQuery += strings.Replace(col.Name, " ", "_", -1) + "_ " + ColDatatype(col.Datatype) + ",\n"
+	}
+	createQuery += ");\n"
+
+	_, err = tx.Exec(createQuery)
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 
 	return tx.Commit()

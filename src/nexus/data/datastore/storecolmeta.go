@@ -95,7 +95,7 @@ func ColDatatype(dt Datatype) string {
 	case UINT:
 		return "uint"
 	case STR:
-		return "str"
+		return "string"
 	case FLOAT:
 		return "float"
 	case BLOB:
