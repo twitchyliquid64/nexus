@@ -115,11 +115,13 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="user in datastores">
-            <td ng-click="edit(user)" style="cursor: pointer;">{{user.UID}}</td>
-            <td ng-click="edit(user)" style="cursor: pointer;">{{user.Name}}</td>
-            <td am-time-ago="user.CreatedAt"></td>
-            <td></td>
+          <tr ng-repeat="ds in datastores">
+            <td ng-click="edit(ds)" style="cursor: pointer;">{{ds.UID}}</td>
+            <td ng-click="edit(ds)" style="cursor: pointer;">{{ds.Name}}</td>
+            <td am-time-ago="ds.CreatedAt"></td>
+            <td>
+              <a class="btn-floating" href="#" ng-click="delete(ds.UID)"><i class="material-icons">delete</i></a>
+            </td>
           </tr>
         </tbody>
       </table>

@@ -20,6 +20,8 @@ func (h *DatastoreAdministrationHandler) BindMux(ctx context.Context, mux *http.
 
 	mux.HandleFunc("/web/v1/data/list", h.HandleListV1)
 	mux.HandleFunc("/web/v1/data/new", h.HandleNewV1)
+	mux.HandleFunc("/web/v1/data/edit", h.HandleEditV1)
+	mux.HandleFunc("/web/v1/data/delete", h.HandleDeleteV1)
 	return nil
 }
 
@@ -30,28 +32,60 @@ func (h *DatastoreAdministrationHandler) HandleNewV1(response http.ResponseWrite
 		return
 	}
 
-	var details struct {
-		Datastore datastore.Datastore
-		Cols      []datastore.Column
-	}
+	var details datastore.Datastore
 	decoder := json.NewDecoder(request.Body)
 	err = decoder.Decode(&details)
 	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
 		return
 	}
-	details.Datastore.OwnerID = usr.UID
+	details.OwnerID = usr.UID
 
-	storeUID, err := datastore.MakeDatastore(request.Context(), &details.Datastore, h.DB)
-	if util.InternalHandlerError("datastore.MakeDatastore()", response, request, err) {
+	err = datastore.DoCreate(request.Context(), &details, h.DB)
+	if util.InternalHandlerError("datastore.DoCreate()", response, request, err) {
+		return
+	}
+}
+
+// HandleDeleteV1 handles a HTTP request to delete a datastore.
+func (h *DatastoreAdministrationHandler) HandleDeleteV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	for _, col := range details.Cols {
-		err = datastore.MakeColumn(request.Context(), storeUID, &col, h.DB)
-		if util.InternalHandlerError("datastore.MakeColumn()", response, request, err) {
+	var dUIDs []int
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&dUIDs)
+	if util.InternalHandlerError("json.Decode([]int])", response, request, err) {
+		return
+	}
+
+	for _, dUID := range dUIDs {
+		storedDS, err := datastore.GetDatastore(request.Context(), dUID, h.DB)
+		if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+			return
+		}
+		if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
+
+		err = datastore.DoDelete(request.Context(), storedDS, h.DB)
+		if util.InternalHandlerError("datastore.DoDelete()", response, request, err) {
 			return
 		}
 	}
+}
+
+// HandleEditV1 handles a HTTP request to edit a datastore.
+func (h *DatastoreAdministrationHandler) HandleEditV1(response http.ResponseWriter, request *http.Request) {
+	_, _, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	http.Error(response, "Editing of datastores is not supported. Delete and re-create the datastore.", 501)
+	return
 }
 
 // HandleListV1 handles a HTTP request to list all the datastores that user has access to.
@@ -64,6 +98,13 @@ func (h *DatastoreAdministrationHandler) HandleListV1(response http.ResponseWrit
 	datastores, err := datastore.GetDatastores(request.Context(), usr.AdminPerms.Data, usr.UID, h.DB)
 	if util.InternalHandlerError("datastore.GetDatastores()", response, request, err) {
 		return
+	}
+
+	for _, ds := range datastores {
+		ds.Cols, err = datastore.GetColumns(request.Context(), ds.UID, h.DB)
+		if util.InternalHandlerError("datastore.GetColumns()", response, request, err) {
+			return
+		}
 	}
 
 	b, err := json.Marshal(datastores)

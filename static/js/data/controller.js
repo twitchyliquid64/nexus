@@ -18,12 +18,53 @@ app.controller('DatastoreController', ["$scope", "$rootScope", "$http", function
     });
   }
 
+  $scope.delete = function(uid){
+    $rootScope.$broadcast('check-confirmation', {
+      title: 'Confirm Deletion',
+      content: 'Are you sure you want to delete datastore \'' + uid + '\'?',
+      actions: [
+        {text: 'No'},
+        {text: 'Yes', onAction: function(){
+          $scope.loading = true;
+          $http({
+            method: 'POST',
+            url: '/web/v1/data/delete',
+            data: [uid],
+          }).then(function successCallback(response) {
+            $scope.update();
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+          });
+        }},
+      ]
+    });
+  }
+
+  $scope.edit = function(ds){
+    console.log(ds);
+    $rootScope.$broadcast('edit-datastore', {ds: ds, cb: function(ds, cols){
+      ds.Cols = cols;
+      $http({
+        method: 'POST',
+        url: '/web/v1/data/edit',
+        data: ds,
+      }).then(function successCallback(response) {
+        $scope.update();
+      }, function errorCallback(response) {
+        $scope.loading = false;
+        $scope.error = response;
+      });
+    }});
+  }
+
   $scope.create = function(){
     $rootScope.$broadcast('create-datastore', {cb: function(ds, cols){
+      ds.Cols = cols;
       $http({
         method: 'POST',
         url: '/web/v1/data/new',
-        data: {Datastore: ds, Cols: cols},
+        data: ds,
       }).then(function successCallback(response) {
         $scope.update();
       }, function errorCallback(response) {

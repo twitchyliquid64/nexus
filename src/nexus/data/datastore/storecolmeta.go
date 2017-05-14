@@ -58,21 +58,14 @@ type Column struct {
 }
 
 // MakeColumn registers a column.
-func MakeColumn(ctx context.Context, datastoreID int, col *Column, db *sql.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, `
+func MakeColumn(ctx context.Context, tx *sql.Tx, datastoreID int, col *Column, db *sql.DB) error {
+	_, err := tx.ExecContext(ctx, `
 		INSERT INTO
 			datastore_col_meta (datastore, name, datatype, ordering)
 			VALUES (
 				$1, $2,	$3, $4
 			);`, datastoreID, col.Name, int(col.Datatype), col.Ordering)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
+	return err
 }
 
 // GetColumns gets all the columns for a datastore.

@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -47,14 +48,11 @@ type Datastore struct {
 	OwnerID   int
 	Kind      string
 	CreatedAt time.Time
+	Cols      []*Column //must be manually populated
 }
 
 // MakeDatastore registers a column.
-func MakeDatastore(ctx context.Context, ds *Datastore, db *sql.DB) (int, error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return 0, err
-	}
+func MakeDatastore(ctx context.Context, tx *sql.Tx, ds *Datastore, db *sql.DB) (int, error) {
 	x, err := tx.ExecContext(ctx, `
 		INSERT INTO
 			datastore_meta (owner_uid, name, store_kind)
@@ -68,7 +66,25 @@ func MakeDatastore(ctx context.Context, ds *Datastore, db *sql.DB) (int, error) 
 	if err != nil {
 		return 0, err
 	}
-	return int(id), tx.Commit()
+	return int(id), nil
+}
+
+// GetDatastore gets a datastore by ID.
+func GetDatastore(ctx context.Context, uid int, db *sql.DB) (*Datastore, error) {
+	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_uid, store_kind, created_at FROM datastore_meta WHERE id()=$1;`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, errors.New("Datastore not found")
+	}
+	var out Datastore
+	if err := res.Scan(&out.UID, &out.Name, &out.OwnerID, &out.Kind, &out.CreatedAt); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // GetDatastores gets all datastores owned by that user. If showAll is true, then all datastores are returned.
