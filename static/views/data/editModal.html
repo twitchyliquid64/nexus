@@ -36,7 +36,7 @@
         </div>
         <div class="input-field col s3">
           <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number">
-          <label for="c_order_{{$index}}">Ordering</label>
+          <label class="active" for="c_order_{{$index}}">Ordering</label>
         </div>
         <div class="col s3 input-field" style="height: 3rem;">
           <a class="btn-floating red" ng-click="deleteCol($index)"><i class="material-icons left">delete</i></a>
@@ -49,7 +49,7 @@
 
   <div class="modal-footer">
     <div ng-if="isEditMode" style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
-      <span>UID={{ds.UID}}</span>, Datastore created <span am-time-ago="ds.CreatedAt"></span>
+      <span>UID={{ds.UID}}</span>, <span>OwnerUID={{ds.OwnerID}}</span>, Datastore created <span am-time-ago="ds.CreatedAt"></span>
     </div>
     <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onFinish()"><span ng-if="!isEditMode">Create</span><span ng-if="isEditMode">Save</span></a>
     <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onCancel()"><span>Cancel</span></a>

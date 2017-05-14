@@ -18,6 +18,11 @@ app.controller('DatastoreController', ["$scope", "$rootScope", "$http", function
     });
   }
 
+  $scope.explore = function(ds){
+    $rootScope.$broadcast('data-explore', {ds: ds});
+    $scope.changePage('data-explorer');
+  }
+
   $scope.delete = function(uid){
     $rootScope.$broadcast('check-confirmation', {
       title: 'Confirm Deletion',

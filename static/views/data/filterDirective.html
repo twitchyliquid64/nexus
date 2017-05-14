@@ -1,0 +1,47 @@
+<div>
+
+
+  <div class="row valign-wrapper">
+    <div class="col s4">
+      <div class="row valign-wrapper" style="margin-bottom: 0px;">
+        <div class="col s2">
+          <label><i class="material-icons left">filter_list</i> Filters</label>
+        </div>
+        <div class="col s10 left-align">
+          <div ng-repeat="filter in filters">
+            <span ng-if="filter.type=='literalConstraint'">Column <i>{{getColName(filter.col)}}</i> {{filter.conditional}} {{filter.val}}</span>
+            <span ng-if="filter.type=='relativeConstraint'">Column <i>{{getColName(filter.col)}}</i> {{filter.conditional}} Column <i>{{filter.val}}</i></span>
+            <a href="#" ng-click="deleteFilter($index)">(X)</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col s1">
+      <label class="">Add Constraint</label>
+    </div>
+    <div class="col s3">
+      <select class="browser-default" ng-model="addFilterColumn">
+        <option value="!!">[ Select a column ]</option>
+        <option ng-repeat="col in ds.Cols" value="{{col.UID}}">{{col.Name}}</option>
+      </select>
+    </div>
+    <div class="col s1">
+      <select class="browser-default" ng-model="addFilterConditional">
+        <option value="==">==</option>
+        <option value="!=">!=</option>
+        <option value=">">&gt;</option>
+        <option value="<">&lt;</option>
+      </select>
+    </div>
+    <div class="input-field col s2">
+      <input id="filter_ValInput" type="text" ng-model="addFilterInput" ng-class="filterInputVldn" ng-keyup="$event.keyCode == 13 && addFilter()">
+      <label for="filter_ValInput">Value</label>
+    </div>
+    <div class="col s1">
+      <a class="btn-flat waves-effect waves-light btn" ng-click="addFilter()">add</a>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+</div>

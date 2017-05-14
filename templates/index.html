@@ -34,6 +34,8 @@
     <script type="text/javascript" src="/static/js/accounts/accountEditModal.js"></script>
     <script type="text/javascript" src="/static/js/data/controller.js"></script>
     <script type="text/javascript" src="/static/js/data/editModal.js"></script>
+    <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
+    <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -42,7 +44,7 @@
       <ul class="right hide-on-med-and-down">
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
         <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
-        <li ng-class="{active: page == 'data'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
+        <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
         <li ng-class="{active: page == 'integration'}"><a href="#" ng-click="changePage('integration')"><i class="material-icons left">import_export</i> Integrations</a></li>
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
@@ -121,6 +123,7 @@
             <td am-time-ago="ds.CreatedAt"></td>
             <td>
               <a class="btn-floating" href="#" ng-click="delete(ds.UID)"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" href="#" ng-click="explore(ds)"><i class="material-icons">search</i></a>
             </td>
           </tr>
         </tbody>
@@ -134,6 +137,29 @@
     </div>
 
     <datastore-edit-modal></datastore-edit-modal>
+  </div>
+
+  <div ng-show="page == 'data-explorer'" style="margin: 0px 9px;">
+    <div ng-controller="DataExplorerController" class="container">
+      <h3>{{datastore.Name}}</h3>
+      <loader loading="loading" error="error"></loader>
+      <datastore-filter ds="datastore" on-change="filtersChanged(filters)"></datastore-filter>
+
+      <table class="highlight section">
+        <thead>
+          <tr>
+              <th>UID</th>
+              <th ng-repeat="col in datastore.Cols">{{col.Name}}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="row in data">
+            <td ng-repeat="col in row">{{col}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <confirmation-dialog-modal></confirmation-dialog-modal>

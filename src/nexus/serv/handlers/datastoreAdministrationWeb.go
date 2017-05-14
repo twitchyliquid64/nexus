@@ -22,6 +22,7 @@ func (h *DatastoreAdministrationHandler) BindMux(ctx context.Context, mux *http.
 	mux.HandleFunc("/web/v1/data/new", h.HandleNewV1)
 	mux.HandleFunc("/web/v1/data/edit", h.HandleEditV1)
 	mux.HandleFunc("/web/v1/data/delete", h.HandleDeleteV1)
+	mux.HandleFunc("/web/v1/data/query", h.HandleQueryV1)
 	return nil
 }
 
@@ -75,6 +76,37 @@ func (h *DatastoreAdministrationHandler) HandleDeleteV1(response http.ResponseWr
 			return
 		}
 	}
+}
+
+// HandleQueryV1 handles a HTTP request to query a datastore.
+func (h *DatastoreAdministrationHandler) HandleQueryV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var query datastore.Query
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&query)
+	if util.InternalHandlerError("json.Decode(datastoreQuery)", response, request, err) {
+		return
+	}
+	query.Limit = 50
+	storedDS, err := datastore.GetDatastore(request.Context(), query.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		http.Error(response, "You do not own this datastore.", 403)
+		return
+	}
+
+	err = datastore.DoStreamingQuery(request.Context(), response, query, h.DB)
+	if util.InternalHandlerError("datastore.DoStreamingQuery()", response, request, err) {
+		return
+	}
+
+	return
 }
 
 // HandleEditV1 handles a HTTP request to edit a datastore.
