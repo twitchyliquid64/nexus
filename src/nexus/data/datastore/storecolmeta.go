@@ -57,8 +57,8 @@ type Column struct {
 	CreatedAt time.Time
 }
 
-// MakeColumn registers a column.
-func MakeColumn(ctx context.Context, tx *sql.Tx, datastoreID int, col *Column, db *sql.DB) error {
+// makeColumn registers a column.
+func makeColumn(ctx context.Context, tx *sql.Tx, datastoreID int, col *Column, db *sql.DB) error {
 	_, err := tx.ExecContext(ctx, `
 		INSERT INTO
 			datastore_col_meta (datastore, name, datatype, ordering)

@@ -51,8 +51,8 @@ type Datastore struct {
 	Cols      []*Column //must be manually populated
 }
 
-// MakeDatastore registers a column.
-func MakeDatastore(ctx context.Context, tx *sql.Tx, ds *Datastore, db *sql.DB) (int, error) {
+// makeDatastore registers a column.
+func makeDatastore(ctx context.Context, tx *sql.Tx, ds *Datastore, db *sql.DB) (int, error) {
 	x, err := tx.ExecContext(ctx, `
 		INSERT INTO
 			datastore_meta (owner_uid, name, store_kind)

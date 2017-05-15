@@ -136,14 +136,14 @@ func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		return err
 	}
 
-	storeUID, err := MakeDatastore(ctx, tx, ds, db)
+	storeUID, err := makeDatastore(ctx, tx, ds, db)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for _, col := range ds.Cols {
-		err = MakeColumn(ctx, tx, storeUID, col, db)
+		err = makeColumn(ctx, tx, storeUID, col, db)
 		if err != nil {
 			tx.Rollback()
 			return err
