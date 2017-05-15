@@ -6,6 +6,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -50,6 +52,8 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 		}
 		for i, val := range pointers {
 			switch val.(type) {
+			case *int64:
+				out[i] = fmt.Sprint(*val.(*int64))
 			case *int:
 				out[i] = fmt.Sprint(*val.(*int))
 			case *string:
@@ -57,6 +61,7 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 			case *[]byte:
 				out[i] = string(*val.(*[]byte))
 			default:
+				log.Printf("DoStreamingQuery(): Type %+v not handled!", reflect.TypeOf(val))
 				out[i] = "?"
 			}
 		}

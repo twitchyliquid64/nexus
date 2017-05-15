@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -31,12 +32,38 @@ func getColNameByUID(cols []*Column, uid string) *Column {
 	return nil
 }
 
-//TODO: Sanitize/escape all non-alpha characters
 func columnName(inName string) string {
-	return strings.Replace(inName, " ", "_", -1) + "_"
+	c := strings.Replace(inName, " ", "_", -1) + "_"
+	o := make([]rune, len(c))
+	for i, char := range c {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') {
+			o[i] = char
+		} else {
+			o[i] = '_'
+		}
+	}
+	return "C" + string(o)
 }
 
-//TODO: better type checking, sanitize conditional, support more datatypes than INT, UINT, STR (currently assume all non-ints are STR)
+func conditional(in string) string {
+	switch in {
+	case ">":
+		fallthrough
+	case ">=":
+		fallthrough
+	case "<=":
+		fallthrough
+	case "<":
+		fallthrough
+	case "==":
+		fallthrough
+	case "!=":
+		return in
+	}
+	return "BAD_CONDITIONAL!!!"
+}
+
+// TODO: Handle TIME type
 func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	queryString := ""
 	var queryParameters []interface{}
@@ -48,9 +75,16 @@ func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error)
 			if col == nil {
 				return "", nil, errors.New("Invalid columnID in query")
 			}
-			queryString += columnName(col.Name) + " " + filter.Conditional + " $" + strconv.Itoa(i+1)
+			queryString += columnName(col.Name) + " " + conditional(filter.Conditional) + " $" + strconv.Itoa(i+1)
 			if col.Datatype == INT || col.Datatype == UINT {
 				v, _ := strconv.Atoi(filter.Val)
+				queryParameters = append(queryParameters, v)
+			} else if col.Datatype == STR {
+				queryParameters = append(queryParameters, filter.Val)
+			} else if col.Datatype == BLOB {
+				queryParameters = append(queryParameters, []byte(filter.Val))
+			} else if col.Datatype == FLOAT {
+				v, _ := strconv.ParseFloat(filter.Val, 64)
 				queryParameters = append(queryParameters, v)
 			} else {
 				queryParameters = append(queryParameters, filter.Val)
@@ -85,5 +119,6 @@ func makeFullQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	if len(query.Filters) > 0 {
 		finalQuery += " WHERE " + queryString + ";"
 	}
+	log.Println(finalQuery, queryParameters)
 	return finalQuery, queryParameters, err
 }

@@ -8,7 +8,7 @@
       //restrict E means its can only be used as an element.
       restrict: 'E',
       templateUrl: function(elem, attr){
-        return '/static/views/data/filterDirective.html?cache=1';
+        return '/static/views/data/filterDirective.html?cache=2';
       },
       link: function($scope, elem, attrs) {
         // scope = either parent scope or its own child scope if scope set.
