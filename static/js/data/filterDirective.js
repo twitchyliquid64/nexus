@@ -20,6 +20,9 @@
         $scope.addFilterInput = '';
         $scope.addFilterConditional = '==';
         $scope.addFilterColumn = '!!';
+        $scope.maxRows = 40;
+        $scope.offset = 0;
+        $scope.page = 0;
 
         $scope.getColName = function(colID){
           for (var i = 0; i < $scope.ds.Cols.length; i++){
@@ -28,9 +31,18 @@
           return '?';
         }
 
+        $scope.next = function(){
+          $scope.page = ($scope.page + 1) % 2;
+          console.log($scope.page);
+        }
+
+        $scope.setBounds = function(){
+          $scope.onChange({filters: $scope.filters, limit: $scope.maxRows, offset: $scope.offset});
+        }
+
         $scope.deleteFilter = function(index){
           $scope.filters.splice(index, 1);
-          $scope.onChange({filters: $scope.filters});
+          $scope.onChange({filters: $scope.filters, limit: $scope.maxRows, offset: $scope.offset});
         };
 
         $scope.addFilter = function(){
@@ -52,7 +64,7 @@
             }
           }
           $scope.addFilterInput = '';
-          $scope.onChange({filters: $scope.filters});
+          $scope.onChange({filters: $scope.filters, limit: $scope.maxRows, offset: $scope.offset});
         };
 
 

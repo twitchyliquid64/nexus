@@ -91,7 +91,6 @@ func (h *DatastoreAdministrationHandler) HandleQueryV1(response http.ResponseWri
 	if util.InternalHandlerError("json.Decode(datastoreQuery)", response, request, err) {
 		return
 	}
-	query.Limit = 50
 	storedDS, err := datastore.GetDatastore(request.Context(), query.UID, h.DB)
 	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
 		return

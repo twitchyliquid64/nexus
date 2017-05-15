@@ -4,6 +4,7 @@ app.controller('DataExplorerController', ["$scope", "$rootScope", "$http", funct
   $scope.datastore = {};
   $scope.filters = [];
   $scope.limit = 40;
+  $scope.offset = 0;
   $scope.error = null;
   $scope.data = [];
 
@@ -12,7 +13,7 @@ app.controller('DataExplorerController', ["$scope", "$rootScope", "$http", funct
     $http({
       method: 'POST',
       url: '/web/v1/data/query',
-      data: {UID: $scope.datastore.UID, Filters: $scope.filters}
+      data: {UID: $scope.datastore.UID, Filters: $scope.filters, Limit: +$scope.limit, Offset: +$scope.offset}
     }).then(function successCallback(response) {
       $scope.loading = false;
       $scope.data = CSVToArray(response.data, ',');
@@ -25,8 +26,10 @@ app.controller('DataExplorerController', ["$scope", "$rootScope", "$http", funct
     });
   }
 
-  $scope.filtersChanged = function(filters){
+  $scope.filtersChanged = function(filters, limit, offset){
     $scope.filters = filters;
+    $scope.limit = limit;
+    $scope.offset = offset;
     $scope.update();
   }
 

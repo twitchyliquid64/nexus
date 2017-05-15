@@ -12,6 +12,7 @@ type Query struct {
 	UID     int
 	Filters []Filter
 	Limit   int
+	Offset  int
 }
 
 // Filter represents a constraint in a query.
@@ -95,6 +96,7 @@ func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error)
 			}
 		}
 	}
+
 	return queryString, queryParameters, nil
 }
 
@@ -117,8 +119,13 @@ func makeFullQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	queryString, queryParameters, err := buildWhereQuery(cols, query)
 	finalQuery := selectQuery
 	if len(query.Filters) > 0 {
-		finalQuery += " WHERE " + queryString + ";"
+		finalQuery += " WHERE " + queryString
 	}
+	if query.Limit > 0 {
+		finalQuery += " LIMIT " + strconv.Itoa(query.Limit)
+	}
+	finalQuery += " OFFSET " + strconv.Itoa(query.Offset)
+
 	log.Println(finalQuery, queryParameters)
 	return finalQuery, queryParameters, err
 }

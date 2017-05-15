@@ -1,11 +1,11 @@
 <div>
 
-
-  <div class="row valign-wrapper">
+  <!-- FILTER display -->
+  <div class="row valign-wrapper" ng-hide="page>0">
     <div class="col s4">
       <div class="row valign-wrapper" style="margin-bottom: 0px;">
-        <div class="col s2">
-          <label><i class="material-icons left">filter_list</i> Filters</label>
+        <div class="col s2" ng-click="next()" style="cursor: pointer;">
+          <label><i class="material-icons left" style="cursor: pointer;">filter_list</i> Filters</label>
         </div>
         <div class="col s10 left-align">
           <div ng-repeat="filter in filters">
@@ -42,6 +42,31 @@
     </div>
     <div class="col s1">
       <a class="btn-flat waves-effect waves-light btn" ng-click="addFilter()">add</a>
+    </div>
+  </div>
+
+
+  <!-- BOUNDS display -->
+  <div class="row valign-wrapper" ng-hide="page!=1" style="min-height: 81px;">
+    <div class="col s4">
+      <div class="row valign-wrapper" style="margin-bottom: 0px;">
+        <div class="col s2" ng-click="next()" style="cursor: pointer;">
+          <label><i class="material-icons left" style="cursor: pointer;">format_shapes</i> Bounds</label>
+        </div>
+        <div class="col s10 left-align">
+        </div>
+      </div>
+    </div>
+    <div class="input-field col s2 offset-s3">
+      <input id="offset_ValInput" type="text" ng-model="offset" ng-class="offsetInputVldn" class="active" ng-keyup="$event.keyCode == 13 && setBounds()">
+      <label for="offset_ValInput">Offset</label>
+    </div>
+    <div class="input-field col s2">
+      <input id="bounds_ValInput" type="text" ng-model="maxRows" ng-class="boundsInputVldn" class="active" ng-keyup="$event.keyCode == 13 && setBounds()">
+      <label for="bounds_ValInput">Max Results</label>
+    </div>
+    <div class="col s1">
+      <a class="btn-flat waves-effect waves-light btn" ng-click="setBounds()">set</a>
     </div>
   </div>
 

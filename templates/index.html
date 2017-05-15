@@ -143,7 +143,7 @@
     <div ng-controller="DataExplorerController" class="container">
       <h3>{{datastore.Name}}</h3>
       <loader loading="loading" error="error"></loader>
-      <datastore-filter ds="datastore" on-change="filtersChanged(filters)"></datastore-filter>
+      <datastore-filter ds="datastore" on-change="filtersChanged(filters, limit, offset)"></datastore-filter>
 
       <table class="highlight section">
         <thead>
