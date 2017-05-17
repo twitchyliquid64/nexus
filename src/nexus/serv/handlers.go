@@ -12,7 +12,7 @@ import (
 var httpHandlers = []handler{
 	&handlers.CoreHandler{},
 	&handlers.AccountsWebHandler{},
-	&handlers.DatastoreAdministrationHandler{},
+	&handlers.DatastoreHandler{},
 }
 
 type handler interface {

@@ -12,13 +12,13 @@ import (
 
 //TODO: Rename to datastoreWeb
 
-// DatastoreAdministrationHandler handles requests used in management of datastores.
-type DatastoreAdministrationHandler struct {
+// DatastoreHandler handles requests used in management of datastores.
+type DatastoreHandler struct {
 	DB *sql.DB
 }
 
 // BindMux registers HTTP handlers on the given mux.
-func (h *DatastoreAdministrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) error {
+func (h *DatastoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) error {
 	h.DB = db
 
 	mux.HandleFunc("/web/v1/data/list", h.HandleListV1)
@@ -31,7 +31,7 @@ func (h *DatastoreAdministrationHandler) BindMux(ctx context.Context, mux *http.
 }
 
 // HandleNewV1 handles a HTTP request to create a new datastore. TODO: Check name/owner combo doesnt already exist.
-func (h *DatastoreAdministrationHandler) HandleNewV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleNewV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -52,7 +52,7 @@ func (h *DatastoreAdministrationHandler) HandleNewV1(response http.ResponseWrite
 }
 
 // HandleDeleteV1 handles a HTTP request to delete a datastore.
-func (h *DatastoreAdministrationHandler) HandleDeleteV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleDeleteV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -83,7 +83,7 @@ func (h *DatastoreAdministrationHandler) HandleDeleteV1(response http.ResponseWr
 }
 
 // HandleInsertV1 handles a HTTP request to insert into a datastore.
-func (h *DatastoreAdministrationHandler) HandleInsertV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleInsertV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -117,7 +117,7 @@ func (h *DatastoreAdministrationHandler) HandleInsertV1(response http.ResponseWr
 }
 
 // HandleQueryV1 handles a HTTP request to query a datastore.
-func (h *DatastoreAdministrationHandler) HandleQueryV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleQueryV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -147,7 +147,7 @@ func (h *DatastoreAdministrationHandler) HandleQueryV1(response http.ResponseWri
 }
 
 // HandleEditV1 handles a HTTP request to edit a datastore.
-func (h *DatastoreAdministrationHandler) HandleEditV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleEditV1(response http.ResponseWriter, request *http.Request) {
 	_, _, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -158,7 +158,7 @@ func (h *DatastoreAdministrationHandler) HandleEditV1(response http.ResponseWrit
 }
 
 // HandleListV1 handles a HTTP request to list all the datastores that user has access to.
-func (h *DatastoreAdministrationHandler) HandleListV1(response http.ResponseWriter, request *http.Request) {
+func (h *DatastoreHandler) HandleListV1(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
