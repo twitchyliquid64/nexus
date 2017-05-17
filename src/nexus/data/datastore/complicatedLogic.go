@@ -22,6 +22,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 		return err
 	}
 
+	// make the querystring
 	queryStr := "INSERT INTO ds_" + strconv.Itoa(dsID) + " ("
 	for i := range colIDs {
 		insertCols[i] = getColNameByUID(cols, strconv.Itoa(colIDs[i]))
@@ -41,7 +42,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 		}
 	}
 	queryStr += ");"
-	log.Printf("Streaming insert query: %s\n", queryStr)
+	log.Printf("Streaming insert querystring: %s\n", queryStr)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -51,6 +52,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	r := csv.NewReader(data)
 	inContainers := make([]interface{}, len(colIDs))
 
+	// iterate through the source rows
 	for {
 		row, err := r.Read()
 		if err == io.EOF {

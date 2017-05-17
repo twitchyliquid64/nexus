@@ -32,8 +32,8 @@ app.controller('DataInserterController', ["$scope", "$rootScope", "$http", funct
     }
 
     outStr = outStr.slice(0, -1);
-    console.log(cols, outStr);
     $scope.loading = true;
+    
     $http({
       method: 'POST',
       url: '/web/v1/data/insert?ds=' + $scope.datastore.UID + "&cols=" + cols.join(),
