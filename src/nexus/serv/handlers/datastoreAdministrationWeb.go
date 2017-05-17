@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"nexus/data/datastore"
 	"nexus/serv/util"
+	"strconv"
 )
+
+//TODO: Rename to datastoreWeb
 
 // DatastoreAdministrationHandler handles requests used in management of datastores.
 type DatastoreAdministrationHandler struct {
@@ -23,6 +26,7 @@ func (h *DatastoreAdministrationHandler) BindMux(ctx context.Context, mux *http.
 	mux.HandleFunc("/web/v1/data/edit", h.HandleEditV1)
 	mux.HandleFunc("/web/v1/data/delete", h.HandleDeleteV1)
 	mux.HandleFunc("/web/v1/data/query", h.HandleQueryV1)
+	mux.HandleFunc("/web/v1/data/insert", h.HandleInsertV1)
 	return nil
 }
 
@@ -76,6 +80,40 @@ func (h *DatastoreAdministrationHandler) HandleDeleteV1(response http.ResponseWr
 			return
 		}
 	}
+}
+
+// HandleInsertV1 handles a HTTP request to insert into a datastore.
+func (h *DatastoreAdministrationHandler) HandleInsertV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if err := request.ParseForm(); err != nil {
+		http.Error(response, "Could not parse form", 400)
+		return
+	}
+
+	dsID, err := strconv.Atoi(request.FormValue("ds"))
+	if util.InternalHandlerError("extractdsID-HandleInsertV1()", response, request, err) {
+		return
+	}
+	storedDS, err := datastore.GetDatastore(request.Context(), dsID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		http.Error(response, "You do not own this datastore.", 403)
+		return
+	}
+
+	cols, err := util.ExtractColumnList(request.FormValue("cols"))
+	if util.InternalHandlerError("util.ExtractColumnList()", response, request, err) {
+		return
+	}
+
+	err = datastore.DoStreamingInsert(request.Context(), request.Body, dsID, cols, h.DB)
+	util.InternalHandlerError("datastore.DoStreamingInsert()", response, request, err)
 }
 
 // HandleQueryV1 handles a HTTP request to query a datastore.

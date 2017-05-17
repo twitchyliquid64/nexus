@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,62 @@ import (
 	"strconv"
 	"time"
 )
+
+// DoStreamingInsert takes input as a CSV and inserts it to a database.
+func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []int, db *sql.DB) error {
+	insertCols := make([]*Column, len(colIDs))
+	cols, err := GetColumns(ctx, dsID, db)
+	if err != nil {
+		return err
+	}
+
+	queryStr := "INSERT INTO ds_" + strconv.Itoa(dsID) + " ("
+	for i := range colIDs {
+		insertCols[i] = getColNameByUID(cols, strconv.Itoa(colIDs[i]))
+		if insertCols[i] == nil {
+			return errors.New("Invalid columnID")
+		}
+		queryStr += columnName(insertCols[i].Name)
+		if i < len(colIDs)-1 {
+			queryStr += ", "
+		}
+	}
+	queryStr += ") VALUES ("
+	for i := range colIDs {
+		queryStr += "$"+strconv.Itoa(i+1)
+		if i < len(colIDs)-1 {
+			queryStr += ", "
+		}
+	}
+	queryStr += ");"
+	log.Printf("Streaming insert query: %s\n", queryStr)
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	r := csv.NewReader(data)
+	inContainers := make([]interface{}, len(colIDs))
+
+	for row, err := r.Read(); err == nil; {
+		for i := range inContainers { //TODO: bounds check
+			inContainers[i] = row[i]
+		}
+
+		_, err = tx.Exec(queryStr, inContainers...)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err != io.EOF{
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
 
 // DoStreamingQuery writes the result of a query in CSV form.
 func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *sql.DB) error {

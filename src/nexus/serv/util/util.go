@@ -3,6 +3,8 @@ package util
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // LogIfErr logs a message if err != nil
@@ -21,4 +23,25 @@ func InternalHandlerError(component string, response http.ResponseWriter, reques
 		return true
 	}
 	return false
+}
+
+// ExtractTrailingNumFromPath returns the number trailing the last '/' character.
+func ExtractTrailingNumFromPath(path string) (int, error) {
+	spl := strings.Split(path, "/")
+	return strconv.Atoi(spl[len(spl)-1])
+}
+
+// ExtractColumnList returns a list of integers which were ',' separated
+func ExtractColumnList(cols string) ([]int, error) {
+	spl := strings.Split(cols, ",")
+	out := make([]int, len(spl))
+
+	for i := range spl {
+		var err error
+		out[i], err = strconv.Atoi(spl[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
 }

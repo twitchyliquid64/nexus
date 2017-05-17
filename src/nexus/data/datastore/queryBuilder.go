@@ -126,6 +126,6 @@ func makeFullQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	}
 	finalQuery += " OFFSET " + strconv.Itoa(query.Offset)
 
-	log.Println(finalQuery, queryParameters)
+	log.Println("StreamingQuery: ", finalQuery, queryParameters)
 	return finalQuery, queryParameters, err
 }
