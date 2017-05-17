@@ -172,7 +172,7 @@
       <div class="row valign-wrapper" ng-repeat="col in datastore.Cols">
         <div class="col s2 offset-s1">
           <p>{{col.Name}}</p>
-          <label>{{kind(col.Datatype)}}</label>
+          <label>{{kind(col.Datatype)}} ({{col.UID}})</label>
         </div>
         <div class="input-field col s9">
           <input id="colInsertInput_$index" class="active" type="text" ng-model="col.tempVal">
