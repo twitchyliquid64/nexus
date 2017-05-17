@@ -35,6 +35,7 @@
     <script type="text/javascript" src="/static/js/data/controller.js"></script>
     <script type="text/javascript" src="/static/js/data/editModal.js"></script>
     <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
+    <script type="text/javascript" src="/static/js/data/inserterController.js"></script>
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
@@ -124,6 +125,7 @@
             <td>
               <a class="btn-floating" href="#" ng-click="delete(ds.UID)"><i class="material-icons">delete</i></a>
               <a class="btn-floating" href="#" ng-click="explore(ds)"><i class="material-icons">search</i></a>
+              <a class="btn-floating" href="#" ng-click="insert(ds)"><i class="material-icons">add</i></a>
             </td>
           </tr>
         </tbody>
@@ -159,6 +161,26 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div ng-show="page == 'data-inserter'" style="margin: 0px 9px;">
+    <div ng-controller="DataInserterController" class="container">
+      <h3>Insert: {{datastore.Name}}</h3>
+      <loader loading="loading" error="error"></loader>
+
+      <div class="row valign-wrapper" ng-repeat="col in datastore.Cols">
+        <div class="col s2 offset-s1">
+          <p>{{col.Name}}</p>
+          <label>{{kind(col.Datatype)}}</label>
+        </div>
+        <div class="input-field col s9">
+          <input id="colInsertInput_$index" class="active" type="text" ng-model="col.tempVal">
+          <label for="colInsertInput_$index">Value</label>
+        </div>
+      </div>
+
+      <a class="waves-effect waves-light btn" ng-click="insert()"><i class="material-icons left">storage</i> insert</a>
     </div>
   </div>
 

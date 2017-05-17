@@ -23,6 +23,11 @@ app.controller('DatastoreController', ["$scope", "$rootScope", "$http", function
     $scope.changePage('data-explorer');
   }
 
+  $scope.insert = function(ds){
+    $rootScope.$broadcast('data-insert', {ds: ds});
+    $scope.changePage('data-inserter');
+  }
+
   $scope.delete = function(uid){
     $rootScope.$broadcast('check-confirmation', {
       title: 'Confirm Deletion',

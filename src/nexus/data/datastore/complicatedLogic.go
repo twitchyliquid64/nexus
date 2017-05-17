@@ -14,6 +14,7 @@ import (
 )
 
 // DoStreamingInsert takes input as a CSV and inserts it to a database.
+// TODO: Refactor
 func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []int, db *sql.DB) error {
 	insertCols := make([]*Column, len(colIDs))
 	cols, err := GetColumns(ctx, dsID, db)
@@ -34,7 +35,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	}
 	queryStr += ") VALUES ("
 	for i := range colIDs {
-		queryStr += "$"+strconv.Itoa(i+1)
+		queryStr += "$" + strconv.Itoa(i+1)
 		if i < len(colIDs)-1 {
 			queryStr += ", "
 		}
@@ -50,9 +51,24 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	r := csv.NewReader(data)
 	inContainers := make([]interface{}, len(colIDs))
 
-	for row, err := r.Read(); err == nil; {
-		for i := range inContainers { //TODO: bounds check
-			inContainers[i] = row[i]
+	for {
+		row, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		log.Println(row)
+		for i := range inContainers {
+			if insertCols[i].Datatype == INT || insertCols[i].Datatype == UINT {
+				v, _ := strconv.Atoi(row[i])
+				inContainers[i] = v
+			} else {
+				inContainers[i] = row[i]
+			}
 		}
 
 		_, err = tx.Exec(queryStr, inContainers...)
@@ -60,11 +76,6 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 			tx.Rollback()
 			return err
 		}
-	}
-
-	if err != io.EOF{
-		tx.Rollback()
-		return err
 	}
 	return tx.Commit()
 }
@@ -209,7 +220,7 @@ func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
 
 	createQuery := "CREATE TABLE ds_" + strconv.Itoa(storeUID) + " (\n"
 	for _, col := range ds.Cols {
-		createQuery += columnName(col.Name) + " " + ColDatatype(col.Datatype) + ",\n"
+		createQuery += columnName(col.Name) + " " + ColDatatype(col.Datatype) + " NOT NULL,\n"
 	}
 	createQuery += ");\n"
 
