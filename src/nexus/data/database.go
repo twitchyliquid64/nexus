@@ -19,6 +19,7 @@ var tables = []DatabaseTable{
 	&datastore.ColumnMetaTable{},
 	&messaging.SourceTable{},
 	&messaging.ConversationTable{},
+	&messaging.MessageTable{},
 }
 
 // DatabaseTable represents the manager object for a database table.

@@ -8,13 +8,14 @@ import (
 	"log"
 	"nexus/data/messaging"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/nlopes/slack"
 )
 
-const updateStateDuration = time.Minute * 7
+const updateStateDuration = time.Minute * 22
 
 // Source represents a integration with a slack channel for a user.
 type Source struct {
@@ -26,7 +27,8 @@ type Source struct {
 	updateTicker *time.Ticker
 	wg           *sync.WaitGroup
 
-	channelCache map[string]slack.Channel
+	channelCache map[string]int
+	imCache      map[string]int
 }
 
 // Make starts talking to slack and providing messaging integration.
@@ -40,7 +42,8 @@ func Make(ctx context.Context, src *messaging.Source, db *sql.DB, wg *sync.WaitG
 		src:          src,
 		closeChan:    make(chan bool, 1),
 		db:           db,
-		channelCache: map[string]slack.Channel{},
+		channelCache: map[string]int{},
+		imCache:      map[string]int{},
 		updateTicker: time.NewTicker(updateStateDuration),
 		wg:           wg,
 	}
@@ -55,40 +58,124 @@ func Make(ctx context.Context, src *messaging.Source, db *sql.DB, wg *sync.WaitG
 
 func (s *Source) syncChannels() error {
 	ctx := context.Background()
+
 	chans, err := s.slack.GetChannels(false)
 	if err != nil {
 		return err
 	}
 	for _, channel := range chans {
-		log.Printf("ID: %s, Name: %s\n", channel.ID, channel.Name)
-		_, err := messaging.GetConversation(ctx, channel.ID, s.src.UID, s.db)
-		if err == messaging.ErrConvoDoesntExist {
-			err = messaging.AddConversation(ctx, messaging.Conversation{
-				SourceUID: s.src.UID,
-				UniqueID:  channel.ID,
-				Name:      channel.Name,
-			}, s.db)
-		}
+		log.Printf("Syncing slack channel - ID: %s, Name: %s\n", channel.ID, channel.Name)
+		err = s.checkEnrollChannel(ctx, channel.ID, channel.Name)
 		if err != nil {
 			return err
 		}
-		s.channelCache[channel.ID] = channel
+	}
+
+	ims, err := s.slack.GetIMChannels()
+	if err != nil {
+		return err
+	}
+	for _, im := range ims {
+		log.Printf("Syncing slack IMs - ID: %s, Name: %s\n", im.ID, im.User)
+		err = s.checkEnrollDM(ctx, im.ID, im.User)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (s *Source) getChannelByName(n string) slack.Channel {
-	for _, val := range s.channelCache {
-		if val.Name == n {
-			return val
-		}
+// ensures a database entry exists for the DM session, and there is a cached relation between channelID <-> conversationID
+func (s *Source) checkEnrollDM(ctx context.Context, ID, name string) error {
+	if _, ok := s.imCache[ID]; ok {
+		return nil
 	}
-	return slack.Channel{}
+
+	conv, err := messaging.GetConversation(ctx, ID, s.src.UID, s.db)
+	if err == messaging.ErrConvoDoesntExist {
+		var cID int
+		cID, err = messaging.AddConversation(ctx, messaging.Conversation{
+			SourceUID: s.src.UID,
+			UniqueID:  ID,
+			Name:      name,
+			Kind:      messaging.DM,
+		}, s.db)
+		if err != nil {
+			return err
+		}
+		s.imCache[ID] = cID
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	s.imCache[ID] = conv.UID
+	return nil
+}
+
+// ensures a database entry exists for the Channel session, and there is a cached relation between channelID <-> conversationID
+func (s *Source) checkEnrollChannel(ctx context.Context, ID, name string) error {
+	if _, ok := s.channelCache[ID]; ok {
+		return nil
+	}
+
+	conv, err := messaging.GetConversation(ctx, ID, s.src.UID, s.db)
+	if err == messaging.ErrConvoDoesntExist {
+		var cID int
+		cID, err = messaging.AddConversation(ctx, messaging.Conversation{
+			SourceUID: s.src.UID,
+			UniqueID:  ID,
+			Name:      name,
+			Kind:      messaging.ChannelConvo,
+		}, s.db)
+		if err != nil {
+			return err
+		}
+		s.channelCache[ID] = cID
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	s.channelCache[ID] = conv.UID
+	return nil
 }
 
 // Stop stops listening to events and closes all resources.
 func (s *Source) Stop() {
 	close(s.closeChan)
+}
+
+func (s *Source) onMessage(e *slack.MessageEvent) error {
+	mID := e.Channel + "-" + e.Timestamp
+	var conversationID int
+
+	if strings.HasPrefix(e.Channel, "C") { //channel
+		if _, ok := s.channelCache[e.Channel]; !ok {
+			if err := s.syncChannels(); err != nil {
+				return err
+			}
+		}
+		conversationID = s.channelCache[e.Channel]
+	}
+
+	if strings.HasPrefix(e.Channel, "D") { //direct message
+		if _, ok := s.imCache[e.Channel]; !ok {
+			if err := s.syncChannels(); err != nil {
+				return err
+			}
+		}
+		conversationID = s.imCache[e.Channel]
+	}
+
+	_, err := messaging.AddMessage(context.Background(), &messaging.Message{
+		Data:           e.Text,
+		ConversationID: conversationID,
+		UniqueID:       mID,
+		Kind:           messaging.Msg,
+		From:           e.User,
+	}, s.db)
+	return err
 }
 
 func (s *Source) runLoop() {
@@ -118,6 +205,7 @@ func (s *Source) runLoop() {
 			case *slack.ConnectingEvent:
 			case *slack.ReconnectUrlEvent:
 			case *slack.AckMessage:
+			case *slack.LatencyReport:
 
 			case *slack.ConnectedEvent:
 				//fmt.Println("Infos:", ev.Info)
@@ -125,13 +213,14 @@ func (s *Source) runLoop() {
 				//rtm.SendMessage(rtm.NewOutgoingMessage("Hello world", s.getChannelByName("general").ID))
 
 			case *slack.MessageEvent:
-				fmt.Printf("Message: %v\n", ev)
+				fmt.Printf("Message: %+v\n", ev)
+				err := s.onMessage(ev)
+				if err != nil {
+					log.Printf("Slack source failed to commit message: %s", err)
+				}
 
 			case *slack.PresenceChangeEvent:
 				fmt.Printf("Presence Change: %v\n", ev)
-
-			case *slack.LatencyReport:
-				fmt.Printf("Current latency: %v\n", ev.Value)
 
 			case *slack.RTMError:
 				log.Printf("Slack Error: %s\n", ev.Error())

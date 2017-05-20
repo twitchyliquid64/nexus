@@ -70,6 +70,7 @@ func AddSource(ctx context.Context, src Source, db *sql.DB) error {
 		VALUES ($1, $2, $3, $4, $5);
 	`, src.Name, src.OwnerID, src.Kind, src.Remote, string(details))
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	return tx.Commit()

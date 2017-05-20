@@ -43,6 +43,7 @@
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus</a>
       <ul class="right hide-on-med-and-down">
+        <li ng-class="{active: page == 'messenger'}"><a href="#" ng-click="changePage('messenger')"><i class="material-icons">message</i></a></li>
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
         <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>

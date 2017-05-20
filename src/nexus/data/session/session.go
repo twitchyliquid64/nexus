@@ -125,6 +125,7 @@ func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia Aut
 		VALUES ($1, $2, $3, $4, $5);
 	`, uid, sid, allowWeb, allowAPI, string(authedVia))
 	if err != nil {
+		tx.Rollback()
 		return "", err
 	}
 	return sid, tx.Commit()
