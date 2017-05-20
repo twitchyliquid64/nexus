@@ -41,6 +41,7 @@ func main() {
 	mux := makeMux(ctx, db)
 
 	for run {
+		// TODO: Refactor contents of this loop into own function
 		var servMutex sync.WaitGroup
 		serv := makeServer(ctx, mux, *listenerFlag)
 		log.Println("Start listening on", *listenerFlag)
