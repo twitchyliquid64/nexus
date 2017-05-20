@@ -4,20 +4,25 @@ import (
 	"context"
 	"database/sql"
 	"nexus/data/datastore"
+	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
+	"reflect"
 
 	"github.com/cznic/ql"
 )
 
-var tables = []databaseTable{
+var tables = []DatabaseTable{
 	&user.Table{},
 	&session.Table{},
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},
+	&messaging.SourceTable{},
+	&messaging.ConversationTable{},
 }
 
-type databaseTable interface {
+// DatabaseTable represents the manager object for a database table.
+type DatabaseTable interface {
 	Setup(ctx context.Context, db *sql.DB) error
 }
 
@@ -38,4 +43,14 @@ func Init(ctx context.Context, databaseKind, connString string) (*sql.DB, error)
 	}
 
 	return db, nil
+}
+
+// GetTable returns the table manager for a given databaseTable type.
+func GetTable(tbl DatabaseTable) DatabaseTable {
+	for _, table := range tables {
+		if reflect.TypeOf(table) == reflect.TypeOf(tbl) {
+			return table
+		}
+	}
+	return nil
 }

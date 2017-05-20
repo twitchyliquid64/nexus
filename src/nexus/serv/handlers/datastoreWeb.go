@@ -89,7 +89,7 @@ func (h *DatastoreHandler) HandleInsertV1(response http.ResponseWriter, request 
 		return
 	}
 
-	if err := request.ParseForm(); err != nil {
+	if err = request.ParseForm(); err != nil {
 		http.Error(response, "Could not parse form", 400)
 		return
 	}

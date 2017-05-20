@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"nexus/data"
+	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
 )
@@ -26,12 +28,15 @@ func die(msg string) {
 var dbFlag = flag.String("db", "dev.db", "path to the database file")
 var nameFlag = flag.String("name", "", "")
 var usernameFlag = flag.String("username", "", "")
+var kindFlag = flag.String("kind", "", "")
 
 var commandTable = map[string]func(context.Context, *sql.DB) error{
-	"CREATEUSER":    createUserCommand,
-	"RESETAUTH":     resetAuthCommand,
-	"CREATESESSION": createSession,
-	"LISTSESSIONS":  listSessions,
+	"CREATEUSER":           createUserCommand,
+	"RESETAUTH":            resetAuthCommand,
+	"CREATESESSION":        createSession,
+	"LISTSESSIONS":         listSessions,
+	"ADDMESSAGINGSOURCE":   addMessagingSource,
+	"LISTMESSAGINGSOURCES": listMessagingSources,
 }
 
 func printCommands() {
@@ -80,8 +85,8 @@ func main() {
 	fmt.Println("OK")
 	defer db.Close()
 
-	fmt.Printf("%s: ", flag.Arg(0))
 	err = commandTable[strings.ToUpper(flag.Arg(0))](ctx, db)
+	fmt.Printf("%s: ", flag.Arg(0))
 	if err != nil {
 		fmt.Println("ERROR!")
 		fmt.Println(err)
@@ -92,11 +97,11 @@ func main() {
 }
 
 func createUserCommand(ctx context.Context, db *sql.DB) error {
-	if *nameFlag == "" {
-		die("Error: createuser needs name flag: --name <display name>")
+	for *nameFlag == "" {
+		*nameFlag = prompt("name")
 	}
-	if *usernameFlag == "" {
-		die("Error: createuser needs username flag: --username <username>")
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
 	}
 
 	usr, err := user.Get(ctx, *usernameFlag, db)
@@ -133,8 +138,8 @@ func prompt(question string) string {
 }
 
 func resetAuthCommand(ctx context.Context, db *sql.DB) error {
-	if *usernameFlag == "" {
-		die("Error: resetauth needs username flag: --username <username>")
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
 	}
 
 	usr, err := user.Get(ctx, *usernameFlag, db)
@@ -151,8 +156,8 @@ func resetAuthCommand(ctx context.Context, db *sql.DB) error {
 }
 
 func createSession(ctx context.Context, db *sql.DB) error {
-	if *usernameFlag == "" {
-		die("Error: createSession needs username flag: --username <username>")
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
 	}
 
 	usr, err := user.Get(ctx, *usernameFlag, db)
@@ -168,8 +173,8 @@ func createSession(ctx context.Context, db *sql.DB) error {
 }
 
 func listSessions(ctx context.Context, db *sql.DB) error {
-	if *usernameFlag == "" {
-		die("Error: createSession needs username flag: --username <username>")
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
 	}
 
 	usr, err := user.Get(ctx, *usernameFlag, db)
@@ -186,7 +191,6 @@ func listSessions(ctx context.Context, db *sql.DB) error {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"#", "SID", "Creation time", "Web?", "API?", "Revoked", "Authentication method"})
 	table.SetFooter([]string{"", "", "", "", "", "Total", strconv.Itoa(len(sessions)) + tablewriter.ConditionString(len(sessions) != 1, " sessions", " session")})
-	table.SetAutoMergeCells(true)
 	table.SetBorder(false)
 	table.SetRowLine(true)
 	for i, session := range sessions {
@@ -202,4 +206,83 @@ func listSessions(ctx context.Context, db *sql.DB) error {
 	}
 	table.Render()
 	return nil
+}
+
+func listMessagingSources(ctx context.Context, db *sql.DB) error {
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
+	}
+
+	usr, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+
+	sources, err := messaging.GetAllSourcesForUser(ctx, usr.UID, db)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\nShowing messaging sources for %q (uid=%d)\n", usr.DisplayName, usr.UID)
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"#", "UID", "Name", "Kind", "Remote", "Creation time", "Details"})
+	table.SetFooter([]string{"", "", "", "", "", "Total", strconv.Itoa(len(sources)) + tablewriter.ConditionString(len(sources) != 1, " sources", " source")})
+	table.SetBorder(false)
+	table.SetRowLine(true)
+	for i, source := range sources {
+		var row []string
+		row = append(row, strconv.Itoa(i+1))
+		row = append(row, strconv.Itoa(source.UID))
+		row = append(row, source.Name)
+		row = append(row, source.Kind)
+		row = append(row, tablewriter.ConditionString(source.Remote, "yes", "no"))
+		row = append(row, source.CreatedAt.Format(time.Stamp))
+		var deets []byte
+		if source.Details != nil && len(source.Details) > 0 {
+			deets, err = json.Marshal(source.Details)
+			if err != nil {
+				return err
+			}
+		}
+		row = append(row, string(deets))
+		table.Append(row)
+	}
+	table.Render()
+	return nil
+}
+
+func addMessagingSource(ctx context.Context, db *sql.DB) error {
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
+	}
+	for *nameFlag == "" {
+		*nameFlag = prompt("name")
+	}
+	for *kindFlag == "" || ((!strings.Contains(*kindFlag, messaging.Slack)) && (!strings.Contains(*kindFlag, messaging.FbMessenger)) && (!strings.Contains(*kindFlag, messaging.IRC))) {
+		*kindFlag = prompt("messaging kind (slack,fb_messenger, irc)")
+	}
+	isRemote := booleanPrompt("In/out remotely sourced?")
+	details := prompt("Additional details (JSON stanza)")
+
+	usr, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+	fmt.Println(details)
+
+	source := messaging.Source{
+		Name:    *nameFlag,
+		Kind:    *kindFlag,
+		OwnerID: usr.UID,
+		Remote:  isRemote,
+	}
+
+	if details != "" {
+		err := json.Unmarshal([]byte(details), &source.Details)
+		if err != nil {
+			return err
+		}
+	}
+
+	return messaging.AddSource(ctx, source, db)
 }

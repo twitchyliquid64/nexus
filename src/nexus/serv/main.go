@@ -55,6 +55,7 @@ func main() {
 		if sig == syscall.SIGHUP {
 			log.Println("Got SIGHUP, reloading")
 		} else {
+			db.Close()
 			os.Exit(0)
 		}
 	}
