@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"nexus/data"
+	"nexus/messaging"
 	"os"
 	"os/signal"
 	"sync"
@@ -31,6 +32,12 @@ func main() {
 	}
 	defer db.Close()
 
+	err = messaging.Init(ctx, db)
+	if err != nil {
+		die(err.Error())
+	}
+	defer messaging.Deinit()
+
 	mux := makeMux(ctx, db)
 
 	for run {
@@ -55,6 +62,7 @@ func main() {
 		if sig == syscall.SIGHUP {
 			log.Println("Got SIGHUP, reloading")
 		} else {
+			messaging.Deinit()
 			db.Close()
 			os.Exit(0)
 		}

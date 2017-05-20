@@ -102,3 +102,29 @@ func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, 
 	}
 	return output, nil
 }
+
+// GetAllSources is called to get all messaging sources.
+func GetAllSources(ctx context.Context, db *sql.DB) ([]*Source, error) {
+	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_id, kind, remote, created_at, details_json FROM messaging_source;`)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Source
+	for res.Next() {
+		var o Source
+		var detailsJSONStr string
+		if err := res.Scan(&o.UID, &o.Name, &o.OwnerID, &o.Kind, &o.Remote, &o.CreatedAt, &detailsJSONStr); err != nil {
+			return nil, err
+		}
+		if detailsJSONStr != "" {
+			err := json.Unmarshal([]byte(detailsJSONStr), &o.Details)
+			if err != nil {
+				return nil, err
+			}
+		}
+		output = append(output, &o)
+	}
+	return output, nil
+}
