@@ -13,6 +13,7 @@ var httpHandlers = []handler{
 	&handlers.CoreHandler{},
 	&handlers.AccountsWebHandler{},
 	&handlers.DatastoreHandler{},
+	&handlers.MessengerHandler{},
 }
 
 type handler interface {

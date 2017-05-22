@@ -210,14 +210,9 @@ func (s *Source) runLoop() {
 			case *slack.ReconnectUrlEvent:
 			case *slack.AckMessage:
 			case *slack.LatencyReport:
-
 			case *slack.ConnectedEvent:
-				//fmt.Println("Infos:", ev.Info)
-				//fmt.Println("Connection counter:", ev.ConnectionCount)
-				//rtm.SendMessage(rtm.NewOutgoingMessage("Hello world", s.getChannelByName("general").ID))
 
 			case *slack.MessageEvent:
-				fmt.Printf("Message: %+v\n", ev)
 				err := s.onMessage(ev)
 				if err != nil {
 					log.Printf("Slack source failed to commit message: %s", err)

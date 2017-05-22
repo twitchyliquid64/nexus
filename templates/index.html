@@ -18,6 +18,9 @@
     .nav-wrapper {
       margin-right: 2px;
     }
+    .collection-item.avatar.active {
+      background-color: #e3f2fd;
+    }
     </style>
 
     <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
@@ -37,6 +40,7 @@
     <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
     <script type="text/javascript" src="/static/js/data/inserterController.js"></script>
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
+    <script type="text/javascript" src="/static/js/messenger/controller.js"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -186,22 +190,24 @@
   </div>
 
   <div ng-show="page == 'messenger'" style="margin: 0px 9px;">
-    <loader loading="loading" error="error"></loader>
+    <div ng-controller="MessengerController">
+      <loader loading="loading" error="error"></loader>
 
-    <div class="row">
-      <div class="col s3">
-        <ul class="collection">
-          <li class="collection-item avatar">
-            <i class="material-icons circle green">insert_chart</i>
-            <span class="title">Title</span>
-            <p>First Line</p>
-            <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
-          </li>
-        </ul>
-      </div>
+      <div class="row">
+        <div class="col s3">
+          <ul class="collection">
+            <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
+              <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
+              <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
+              <span class="title">{{convo.Name}}</span>
+              <p>{{getConvoSecondLine(convo)}}</p>
+            </a>
+          </ul>
+        </div>
 
-      <div class="s9">
-        <h3>General</h3>
+        <div class="s9" style="margin-top: 6px;">
+          <h3>{{currentConvoTitle}}</h3>
+        </div>
       </div>
     </div>
   </div>
