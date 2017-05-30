@@ -68,6 +68,16 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 			if insertCols[i].Datatype == INT || insertCols[i].Datatype == UINT {
 				v, _ := strconv.Atoi(row[i])
 				inContainers[i] = v
+			} else if insertCols[i].Datatype == BLOB {
+				inContainers[i] = []byte(row[i])
+			} else if insertCols[i].Datatype == TIME {
+				v, e := strconv.Atoi(row[i])
+				if e == nil {
+					inContainers[i] = time.Unix(int64(v), 0)
+				} else {
+					inContainers[i], _ = time.Parse(time.RFC1123, row[i])
+				}
+
 			} else {
 				inContainers[i] = row[i]
 			}
@@ -121,7 +131,7 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 			return err
 		}
 		for i, val := range pointers {
-			switch val.(type) {
+			switch v := val.(type) {
 			case *int64:
 				out[i] = fmt.Sprint(*val.(*int64))
 			case *int:
@@ -130,6 +140,8 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 				out[i] = *val.(*string)
 			case *[]byte:
 				out[i] = string(*val.(*[]byte))
+			case *time.Time:
+				out[i] = strconv.Itoa(int(v.Unix()))
 			default:
 				log.Printf("DoStreamingQuery(): Type %+v not handled!", reflect.TypeOf(val))
 				out[i] = "?"

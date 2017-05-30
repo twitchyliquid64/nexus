@@ -19,6 +19,8 @@ app.controller('DataInserterController', ["$scope", "$rootScope", "$http", funct
         return "STR";
       case 4:
         return "BLOB";
+      case 5:
+        return "TIME";
     }
   }
 
@@ -33,7 +35,7 @@ app.controller('DataInserterController', ["$scope", "$rootScope", "$http", funct
 
     outStr = outStr.slice(0, -1);
     $scope.loading = true;
-    
+
     $http({
       method: 'POST',
       url: '/web/v1/data/insert?ds=' + $scope.datastore.UID + "&cols=" + cols.join(),
