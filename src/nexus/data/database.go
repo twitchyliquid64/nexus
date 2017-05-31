@@ -17,6 +17,7 @@ var tables = []DatabaseTable{
 	&session.Table{},
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},
+	&datastore.StoreGrant{},
 	&messaging.SourceTable{},
 	&messaging.ConversationTable{},
 	&messaging.MessageTable{},

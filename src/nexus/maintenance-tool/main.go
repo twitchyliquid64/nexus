@@ -15,6 +15,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"nexus/data"
+	"nexus/data/datastore"
 	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
@@ -37,6 +38,9 @@ var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"LISTSESSIONS":         listSessions,
 	"ADDMESSAGINGSOURCE":   addMessagingSource,
 	"LISTMESSAGINGSOURCES": listMessagingSources,
+	"LISTGRANTS":						listGrants,
+	"LISTDATASTORES":				listDatastores,
+	"CREATEGRANT": 					createGrant,
 }
 
 func printCommands() {
@@ -205,6 +209,118 @@ func listSessions(ctx context.Context, db *sql.DB) error {
 		table.Append(row)
 	}
 	table.Render()
+	return nil
+}
+
+func listDatastores(ctx context.Context, db *sql.DB) error {
+	var userUID int
+	if *usernameFlag != "" {
+		usr, err := user.Get(ctx, *usernameFlag, db)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\nShowing datastores for %q (uid=%d)\n", usr.DisplayName, usr.UID)
+		userUID = usr.UID
+	}
+
+	stores, err := datastore.GetDatastores(ctx, *usernameFlag=="", userUID, db)
+	if err != nil {
+		return err
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"#", "UID", "Name", "Kind", "Owner", "Creation time"})
+	table.SetFooter([]string{"", "", "", "", "Total", strconv.Itoa(len(stores)) + " stores"})
+	table.SetBorder(false)
+	table.SetRowLine(true)
+	for i, ds := range stores {
+		u, err := user.GetByUID(ctx, ds.OwnerID, db)
+		if err != nil {
+			return err
+		}
+
+		var row []string
+		row = append(row, strconv.Itoa(i+1))
+		row = append(row, strconv.Itoa(ds.UID))
+		row = append(row, ds.Name)
+		row = append(row, ds.Kind)
+		row = append(row, u.Username + " (UID=" + strconv.Itoa(u.UID) + ")")
+		row = append(row, ds.CreatedAt.Format(time.Stamp))
+		table.Append(row)
+	}
+	table.Render()
+
+	return nil
+}
+
+func createGrant(ctx context.Context, db *sql.DB) error {
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
+	}
+
+	var dsID string
+	_, err := strconv.Atoi(dsID)
+	for dsID == "" || err != nil {
+		dsID = prompt("datastore UID")
+		_, err = strconv.Atoi(dsID)
+	}
+	ds, _ := strconv.Atoi(dsID)
+
+	readOnly := booleanPrompt("Read only")
+
+	usr, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Creating grant with ds_uid=%s, user_uid=%d and read_only=%d\n", dsID, usr.UID, readOnly)
+
+	id, err := datastore.MakeGrant(ctx, &datastore.Grant{
+		UsrUID: usr.UID,
+		DsUID: ds,
+		ReadOnly: readOnly,
+	}, db)
+	fmt.Printf("Grant ID=%d\n", id)
+	return err
+}
+
+func listGrants(ctx context.Context, db *sql.DB) error {
+	for *usernameFlag == "" {
+		*usernameFlag = prompt("username")
+	}
+
+	usr, err := user.Get(ctx, *usernameFlag, db)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\nShowing grants for %q (uid=%d)\n", usr.DisplayName, usr.UID)
+
+	grants, err := datastore.ListByUser(ctx, usr.UID, db)
+	if err != nil {
+		return err
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"#", "Datastore UID", "Datastore", "Read Only", "Creation time"})
+	table.SetFooter([]string{"", "", "", "Total", strconv.Itoa(len(grants)) + tablewriter.ConditionString(len(grants) != 1, " grants", " grant")})
+	table.SetBorder(false)
+	table.SetRowLine(true)
+	for _, grant := range grants {
+		ds, err := datastore.GetDatastore(ctx, grant.DsUID, db)
+		if err != nil {
+			return err
+		}
+
+		var row []string
+		row = append(row, strconv.Itoa(grant.UID))
+		row = append(row, strconv.Itoa(grant.DsUID))
+		row = append(row, ds.Name)
+		row = append(row, tablewriter.ConditionString(grant.ReadOnly, "yes", "no"))
+		row = append(row, grant.CreatedAt.Format(time.Stamp))
+		table.Append(row)
+	}
+	table.Render()
+
 	return nil
 }
 
