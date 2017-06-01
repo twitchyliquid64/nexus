@@ -109,8 +109,14 @@ func (h *DatastoreHandler) HandleInsertV1(response http.ResponseWriter, request 
 		return
 	}
 	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
-		http.Error(response, "You do not own this datastore.", 403)
-		return
+		canAccess, err := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, err) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
 	}
 
 	cols, err := util.ExtractColumnList(request.FormValue("cols"))
@@ -140,8 +146,14 @@ func (h *DatastoreHandler) HandleQueryV1(response http.ResponseWriter, request *
 		return
 	}
 	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
-		http.Error(response, "You do not own this datastore.", 403)
-		return
+		canAccess, err := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, true, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, err) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
 	}
 
 	err = datastore.DoStreamingQuery(request.Context(), response, query, h.DB)

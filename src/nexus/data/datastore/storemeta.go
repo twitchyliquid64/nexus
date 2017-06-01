@@ -89,7 +89,11 @@ func GetDatastore(ctx context.Context, uid int, db *sql.DB) (*Datastore, error) 
 
 // GetDatastores gets all datastores owned by that user. If showAll is true, then all datastores are returned.
 func GetDatastores(ctx context.Context, showAll bool, userID int, db *sql.DB) ([]*Datastore, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_uid, store_kind, created_at FROM datastore_meta WHERE owner_uid=$1 OR $2;`, userID, showAll)
+	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_uid, store_kind, created_at
+	FROM datastore_meta
+	WHERE
+		owner_uid=$1 OR $2
+		OR id() IN (SELECT ds_uid FROM datastore_grant WHERE user_uid=$1);`, userID, showAll)
 	if err != nil {
 		return nil, err
 	}
