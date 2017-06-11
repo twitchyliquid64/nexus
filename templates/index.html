@@ -21,6 +21,10 @@
     .collection-item.avatar.active {
       background-color: #e3f2fd;
     }
+    .msg-time {
+      padding-left: 12px;
+      font-size: 0.9rem;
+    }
     </style>
 
     <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
@@ -172,7 +176,7 @@
   <div ng-show="page == 'data-inserter'" style="margin: 0px 9px;">
     <div ng-controller="DataInserterController" class="container">
       <h3>Insert: {{datastore.Name}}</h3>
-      <loader loading="loading" error="error"></loader>
+      <loader loading="loading" error="error" ></loader>
 
       <div class="row valign-wrapper" ng-repeat="col in datastore.Cols">
         <div class="col s2 offset-s1">
@@ -191,11 +195,13 @@
 
   <div ng-show="page == 'messenger'" style="margin: 0px 9px;">
     <div ng-controller="MessengerController">
-      <loader loading="loading" error="error"></loader>
+      <div style="height: 12px; width: 100%; overflow: hidden;">
+        <loader loading="loading" error="error" ></loader>
+      </div>
 
       <div class="row">
         <div class="col s3">
-          <ul class="collection">
+          <ul class="collection" style="overflow-y: scroll; height: 82%;">
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
               <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
               <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
@@ -205,8 +211,17 @@
           </ul>
         </div>
 
-        <div class="s9" style="margin-top: 6px;">
+        <div class="s9">
           <h3>{{currentConvoTitle}}</h3>
+          <div id="messages-container" style="overflow-y: auto">
+            <div ng-repeat="msg in currentConvoMessages">
+              <div class="message-section">
+                <h5 style="font-size: 1.2rem; display: inline-block; margin: 0.52rem 0 0.156rem 0;">{{msg.From}}</h5><span am-time-ago="msg.CreatedAt" class="msg-time"></span>
+                <p style="margin: 6px;">{{msg.Data}}</p>
+              </div>
+              <div class="divider"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"nexus/data/messaging"
 	"nexus/serv/util"
@@ -62,7 +61,7 @@ func (h *MessengerHandler) HandleConversations(response http.ResponseWriter, req
 
 // HandleMessages handles web requests to retrieve messages in a conversation.
 func (h *MessengerHandler) HandleMessages(response http.ResponseWriter, request *http.Request) {
-	_, _, err := util.AuthInfo(request, h.DB)
+	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
@@ -76,5 +75,33 @@ func (h *MessengerHandler) HandleMessages(response http.ResponseWriter, request 
 	if util.InternalHandlerError("strconv.Atoi(cid)", response, request, err) {
 		return
 	}
-	log.Println("CID: ", cID)
+
+	convos, err := messaging.GetConversationsForUser(request.Context(), usr.UID, h.DB)
+	if util.InternalHandlerError("messaging.GetConversationsForUser()", response, request, err) {
+		return
+	}
+	foundConvo := false
+	for _, convo := range convos { //check the requested cID is actually owned by the user requesting it
+		if convo.UID == cID {
+			foundConvo = true
+			break
+		}
+	}
+	if !foundConvo {
+		http.Error(response, "You do not own this conversation.", 403)
+		return
+	}
+
+	messages, err := messaging.GetMessagesForConversation(request.Context(), cID, h.DB)
+	if util.InternalHandlerError("messaging.GetMessagesForConversation()", response, request, err) {
+		return
+	}
+
+	b, err := json.Marshal(messages)
+	if util.InternalHandlerError("json.Marshal([]messages)", response, request, err) {
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
 }

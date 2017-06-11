@@ -83,3 +83,27 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 	}
 	return int(id), tx.Commit()
 }
+
+// GetMessagesForConversation returns a list of messages for a given conversation.
+func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([]*Message, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), kind, content, created_at, unique_identifier, identity FROM messaging_messages
+		WHERE conversation_uid = $1 ORDER BY created_at ASC;
+	`, convoID)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Message
+	for res.Next() {
+		var o Message
+		o.ConversationID = convoID
+		if err := res.Scan(&o.UID, &o.Kind, &o.Data, &o.CreatedAt, &o.UniqueID, &o.From); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+
+	return output, nil
+}

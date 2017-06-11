@@ -97,6 +97,24 @@ func GetConversation(ctx context.Context, uniqueID string, sourceUID int, db *sq
 	return &o, res.Scan(&o.UID, &o.Name, &o.SourceUID, &o.CreatedAt, &o.UniqueID, &o.Kind)
 }
 
+// GetConversationByCID returns a convo based on it's CID.
+func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversation, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation WHERE id() = $1;
+	`, CID)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, ErrConvoDoesntExist
+	}
+
+	var o Conversation
+	return &o, res.Scan(&o.UID, &o.Name, &o.SourceUID, &o.CreatedAt, &o.UniqueID, &o.Kind)
+}
+
 // GetConversationsForUser returns a list of convos for a given user.
 func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Conversation, error) {
 	res, err := db.QueryContext(ctx, `

@@ -27,8 +27,9 @@ type Source struct {
 	updateTicker *time.Ticker
 	wg           *sync.WaitGroup
 
-	channelCache map[string]int
-	imCache      map[string]int
+	userInfoCache map[string]*slack.User
+	channelCache  map[string]int
+	imCache       map[string]int
 }
 
 // Make starts talking to slack and providing messaging integration.
@@ -38,14 +39,15 @@ func Make(ctx context.Context, src *messaging.Source, db *sql.DB, wg *sync.WaitG
 	}
 
 	out := &Source{
-		slack:        slack.New(src.Details["token"]),
-		src:          src,
-		closeChan:    make(chan bool, 1),
-		db:           db,
-		channelCache: map[string]int{},
-		imCache:      map[string]int{},
-		updateTicker: time.NewTicker(updateStateDuration),
-		wg:           wg,
+		slack:         slack.New(src.Details["token"]),
+		src:           src,
+		closeChan:     make(chan bool, 1),
+		db:            db,
+		channelCache:  map[string]int{},
+		imCache:       map[string]int{},
+		userInfoCache: map[string]*slack.User{},
+		updateTicker:  time.NewTicker(updateStateDuration),
+		wg:            wg,
 	}
 
 	err := out.syncChannels()
@@ -172,12 +174,20 @@ func (s *Source) onMessage(e *slack.MessageEvent) error {
 		conversationID = s.imCache[e.Channel]
 	}
 
+	if _, userKnown := s.userInfoCache[e.User]; !userKnown {
+		user, err := s.slack.GetUserInfo(e.User)
+		if err != nil {
+			return err
+		}
+		s.userInfoCache[e.User] = user
+	}
+
 	_, err := messaging.AddMessage(context.Background(), &messaging.Message{
 		Data:           e.Text,
 		ConversationID: conversationID,
 		UniqueID:       mID,
 		Kind:           messaging.Msg,
-		From:           e.User,
+		From:           s.userInfoCache[e.User].RealName + " (" + s.userInfoCache[e.User].Name + ")",
 	}, s.db)
 	return err
 }

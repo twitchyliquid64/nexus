@@ -1,5 +1,5 @@
 
-app.controller('MessengerController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
+app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$timeout",  function ($scope, $rootScope, $http, $timeout) {
   $scope.loading = false;
   $scope.baseData = [];
   $scope.error = null;
@@ -25,6 +25,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", function
   $scope.openConvo = function(convo){
     $scope.selected = convo.UID;
     $scope.currentConvoTitle = convo.Name;
+    $scope.currentConvoMessages = [];
     $scope.loadCurrentConvo(convo);
   }
 
@@ -56,4 +57,10 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", function
       $scope.update();
     }
   });
+
+  $timeout(function(){
+    if ($scope.selected){
+      $scope.loadCurrentConvo({UID: $scope.selected});
+    }
+  }, 7500);
 }]);
