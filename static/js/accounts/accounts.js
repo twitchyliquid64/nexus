@@ -63,6 +63,11 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
     });
   }
 
+  $scope.editGrants = function(acc){
+    $rootScope.$broadcast('open-user-grants',{account: acc, cb: function(){
+    }});
+  }
+
   $scope.createAccount = function(){
     $rootScope.$broadcast('create-account',{cb: function(newUser){
       console.log("New user", newUser);

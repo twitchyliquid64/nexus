@@ -39,6 +39,7 @@
     <script type="text/javascript" src="/static/js/app.js"></script>
     <script type="text/javascript" src="/static/js/accounts/accounts.js"></script>
     <script type="text/javascript" src="/static/js/accounts/accountEditModal.js"></script>
+    <script type="text/javascript" src="/static/js/accounts/accountGrantsModal.js"></script>
     <script type="text/javascript" src="/static/js/data/controller.js"></script>
     <script type="text/javascript" src="/static/js/data/editModal.js"></script>
     <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
@@ -96,6 +97,7 @@
             <td>
               <a class="btn-floating" href="#" ng-click="delete(user.UID)"><i class="material-icons">delete</i></a>
               <a class="btn-floating" href="#" ng-click="changeAuth(user)"><i class="material-icons">vpn_key</i></a>
+              <a class="btn-floating" href="#" ng-click="editGrants(user)"><i class="material-icons">perm_identity</i></a>
             </td>
           </tr>
         </tbody>
@@ -109,6 +111,7 @@
     </div>
 
     <account-edit-modal></account-edit-modal>
+    <account-grants-modal></account-grants-modal>
   </div>
 
   <div ng-show="page == 'data'" class="container">
@@ -213,13 +216,22 @@
 
         <div class="s9">
           <h3>{{currentConvoTitle}}</h3>
-          <div id="messages-container" style="overflow-y: auto">
+          <div id="messages-container" style="overflow-y: auto; height: 62%;">
             <div ng-repeat="msg in currentConvoMessages">
               <div class="message-section">
                 <h5 style="font-size: 1.2rem; display: inline-block; margin: 0.52rem 0 0.156rem 0;">{{msg.From}}</h5><span am-time-ago="msg.CreatedAt" class="msg-time"></span>
                 <p style="margin: 6px;">{{msg.Data}}</p>
               </div>
               <div class="divider"></div>
+            </div>
+          </div>
+          <div style="height: 10%;" class="valign-wrapper">
+            <div class="col s9 input-field">
+              <input id="messengerMsg" type="text" ng-model="msg">
+              <label for="messengerMsg">Message</label>
+            </div>
+            <div class="col s3">
+              <a class="waves-effect waves-light btn" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
             </div>
           </div>
         </div>

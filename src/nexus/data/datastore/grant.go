@@ -1,14 +1,13 @@
 package datastore
 
 import (
-  "context"
-  "database/sql"
-  "time"
+	"context"
+	"database/sql"
+	"time"
 )
 
 // StoreGrant (datastore_grant) implements the databaseTable interface.
 type StoreGrant struct{}
-
 
 // Setup is called on initialization to create necessary structures in the database.
 func (t *StoreGrant) Setup(ctx context.Context, db *sql.DB) error {
@@ -35,16 +34,18 @@ func (t *StoreGrant) Setup(ctx context.Context, db *sql.DB) error {
 
 // Grant is the DAO for granting access to a datastore.
 type Grant struct {
-  UID int
-  UsrUID int
-  DsUID int
-  ReadOnly bool
-  CreatedAt time.Time
+	UID       int
+	UsrUID    int
+	DsUID     int
+	ReadOnly  bool
+	CreatedAt time.Time
+
+	Name string
 }
 
-// makeGrant registers access to the datastore.
+// MakeGrant registers access to the datastore.
 func MakeGrant(ctx context.Context, grant *Grant, db *sql.DB) (int, error) {
-  tx, err := db.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
 	}
@@ -56,22 +57,23 @@ func MakeGrant(ctx context.Context, grant *Grant, db *sql.DB) (int, error) {
 				$1, $2, $3
 			);`, grant.UsrUID, grant.DsUID, grant.ReadOnly)
 	if err != nil {
-    tx.Rollback()
+		tx.Rollback()
 		return 0, err
 	}
 	id, err := x.LastInsertId()
 	if err != nil {
-    tx.Rollback()
+		tx.Rollback()
 		return 0, err
 	}
-  if err = tx.Commit(); err != nil{
-    return 0, err
-  }
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
 	return int(id), nil
 }
 
+// CheckAccess determines if the user is allowed to perform the given action on the given datastore.
 func CheckAccess(ctx context.Context, usrUID, dsUID int, readOnly bool, db *sql.DB) (bool, error) {
-  res, err := db.QueryContext(ctx, `SELECT id() FROM datastore_grant WHERE
+	res, err := db.QueryContext(ctx, `SELECT id() FROM datastore_grant WHERE
     user_uid = $1 AND ds_uid = $2 AND (read_only = $3 OR read_only = FALSE);`, usrUID, dsUID, readOnly)
 	if err != nil {
 		return false, err
@@ -84,23 +86,27 @@ func CheckAccess(ctx context.Context, usrUID, dsUID int, readOnly bool, db *sql.
 	return true, nil
 }
 
+// ListByUser returns all the grants for a given userID.
 func ListByUser(ctx context.Context, userUID int, db *sql.DB) ([]*Grant, error) {
-  res, err := db.QueryContext(ctx, `
+	res, err := db.QueryContext(ctx, `
     SELECT
-      id(), user_uid, ds_uid, read_only, created_at FROM datastore_grant
-    WHERE user_uid = $1;`, userUID)
-  if err != nil {
-    return nil, err
-  }
-  defer res.Close()
+      id(datastore_grant), datastore_grant.user_uid, datastore_grant.ds_uid, datastore_grant.read_only, datastore_grant.created_at, datastore_meta.name
+    FROM
+			datastore_grant, datastore_meta
+		WHERE
+			datastore_grant.user_uid=$1 AND id(datastore_meta)=datastore_grant.ds_uid;`, userUID)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
 
-  var output []*Grant
-  for res.Next() {
-    var out Grant
-    if err := res.Scan(&out.UID, &out.UsrUID, &out.DsUID, &out.ReadOnly, &out.CreatedAt); err != nil {
-      return nil, err
-    }
-    output = append(output, &out)
-  }
-  return output, nil
+	var output []*Grant
+	for res.Next() {
+		var out Grant
+		if err := res.Scan(&out.UID, &out.UsrUID, &out.DsUID, &out.ReadOnly, &out.CreatedAt, &out.Name); err != nil {
+			return nil, err
+		}
+		output = append(output, &out)
+	}
+	return output, nil
 }

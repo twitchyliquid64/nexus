@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"nexus/data/datastore"
 	"strconv"
 	"time"
 
@@ -59,6 +60,8 @@ type DAO struct {
 		Data         bool
 		Integrations bool
 	}
+
+	Grants []*datastore.Grant
 }
 
 // Update takes the DAO and updates the attributes of the given user. Keyed by UID.

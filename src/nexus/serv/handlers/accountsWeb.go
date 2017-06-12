@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"nexus/data/datastore"
 	"nexus/data/user"
 	"nexus/serv/util"
 )
@@ -149,6 +150,13 @@ func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, 
 	accounts, err := user.GetAll(request.Context(), h.DB)
 	if util.InternalHandlerError("user.GetAll()", response, request, err) {
 		return
+	}
+
+	for i := range accounts {
+		accounts[i].Grants, err = datastore.ListByUser(request.Context(), accounts[i].UID, h.DB)
+		if util.InternalHandlerError("datastore.ListByUser()", response, request, err) {
+			return
+		}
 	}
 
 	b, err := json.Marshal(accounts)

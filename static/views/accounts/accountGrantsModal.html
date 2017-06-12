@@ -1,0 +1,39 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='accountGrantModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="accountGrantModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4>Datastore Grants</h4>
+    <p>Editing datastore access grants for <i>{{account.DisplayName}}</i>.</p>
+
+    <ul class="collection">
+      <li class="collection-item" ng-repeat="grant in account.Grants">
+        <div>
+          {{grant.Name}} ({{readOnlyStr(grant)}})
+          <a href="#" class="secondary-content"><i class="material-icons">close</i></a>
+        </div>
+      </li>
+    </ul>
+
+    <div class="divider"></div>
+    <h5>Add Grant</h5>
+    <div class="row" style="margin-bottom: 2px;" class="valign-wrapper"> <!-- Name -->
+      <div class="input-field col s7">
+        <input id="dsuid_input" type="text" ng-model="dsuid">
+        <label for="dsuid_input">Datastore UID</label>
+      </div>
+      <div class="input-field col s3">
+        <input type="checkbox" id="rw_check" ng-click="rw=!rw" ng-checked="rw==true" />
+        <label for="rw_check">Read Only</label>
+      </div>
+      <div class="input-field col s2">
+        <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="add()"><span>Add</span></a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onCancel()"><span>Done</span></a>
+  </div>
+</div>
