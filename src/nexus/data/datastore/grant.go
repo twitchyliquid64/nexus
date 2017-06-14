@@ -71,6 +71,24 @@ func MakeGrant(ctx context.Context, grant *Grant, db *sql.DB) (int, error) {
 	return int(id), nil
 }
 
+// DeleteGrant removes grants corresponding to the given grantID
+func DeleteGrant(ctx context.Context, uid int, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		DELETE FROM
+			datastore_grant
+		WHERE id() = $1;`, uid)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 // CheckAccess determines if the user is allowed to perform the given action on the given datastore.
 func CheckAccess(ctx context.Context, usrUID, dsUID int, readOnly bool, db *sql.DB) (bool, error) {
 	res, err := db.QueryContext(ctx, `SELECT id() FROM datastore_grant WHERE

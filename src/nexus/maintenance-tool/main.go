@@ -38,9 +38,9 @@ var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"LISTSESSIONS":         listSessions,
 	"ADDMESSAGINGSOURCE":   addMessagingSource,
 	"LISTMESSAGINGSOURCES": listMessagingSources,
-	"LISTGRANTS":						listGrants,
-	"LISTDATASTORES":				listDatastores,
-	"CREATEGRANT": 					createGrant,
+	"LISTGRANTS":           listGrants,
+	"LISTDATASTORES":       listDatastores,
+	"CREATEGRANT":          createGrant,
 }
 
 func printCommands() {
@@ -223,7 +223,7 @@ func listDatastores(ctx context.Context, db *sql.DB) error {
 		userUID = usr.UID
 	}
 
-	stores, err := datastore.GetDatastores(ctx, *usernameFlag=="", userUID, db)
+	stores, err := datastore.GetDatastores(ctx, *usernameFlag == "", userUID, db)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func listDatastores(ctx context.Context, db *sql.DB) error {
 		row = append(row, strconv.Itoa(ds.UID))
 		row = append(row, ds.Name)
 		row = append(row, ds.Kind)
-		row = append(row, u.Username + " (UID=" + strconv.Itoa(u.UID) + ")")
+		row = append(row, u.Username+" (UID="+strconv.Itoa(u.UID)+")")
 		row = append(row, ds.CreatedAt.Format(time.Stamp))
 		table.Append(row)
 	}
@@ -272,11 +272,11 @@ func createGrant(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Creating grant with ds_uid=%s, user_uid=%d and read_only=%d\n", dsID, usr.UID, readOnly)
+	fmt.Printf("Creating grant with ds_uid=%s, user_uid=%d and read_only=%v\n", dsID, usr.UID, readOnly)
 
 	id, err := datastore.MakeGrant(ctx, &datastore.Grant{
-		UsrUID: usr.UID,
-		DsUID: ds,
+		UsrUID:   usr.UID,
+		DsUID:    ds,
 		ReadOnly: readOnly,
 	}, db)
 	fmt.Printf("Grant ID=%d\n", id)

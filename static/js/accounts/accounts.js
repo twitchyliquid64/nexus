@@ -10,6 +10,7 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
       console.log("Post-edit user", newUser);
 
       $scope.loading = true;
+      $scope.error = null;
       $http({
         method: 'POST',
         url: '/web/v1/account/edit',
@@ -27,6 +28,7 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
     var pass = prompt("Enter the new password for '" + user.DisplayName + "'");
     if (pass) {
       $scope.loading = true;
+      $scope.error = null;
       $http({
         method: 'POST',
         url: '/web/v1/account/setbasicpass',
@@ -48,6 +50,7 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
         {text: 'No'},
         {text: 'Yes', onAction: function(){
           $scope.loading = true;
+          $scope.error = null;
           $http({
             method: 'POST',
             url: '/web/v1/account/delete',
@@ -64,7 +67,37 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
   }
 
   $scope.editGrants = function(acc){
-    $rootScope.$broadcast('open-user-grants',{account: acc, cb: function(){
+    $rootScope.$broadcast('open-user-grants',{account: acc, cb: function(d){
+      switch (d.action) {
+        case 'delete':
+          $scope.loading = true;
+          $scope.error = null;
+          $http({
+            method: 'POST',
+            url: '/web/v1/account/delgrant',
+            data: d,
+          }).then(function successCallback(response) {
+            $scope.update();
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+          });
+          break;
+        case 'add':
+          $scope.loading = true;
+          $scope.error = null;
+          $http({
+            method: 'POST',
+            url: '/web/v1/account/addgrant',
+            data: d,
+          }).then(function successCallback(response) {
+            $scope.update();
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+          });
+          break;
+      }
     }});
   }
 
@@ -73,6 +106,7 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
       console.log("New user", newUser);
 
       $scope.loading = true;
+      $scope.error = null;
       $http({
         method: 'POST',
         url: '/web/v1/account/create',
@@ -88,6 +122,7 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
 
   $scope.update = function(){
     $scope.loading = true;
+    $scope.error = null;
     $http({
       method: 'GET',
       url: '/web/v1/accounts'

@@ -25,6 +25,8 @@ func (h *AccountsWebHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/account/create", h.HandleCreateAccountV1)
 	mux.HandleFunc("/web/v1/account/delete", h.HandleDeleteAccountV1)
 	mux.HandleFunc("/web/v1/account/setbasicpass", h.HandleSetBasicPassV1)
+	mux.HandleFunc("/web/v1/account/addgrant", h.HandleAddGrantV1)
+	mux.HandleFunc("/web/v1/account/delgrant", h.HandleDeleteGrantV1)
 	return nil
 }
 
@@ -85,6 +87,74 @@ func (h *AccountsWebHandler) HandleDeleteAccountV1(response http.ResponseWriter,
 			log.Printf("Error when deleting UID %d: %s", uid, err)
 		}
 	}
+}
+
+// HandleDeleteGrantV1 handles web requests to delete a datastore grant.
+func (h *AccountsWebHandler) HandleDeleteGrantV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts {
+		http.Error(response, "You do not have permission to manage accounts", 403)
+		return
+	}
+
+	var input struct {
+		Action string `json:"action"`
+		GID    int    `json:"gid"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&input)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	err = datastore.DeleteGrant(request.Context(), input.GID, h.DB)
+	if util.InternalHandlerError("datastore.DeleteGrant()", response, request, err) {
+		return
+	}
+}
+
+// HandleAddGrantV1 handles web requests to grant access to a datastore for a user.
+func (h *AccountsWebHandler) HandleAddGrantV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts {
+		http.Error(response, "You do not have permission to manage accounts", 403)
+		return
+	}
+
+	var input struct {
+		Action string `json:"action"`
+		Dsuid  int    `json:"dsuid"`
+		RW     bool   `json:"rw"`
+		UID    int    `json:"uid"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&input)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	_, err = datastore.GetDatastore(request.Context(), input.Dsuid, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore() - doesnt exist", response, request, err) {
+		return
+	}
+
+	id, err := datastore.MakeGrant(request.Context(), &datastore.Grant{
+		UsrUID:   input.UID,
+		DsUID:    input.Dsuid,
+		ReadOnly: input.RW,
+	}, h.DB)
+	if util.InternalHandlerError("datastore.MakeGrant()", response, request, err) {
+		return
+	}
+	log.Printf("Grant ID=%d\n", id)
 }
 
 // HandleCreateAccountV1 handles web requests to create an account.

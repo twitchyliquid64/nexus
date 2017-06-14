@@ -23,12 +23,14 @@
           $scope.account = {};
           $scope.cb = null;
           $scope.rw = false;
+          $scope.dsuid = '';
 
           $rootScope.$on('open-user-grants', function(event, args) {
             $scope.open = true;
             $scope.account = args.account;
             $scope.cb = args.cb;
             $scope.rw = false;
+            $scope.dsuid = '';
           });
 
           $scope.readOnlyStr = function(grant){
@@ -36,10 +38,20 @@
             return "r/w";
           }
 
+          $scope.doAdd = function(){
+            if ($scope.dsuid) {
+              $scope.cb({'action': 'add', 'dsuid': parseInt($scope.dsuid), 'rw': $scope.rw, 'uid': $scope.account.UID});
+              $scope.onCancel();
+            }
+          }
+
+          $scope.doDelete = function(grant){
+            $scope.cb({'action': 'delete', 'gid': grant.UID});
+            $scope.onCancel();
+          }
+
           $scope.onCancel = function(){
             $scope.open = false;
-            $scope.cb = null;
-            $scope.account = {};
           }
         }
       };

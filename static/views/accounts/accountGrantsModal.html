@@ -10,7 +10,7 @@
       <li class="collection-item" ng-repeat="grant in account.Grants">
         <div>
           {{grant.Name}} ({{readOnlyStr(grant)}})
-          <a href="#" class="secondary-content"><i class="material-icons">close</i></a>
+          <a href="#" ng-click="doDelete(grant)" class="secondary-content"><i class="material-icons">close</i></a>
         </div>
       </li>
     </ul>
@@ -27,7 +27,7 @@
         <label for="rw_check">Read Only</label>
       </div>
       <div class="input-field col s2">
-        <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="add()"><span>Add</span></a>
+        <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="doAdd()"><span>Add</span></a>
       </div>
     </div>
 
