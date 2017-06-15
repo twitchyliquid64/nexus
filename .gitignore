@@ -20,3 +20,5 @@
 
 /ql
 /maintenance-tool
+
+*.pyc
