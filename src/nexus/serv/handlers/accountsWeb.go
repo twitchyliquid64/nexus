@@ -32,12 +32,12 @@ func (h *AccountsWebHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 
 // HandleSetBasicPassV1 handles web requests to set the basic password of an account.
 func (h *AccountsWebHandler) HandleSetBasicPassV1(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	if !usr.AdminPerms.Accounts {
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
 		http.Error(response, "You do not have permission to manage accounts", 403)
 		return
 	}
@@ -65,12 +65,12 @@ func (h *AccountsWebHandler) HandleSetBasicPassV1(response http.ResponseWriter, 
 
 // HandleDeleteAccountV1 handles web requests to delete accounts.
 func (h *AccountsWebHandler) HandleDeleteAccountV1(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	if !usr.AdminPerms.Accounts {
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
 		http.Error(response, "You do not have permission to manage accounts", 403)
 		return
 	}
@@ -159,12 +159,12 @@ func (h *AccountsWebHandler) HandleAddGrantV1(response http.ResponseWriter, requ
 
 // HandleCreateAccountV1 handles web requests to create an account.
 func (h *AccountsWebHandler) HandleCreateAccountV1(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	if !usr.AdminPerms.Accounts {
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
 		http.Error(response, "You do not have permission to manage accounts", 403)
 		return
 	}
@@ -183,12 +183,12 @@ func (h *AccountsWebHandler) HandleCreateAccountV1(response http.ResponseWriter,
 
 // HandleEditAccountV1 handles web requests to edit an account.
 func (h *AccountsWebHandler) HandleEditAccountV1(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	if !usr.AdminPerms.Accounts {
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
 		http.Error(response, "You do not have permission to manage accounts", 403)
 		return
 	}
@@ -207,12 +207,12 @@ func (h *AccountsWebHandler) HandleEditAccountV1(response http.ResponseWriter, r
 
 // HandleListAccountsV1 handles web requests to list all accounts in the system.
 func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	if !usr.AdminPerms.Accounts {
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
 		http.Error(response, "You do not have permission to manage accounts", 403)
 		return
 	}

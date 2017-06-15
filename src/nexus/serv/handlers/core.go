@@ -80,7 +80,13 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 				return
 			}
 
-			sid, err := session.Create(ctx, usr.UID, true, false, session.AuthPass, h.DB)
+			if usr.IsRobot {
+				log.Printf("Robot account %q attempted to login to web interface, login denied", usr.Username)
+				http.Error(response, "Access Denied", 403)
+				return
+			}
+
+			sid, err := session.Create(ctx, usr.UID, true, true, session.AuthPass, h.DB)
 			if util.InternalHandlerError("session.Create()", response, request, err) {
 				return
 			}

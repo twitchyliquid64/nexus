@@ -4,9 +4,10 @@
 <div id="accountGrantModal" class="modal" style="max-height: 85%;">
   <div class="modal-content">
     <h4>Datastore Grants</h4>
-    <p>Editing datastore access grants for <i>{{account.DisplayName}}</i>.</p>
 
-    <ul class="collection">
+    <p ng-if="account.Grants">Editing datastore access grants for <i>{{account.DisplayName}}</i>.</p>
+    <p ng-if="!account.Grants"><i>{{account.DisplayName}}</i> has no grants.</p>
+    <ul class="collection" ng-if="account.Grants">
       <li class="collection-item" ng-repeat="grant in account.Grants">
         <div>
           {{grant.Name}} ({{readOnlyStr(grant)}})
