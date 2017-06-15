@@ -22,11 +22,16 @@ func (h *DatastoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *
 	h.DB = db
 
 	mux.HandleFunc("/web/v1/data/list", h.HandleListV1)
+	mux.HandleFunc("/api/v1/data/list", h.HandleListV1)
+
 	mux.HandleFunc("/web/v1/data/new", h.HandleNewV1)
 	mux.HandleFunc("/web/v1/data/edit", h.HandleEditV1)
 	mux.HandleFunc("/web/v1/data/delete", h.HandleDeleteV1)
+
 	mux.HandleFunc("/web/v1/data/query", h.HandleQueryV1)
+	mux.HandleFunc("/api/v1/data/query", h.HandleQueryV1)
 	mux.HandleFunc("/web/v1/data/insert", h.HandleInsertV1)
+	mux.HandleFunc("/api/v1/data/insert", h.HandleInsertV1)
 	return nil
 }
 
