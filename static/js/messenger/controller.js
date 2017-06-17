@@ -1,14 +1,16 @@
 
-app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$timeout",  function ($scope, $rootScope, $http, $timeout) {
+app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interval",  function ($scope, $rootScope, $http, $interval) {
   $scope.loading = false;
   $scope.baseData = [];
   $scope.error = null;
   $scope.selected = 0;
   $scope.currentConvoTitle = '';
   $scope.currentConvoMessages = [];
+  $scope.msg = '';
 
   $scope.update = function(){
     $scope.loading = true;
+    $scope.error = undefined;
     $http({
       method: 'GET',
       url: '/web/v1/messenger/conversations'
@@ -29,8 +31,28 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$timeou
     $scope.loadCurrentConvo(convo);
   }
 
+  $scope.send = function(){
+    if($scope.msg){
+      $scope.error = undefined;
+      $scope.loading = true;
+      var a = $scope.msg;
+      $scope.msg = '';
+      $http({
+        method: 'POST',
+        data: {cid: $scope.selected, msg: a},
+        url: '/web/v1/messenger/send',
+      }).then(function successCallback(response) {
+        $scope.loading = false;
+      }, function errorCallback(response) {
+        $scope.loading = false;
+        $scope.error = response;
+      });
+    }
+  }
+
   $scope.loadCurrentConvo = function(convo){
     $scope.loading = true;
+    $scope.error = undefined;
     $http({
       method: 'GET',
       url: '/web/v1/messenger/messages?cid=' + convo.UID
@@ -58,7 +80,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$timeou
     }
   });
 
-  $timeout(function(){
+  $interval(function(){
     if ($scope.selected){
       $scope.loadCurrentConvo({UID: $scope.selected});
     }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"nexus/data/messaging"
+	msg "nexus/messaging"
 	"nexus/serv/util"
 	"strconv"
 )
@@ -22,6 +23,7 @@ func (h *MessengerHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *
 
 	mux.HandleFunc("/web/v1/messenger/conversations", h.HandleConversations)
 	mux.HandleFunc("/web/v1/messenger/messages", h.HandleMessages)
+	mux.HandleFunc("/web/v1/messenger/send", h.HandleSend)
 	return nil
 }
 
@@ -57,6 +59,45 @@ func (h *MessengerHandler) HandleConversations(response http.ResponseWriter, req
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(b)
+}
+
+// HandleSend handles web requests to send a message.
+func (h *MessengerHandler) HandleSend(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		CID int    `json:"cid"`
+		Msg string `json:"msg"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	convos, err := messaging.GetConversationsForUser(request.Context(), usr.UID, h.DB)
+	if util.InternalHandlerError("messaging.GetConversationsForUser()", response, request, err) {
+		return
+	}
+	foundConvo := false
+	for _, convo := range convos { //check the requested cID is actually owned by the user requesting it
+		if convo.UID == details.CID {
+			foundConvo = true
+			break
+		}
+	}
+	if !foundConvo {
+		http.Error(response, "You do not own this conversation.", 403)
+		return
+	}
+
+	err = msg.Send(details.CID, details.Msg)
+	if util.InternalHandlerError("messaging.Send()", response, request, err) {
+		return
+	}
 }
 
 // HandleMessages handles web requests to retrieve messages in a conversation.

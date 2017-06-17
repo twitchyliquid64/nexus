@@ -152,6 +152,38 @@ func (s *Source) Stop() {
 	close(s.closeChan)
 }
 
+// Send handles a message from the user to the given conversation.
+func (s *Source) Send(cID int, msg string) error {
+	for uid, id := range s.channelCache {
+		if cID == id {
+			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{})
+			return err
+		}
+	}
+	for uid, id := range s.imCache {
+		if cID == id {
+			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{})
+			return err
+		}
+	}
+	return errors.New("No matching conversation")
+}
+
+// HandlesConversationID returns true if this source is responsible for the given conversation.
+func (s *Source) HandlesConversationID(cID int) bool {
+	for _, id := range s.channelCache {
+		if cID == id {
+			return true
+		}
+	}
+	for _, id := range s.imCache {
+		if cID == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Source) onMessage(e *slack.MessageEvent) error {
 	mID := e.Channel + "-" + e.Timestamp
 	var conversationID int
@@ -174,12 +206,23 @@ func (s *Source) onMessage(e *slack.MessageEvent) error {
 		conversationID = s.imCache[e.Channel]
 	}
 
-	if _, userKnown := s.userInfoCache[e.User]; !userKnown {
-		user, err := s.slack.GetUserInfo(e.User)
-		if err != nil {
-			return err
+	if e.User != "" {
+		if _, userKnown := s.userInfoCache[e.User]; !userKnown {
+			user, err := s.slack.GetUserInfo(e.User)
+			if err != nil {
+				return err
+			}
+			s.userInfoCache[e.User] = user
 		}
-		s.userInfoCache[e.User] = user
+
+		_, err := messaging.AddMessage(context.Background(), &messaging.Message{
+			Data:           e.Text,
+			ConversationID: conversationID,
+			UniqueID:       mID,
+			Kind:           messaging.Msg,
+			From:           s.userInfoCache[e.User].RealName + " (" + s.userInfoCache[e.User].Name + ")",
+		}, s.db)
+		return err
 	}
 
 	_, err := messaging.AddMessage(context.Background(), &messaging.Message{
@@ -187,7 +230,7 @@ func (s *Source) onMessage(e *slack.MessageEvent) error {
 		ConversationID: conversationID,
 		UniqueID:       mID,
 		Kind:           messaging.Msg,
-		From:           s.userInfoCache[e.User].RealName + " (" + s.userInfoCache[e.User].Name + ")",
+		From:           "Me",
 	}, s.db)
 	return err
 }

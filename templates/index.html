@@ -227,7 +227,7 @@
           </div>
           <div style="height: 10%;" class="valign-wrapper">
             <div class="col s9 input-field">
-              <input id="messengerMsg" type="text" ng-model="msg">
+              <input id="messengerMsg" type="text" ng-model="msg" ng-keyup="$event.keyCode == 13 && send()">
               <label for="messengerMsg">Message</label>
             </div>
             <div class="col s3">

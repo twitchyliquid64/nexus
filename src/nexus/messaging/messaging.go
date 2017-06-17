@@ -14,6 +14,8 @@ var wg sync.WaitGroup
 
 type localMessageSource interface {
 	Stop()
+	HandlesConversationID(int) bool
+	Send(cID int, msg string) error
 }
 
 // Init starts the local messaging system - fetching and delivering messages for all non-remote sources.
@@ -45,4 +47,13 @@ func Deinit() {
 		source.Stop()
 	}
 	wg.Wait()
+}
+
+func Send(cID int, msg string) error {
+	for _, source := range workingSources {
+		if source.HandlesConversationID(cID) {
+			return source.Send(cID, msg)
+		}
+	}
+	return errors.New("No handler for conversation")
 }
