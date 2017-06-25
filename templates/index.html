@@ -25,6 +25,13 @@
       padding-left: 12px;
       font-size: 0.9rem;
     }
+    #codeEditor {
+      width: 100%;
+      height: 100%;
+    }
+    .suggestion-kind {
+      font-size: 50%;
+    }
     </style>
 
     <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
@@ -34,7 +41,6 @@
     <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
-
 
     <script type="text/javascript" src="/static/js/app.js"></script>
     <script type="text/javascript" src="/static/js/accounts/accounts.js"></script>
@@ -46,6 +52,12 @@
     <script type="text/javascript" src="/static/js/data/inserterController.js"></script>
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/messenger/controller.js"></script>
+    <script type="text/javascript" src="/static/js/integration/editor.js"></script>
+
+    <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/ace/theme-github.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/ace/ext-language_tools.js" charset="utf-8"></script>
 </head>
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
@@ -56,7 +68,7 @@
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
         <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
-        <li ng-class="{active: page == 'integration'}"><a href="#" ng-click="changePage('integration')"><i class="material-icons left">import_export</i> Integrations</a></li>
+        <li ng-class="{active: page == 'integration-editor'}"><a href="#" ng-click="changePage('integration-editor')"><i class="material-icons left">import_export</i> Integrations</a></li>
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
@@ -123,7 +135,7 @@
         <thead>
           <tr>
               <th>UID</th>
-              <th>Name</th>
+              <th>Name</th> 
               <th>Created</th>
               <th>Actions</th>
           </tr>
@@ -232,6 +244,37 @@
             </div>
             <div class="col s3">
               <a class="waves-effect waves-light btn" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div ng-show="page == 'integration-editor'" style="margin: 0px 9px;">
+    <div ng-controller="EditorController">
+      <h3>Editor</h3>
+      <loader loading="loading" error="error" ></loader>
+      <div style="height: 25px;padding-left: 8px;">
+        <p>Type some code.</p>
+      </div>
+
+
+      <div class="row">
+        <div class="col s8">
+          <div id="codeEditor"></div>
+        </div>
+        <div class="col s4">
+          <div ng-show="codeSuggestions.length">
+            <h5>Suggestions</h5>
+            <div class="card light-blue darken-2" ng-repeat="suggestion in codeSuggestions">
+              <div class="card-content white-text" style="padding-top: 6px; padding-bottom: 8px;">
+                <span class="card-title">
+                  {{suggestion.reference.heading}}
+                  <span class="suggestion-kind">{{suggestion.reference.kind}}</span>
+                </span>
+                <p>{{suggestion.reference.detail}}</p>
+              </div>
             </div>
           </div>
         </div>
