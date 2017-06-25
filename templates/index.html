@@ -53,6 +53,8 @@
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/messenger/controller.js"></script>
     <script type="text/javascript" src="/static/js/integration/editor.js"></script>
+    <script type="text/javascript" src="/static/js/integration/editModal.js"></script>
+    <script type="text/javascript" src="/static/js/integration/list.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -68,7 +70,7 @@
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
         <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
-        <li ng-class="{active: page == 'integration-editor'}"><a href="#" ng-click="changePage('integration-editor')"><i class="material-icons left">import_export</i> Integrations</a></li>
+        <li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
@@ -135,7 +137,7 @@
         <thead>
           <tr>
               <th>UID</th>
-              <th>Name</th> 
+              <th>Name</th>
               <th>Created</th>
               <th>Actions</th>
           </tr>
@@ -251,6 +253,43 @@
     </div>
   </div>
 
+  <div ng-show="page == 'integrations'" class="container">
+    <h3>Integrations</h3>
+    <div ng-controller="IntegrationsController">
+      <loader loading="loading" error="error"></loader>
+
+      <table class="highlight">
+        <thead>
+          <tr>
+              <th>UID</th>
+              <th>Name</th>
+              <th>Triggers</th>
+              <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="runnable in integrations">
+            <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.UID}}</td>
+            <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.Name}}</td>
+            <td ng-click="edit(runnable)" style="cursor: pointer;"></td>
+            <td>
+              <a class="btn-floating" href="#" ng-click="delete(runnable)"><i class="material-icons">delete</i></a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="fixed-action-btn">
+        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Integration" ng-click="createIntegration()">
+          <i class="large material-icons">add</i>
+        </a>
+      </div>
+    </div>
+
+    <integration-edit-modal></integration-edit-modal>
+  </div>
+
   <div ng-show="page == 'integration-editor'" style="margin: 0px 9px;">
     <div ng-controller="EditorController">
       <h3>Editor</h3>
@@ -284,3 +323,4 @@
 
   <confirmation-dialog-modal></confirmation-dialog-modal>
 </body>
+</html>

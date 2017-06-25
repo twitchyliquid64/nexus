@@ -1,0 +1,50 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='integrationEditModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="integrationEditModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4 ng-if="!isEditMode">Create Integration</h4>
+    <h4 ng-if="isEditMode">Edit Integration</h4>
+
+    <div class="fields-container">
+      <div class="row" style="margin-bottom: 3px;"><!-- Type selector -->
+        <div class="col s12">
+          <span style="margin-right: 25px;">
+            <input class="with-gap" name="integration_typeSelector" type="radio" id="runnableSelector" ng-click="integration.Kind='Runnable'" ng-checked="integration.Kind=='Runnable'" />
+            <label for="runnableSelector">Runnable</label>
+          </span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 6px;"> <!-- Name -->
+        <div class="input-field col s12">
+          <input id="name_accSelector2" type="text" ng-model="integration.Name" ng-class="nameVldn" ng-keyup="$event.keyCode == 13 && onFinish()">
+          <label for="name_accSelector2">Name</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 2px;"> <!-- Columns -->
+        <label>Add Triggers</label>
+        <a class="btn-floating" ng-click="newTrigger('CRON')"><i class="material-icons">timer</i></a>
+      </div>
+      <div class="row" style="margin-bottom: 2px;" ng-repeat="trigger in triggers"> <!-- Columns Actual -->
+        <div class="input-field col s9">
+          <input id="int_c_name_{{$index}}" ng-model="trigger.Name" type="text">
+          <label for="int_c_name_{{$index}}">Name</label>
+        </div>
+        <div class="col s3 input-field" style="height: 3rem;">
+          <a class="btn-floating red" ng-click="deleteTrigger($index)"><i class="material-icons left">delete</i></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <div ng-if="isEditMode" style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
+      <span>UID={{integration.UID}}</span>, <span>OwnerUID={{integration.OwnerID}}</span>, Datastore created <span am-time-ago="integration.CreatedAt"></span>
+    </div>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onFinish()"><span ng-if="!isEditMode">Create</span><span ng-if="isEditMode">Save</span></a>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onCancel()"><span>Cancel</span></a>
+  </div>
+</div>
