@@ -28,7 +28,7 @@ var codeGlobals = [
     score: 110,
     reference: {
       heading: 'context',
-      kind: 'global obj',
+      kind: 'global object',
       detail: 'Information pertaining to the context/reason this integration was executed.',
     },
   }
@@ -82,6 +82,8 @@ app.controller('EditorController', ["$scope", "$rootScope", function ($scope, $r
     lastWord = spl[spl.length-1];
 
     if (fullLine == ""){ //nothing typed - show globals
+      $scope.codeSuggestions = codeGlobals;
+      $scope.$digest();
       return callback(null, codeGlobals);
     }
 
@@ -101,19 +103,17 @@ app.controller('EditorController', ["$scope", "$rootScope", function ($scope, $r
     if (args.page == 'integration-editor'){
       if (!$scope.editorObj) {
         $scope.langTools = ace.require("ace/ext/language_tools");
-        console.log($scope.langTools);
         $scope.editorObj = ace.edit("codeEditor");
         var JavaScriptMode = ace.require("ace/mode/javascript").Mode;
         $scope.editorObj.session.setMode(new JavaScriptMode());
         $scope.editorObj.setOptions({
             enableBasicAutocompletion: true
         });
-        console.log($scope.editorObj);
-
         $scope.langTools.addCompleter({getCompletions: $scope.doEditorAutocomplete});
         $scope.editorObj.setTheme("ace/theme/github");
         $scope.editorObj.getSession().on('change', function(){
           if ($scope.codeSuggestions.length > 0){
+            console.log('clearing suggestions');
             $scope.codeSuggestions = [];
             $scope.$digest();
           }
