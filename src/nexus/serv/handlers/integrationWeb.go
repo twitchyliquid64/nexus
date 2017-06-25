@@ -21,6 +21,7 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/mine", h.HandleGetMine)
 	mux.HandleFunc("/web/v1/integrations/create/runnable", h.HandleCreateRunnable)
 	mux.HandleFunc("/web/v1/integrations/delete/runnable", h.HandleDeleteRunnable)
+	mux.HandleFunc("/web/v1/integrations/edit/runnable", h.HandleEditRunnable)
 	return nil
 }
 
@@ -41,6 +42,53 @@ func (h *IntegrationHandler) HandleCreateRunnable(response http.ResponseWriter, 
 
 	err = integration.DoCreateRunnable(request.Context(), &runnable, h.DB)
 	if util.InternalHandlerError("integration.DoCreateRunnable(struct)", response, request, err) {
+		return
+	}
+}
+
+// HandleEditRunnable handles web requests to edit a runnable.
+func (h *IntegrationHandler) HandleEditRunnable(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var runnable integration.Runnable
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&runnable)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+	runnable.OwnerID = usr.UID
+
+	runnableInDB, errGetRunnable := integration.GetRunnable(request.Context(), runnable.UID, h.DB)
+	if util.InternalHandlerError("integration.GetRunnable(int)", response, request, errGetRunnable) {
+		return
+	}
+	if runnableInDB.OwnerID != usr.UID {
+		http.Error(response, "You do not own this integration.", 403)
+		return
+	}
+
+	// check all given Triggers have either no UID, or a UID belonging to a trigger which belongs to this user.
+	for _, t := range runnable.Triggers {
+		t.ParentUID = runnable.UID
+		t.OwnerUID = usr.UID
+		if t.UID == 0 {
+			continue //we dont care about new columns
+		}
+		triggerInDB, errTrigger := integration.GetTriggerByUID(request.Context(), t.UID, h.DB)
+		if util.InternalHandlerError("integration.GetTriggerByUID(struct)", response, request, errTrigger) {
+			return
+		}
+		if triggerInDB.OwnerUID != usr.UID {
+			http.Error(response, "You do not own this trigger.", 403)
+			return
+		}
+	}
+
+	err = integration.DoEditRunnable(request.Context(), &runnable, h.DB)
+	if util.InternalHandlerError("integration.DoEditRunnable(struct)", response, request, err) {
 		return
 	}
 }

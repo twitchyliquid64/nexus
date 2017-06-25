@@ -42,6 +42,43 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
     });
   }
 
+  $scope.computeTriggerIcons = function(runnable){
+    runnable.Triggers = runnable.Triggers || [];
+    var out = {};
+    for (var i = 0; i < runnable.Triggers.length; i++) {
+      switch (runnable.Triggers[i].Kind) {
+        case 'CRON':
+          out['schedule'] = true;
+          break;
+        case 'HTTP':
+          out['http'] = true;
+          break;
+      }
+
+    }
+    return out;
+  }
+
+  $scope.edit = function(runnable){
+    $rootScope.$broadcast('edit-integration',{cb: function(editIntegration, triggers){
+      console.log("Edit integration", editIntegration);
+      editIntegration.Triggers = triggers;
+
+      $scope.loading = true;
+      $scope.error = null;
+      $http({
+        method: 'POST',
+        url: '/web/v1/integrations/edit/runnable',
+        data: editIntegration,
+      }).then(function successCallback(response) {
+        $scope.update();
+      }, function errorCallback(response) {
+        $scope.loading = false;
+        $scope.error = response;
+      });
+    }, integration: runnable});
+  }
+
   $scope.createIntegration = function(){
     $rootScope.$broadcast('create-integration',{cb: function(newIntegration, triggers){
       console.log("New integration", newIntegration);

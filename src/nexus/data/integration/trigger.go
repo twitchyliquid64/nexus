@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -45,6 +46,24 @@ type Trigger struct {
 	Kind      string
 }
 
+// GetTriggerByUID returns a specific Trigger DAO.
+func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), integration_parent, owner_uid, created_at, name, kind FROM integration_trigger WHERE id() = $1;
+	`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, errors.New("no trigger with that UID")
+	}
+
+	var o Trigger
+	return &o, res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind)
+}
+
 // GetTriggersForRunnable is called to get all triggers for a runnable.
 func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([]*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
@@ -81,4 +100,12 @@ func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, 
 		return 0, err
 	}
 	return int(id), nil
+}
+
+func editTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) error {
+	_, err := tx.ExecContext(ctx, `
+		UPDATE integration_trigger
+			SET name=$2, kind=$3
+			WHERE id() = $1;`, t.UID, t.Name, t.Kind)
+	return err
 }

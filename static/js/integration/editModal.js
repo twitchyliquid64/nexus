@@ -19,7 +19,7 @@
         //restrict E means its can only be used as an element.
         restrict: 'E',
         templateUrl: function(elem, attr){
-          return "/static/views/integration/editModal.html?cachebust=2"
+          return "/static/views/integration/editModal.html?cachebust=3"
         },
         link: function($scope, elem, attrs) {
           // scope = either parent scope or its own child scope if scope set.
@@ -49,7 +49,7 @@
             $scope.open = true;
             $scope.isEditMode = true;
             $scope.integration = args.integration;
-            $scope.triggers = args.integration.Triggers;
+            $scope.triggers = args.integration.Triggers || [];
             $scope.cb = args.cb;
           });
 

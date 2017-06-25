@@ -272,7 +272,9 @@
           <tr ng-repeat="runnable in integrations">
             <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.UID}}</td>
             <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.Name}}</td>
-            <td ng-click="edit(runnable)" style="cursor: pointer;"></td>
+            <td ng-click="edit(runnable)" style="cursor: pointer;">
+              <i ng-repeat="(i,v) in computeTriggerIcons(runnable)" class="material-icons">{{i}}</i>
+            </td>
             <td>
               <a class="btn-floating" href="#" ng-click="delete(runnable)"><i class="material-icons">delete</i></a>
             </td>

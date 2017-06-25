@@ -103,3 +103,11 @@ func makeRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) (int
 	}
 	return int(id), nil
 }
+
+func editRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) error {
+	_, err := tx.ExecContext(ctx, `
+		UPDATE integration_runnable
+			SET name=$2, content=$3
+			WHERE id() = $1;`, r.UID, r.Name, r.Content)
+	return err
+}

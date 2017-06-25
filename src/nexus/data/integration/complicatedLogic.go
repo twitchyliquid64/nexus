@@ -31,6 +31,62 @@ func DoCreateRunnable(ctx context.Context, ds *Runnable, db *sql.DB) error {
 	return tx.Commit()
 }
 
+// DoEditRunnable applies an edit to a runnable and its triggers.
+func DoEditRunnable(ctx context.Context, r *Runnable, db *sql.DB) error {
+	currentTriggers, err := GetTriggersForRunnable(ctx, r.UID, db)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	err = editRunnable(ctx, tx, r, db)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, t := range r.Triggers {
+		if t.UID == 0 { //create
+			_, err := makeTrigger(ctx, tx, t, db)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		} else { //edit
+			err = editTrigger(ctx, tx, t, db)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	for _, earlierExistingTrigger := range currentTriggers {
+		if !inTriggerSet(r.Triggers, earlierExistingTrigger.UID) {
+			_, err = tx.ExecContext(ctx, `DELETE FROM integration_trigger WHERE id()=$1;`, earlierExistingTrigger.UID)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+func inTriggerSet(triggers []*Trigger, uid int) bool {
+	for _, t := range triggers {
+		if t.UID == uid {
+			return true
+		}
+	}
+	return false
+}
+
 // DoDeleteRunnable implements all the logic to delete a runnable and its triggers.
 func DoDeleteRunnable(ctx context.Context, uid int, db *sql.DB) error {
 	tx, err := db.Begin()
