@@ -74,6 +74,8 @@ func Start(runnableUID int, startContext *StartContext) error {
 // Start is called to actually run
 func (r *Run) start() {
 	log.Printf("[run][%s] %q starting", r.ID, r.Base.Name)
+	logControlInfo(r.Ctx, r.ID, "Run starting. Cause: "+r.StartContext.TriggerKind, r.Base.UID, db)
 	v, runErr := r.VM.Run(r.Base.Content)
+	logControlInfo(r.Ctx, r.ID, "Run finished.", r.Base.UID, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
 }

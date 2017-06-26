@@ -1,8 +1,11 @@
 package integration
 
 import (
+	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
+	"nexus/data/integration"
 
 	"github.com/robertkrimen/otto"
 )
@@ -40,4 +43,14 @@ func makeObject(o *otto.Otto) (*otto.Object, error) {
 		return nil, err
 	}
 	return v.Object(), nil
+}
+
+func logControlInfo(ctx context.Context, runID, msg string, runnableUID int, db *sql.DB) error {
+	return integration.WriteLog(ctx, &integration.Log{
+		ParentUID: runnableUID,
+		RunID:     runID,
+		Value:     msg,
+		Level:     integration.LevelInfo,
+		Kind:      integration.KindControlLog,
+	}, db)
 }

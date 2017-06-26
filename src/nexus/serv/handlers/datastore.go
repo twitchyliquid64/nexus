@@ -76,8 +76,8 @@ func (h *DatastoreHandler) HandleDeleteV1(response http.ResponseWriter, request 
 			return
 		}
 		if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
-			canAccess, err := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
-			if util.InternalHandlerError("datastore.CheckAccess()", response, request, err) {
+			canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+			if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
 				return
 			}
 			if !canAccess {
@@ -114,8 +114,8 @@ func (h *DatastoreHandler) HandleInsertV1(response http.ResponseWriter, request 
 		return
 	}
 	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
-		canAccess, err := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
-		if util.InternalHandlerError("datastore.CheckAccess()", response, request, err) {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
 			return
 		}
 		if !canAccess {
@@ -151,8 +151,8 @@ func (h *DatastoreHandler) HandleQueryV1(response http.ResponseWriter, request *
 		return
 	}
 	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
-		canAccess, err := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, true, h.DB)
-		if util.InternalHandlerError("datastore.CheckAccess()", response, request, err) {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, true, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
 			return
 		}
 		if !canAccess {

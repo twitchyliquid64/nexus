@@ -6,6 +6,28 @@ import (
 	"time"
 )
 
+// types of log levels
+const (
+	LevelInfo int = iota
+	LevelWarning
+	LevelError
+	LevelData
+)
+
+// kinds of messages
+const (
+	KindLog            = "log"
+	KindControlLog     = "control"
+	KindStructuredData = "data"
+)
+
+// datatypes
+const (
+	DatatypeUnstructured int = iota
+	DatatypeString
+	DatatypeInt
+)
+
 // LogTable (log) implements the databaseTable interface.
 type LogTable struct{}
 
