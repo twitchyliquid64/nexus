@@ -59,6 +59,11 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
     return out;
   }
 
+  $scope.open = function(runnable){
+    $rootScope.$broadcast('integration-code-editor', {runnable: runnable});
+    $scope.changePage('integration-editor');
+  }
+
   $scope.edit = function(runnable){
     $rootScope.$broadcast('edit-integration',{cb: function(editIntegration, triggers){
       console.log("Edit integration", editIntegration);

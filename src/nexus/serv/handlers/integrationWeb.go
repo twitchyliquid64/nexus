@@ -22,6 +22,7 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/create/runnable", h.HandleCreateRunnable)
 	mux.HandleFunc("/web/v1/integrations/delete/runnable", h.HandleDeleteRunnable)
 	mux.HandleFunc("/web/v1/integrations/edit/runnable", h.HandleEditRunnable)
+	mux.HandleFunc("/web/v1/integrations/code/save", h.HandleSaveCode)
 	return nil
 }
 
@@ -42,6 +43,38 @@ func (h *IntegrationHandler) HandleCreateRunnable(response http.ResponseWriter, 
 
 	err = integration.DoCreateRunnable(request.Context(), &runnable, h.DB)
 	if util.InternalHandlerError("integration.DoCreateRunnable(struct)", response, request, err) {
+		return
+	}
+}
+
+// HandleSaveCode handles web requests to save the code of a runnable.
+func (h *IntegrationHandler) HandleSaveCode(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		UID  int
+		Code string
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	runnableInDB, errGetRunnable := integration.GetRunnable(request.Context(), details.UID, h.DB)
+	if util.InternalHandlerError("integration.GetRunnable(int)", response, request, errGetRunnable) {
+		return
+	}
+	if runnableInDB.OwnerID != usr.UID {
+		http.Error(response, "You do not own this integration.", 403)
+		return
+	}
+
+	err = integration.SaveCode(request.Context(), details.UID, details.Code, h.DB)
+	if util.InternalHandlerError("integration.SaveCode(UID, code)", response, request, err) {
 		return
 	}
 }

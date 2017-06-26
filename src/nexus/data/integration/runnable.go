@@ -111,3 +111,21 @@ func editRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) erro
 			WHERE id() = $1;`, r.UID, r.Name, r.Content)
 	return err
 }
+
+// SaveCode updates just the content of a runnable with the given UID.
+func SaveCode(ctx context.Context, UID int, code string, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(`
+		UPDATE integration_runnable
+			SET content=$2
+			WHERE id() = $1;
+	`, UID, code)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}

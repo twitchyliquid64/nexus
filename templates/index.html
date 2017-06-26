@@ -277,6 +277,7 @@
             </td>
             <td>
               <a class="btn-floating" href="#" ng-click="delete(runnable)"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" href="#" ng-click="open(runnable)"><i class="material-icons">edit</i></a>
             </td>
           </tr>
         </tbody>
@@ -294,10 +295,10 @@
 
   <div ng-show="page == 'integration-editor'" style="margin: 0px 9px;">
     <div ng-controller="EditorController">
-      <h3>Editor</h3>
+      <h3>Editing: {{runnable.Name}}</h3>
       <loader loading="loading" error="error" ></loader>
-      <div style="height: 25px;padding-left: 8px;">
-        <p>Type some code.</p>
+      <div style="padding-left: 8px;color: #9e9e9e;">
+        <p>Last saved <span am-time-ago="lastSaved"></span></p>
       </div>
 
 
@@ -318,6 +319,19 @@
               </div>
             </div>
           </div>
+          <ul class="collection with-header" ng-show="runnable.Triggers.length">
+            <li class="collection-header"><h5>Triggers</h5></li>
+            <li class="collection-item" ng-repeat="trigger in runnable.Triggers">
+              {{trigger.Name}}
+              <a href="#!" class="secondary-content"><i class="material-icons">{{triggerIcon(trigger)}}</i></a>
+            </li>
+          </ul>
+          <p ng-hide="runnable.Triggers.length">This script is not configured with any triggers. It will only execute when manually started.</p>
+
+          <button class="btn waves-effect waves-light" type="submit" ng-click="save()">
+            Save
+            <i class="material-icons right">save</i>
+          </button>
         </div>
       </div>
     </div>

@@ -68,10 +68,14 @@ function startsWith(s, prefix) {
   return s.substring(0, prefix.length) === prefix;
 }
 
-app.controller('EditorController', ["$scope", "$rootScope", function ($scope, $rootScope) {
+app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
   $scope.editorObj = null;
   $scope.langTools = null;
   $scope.codeSuggestions = [];
+  $scope.runnable = null;
+  $scope.lastSaved = null;
+  $scope.loading = false;
+  $scope.error = null;
 
   $scope.doEditorAutocomplete = function(editor, session, pos, prefix, callback) {
     console.log(session, pos, prefix, pos.column, pos.line);
@@ -99,8 +103,44 @@ app.controller('EditorController', ["$scope", "$rootScope", function ($scope, $r
     callback(null, []);
   };
 
+  $scope.triggerIcon = function(trigger){
+    switch (trigger.Kind) {
+      case 'CRON':
+        return 'schedule';
+      case 'HTTP':
+        return 'schedule';
+    }
+    return '?'
+  }
+
+  $scope.save = function(){
+    $scope.loading = true;
+    $scope.error = null;
+    $http({
+      method: 'POST',
+      url: '/web/v1/integrations/code/save',
+      data: {
+        UID: $scope.runnable.UID,
+        Code: $scope.editorObj.getValue(),
+      },
+    }).then(function successCallback(response) {
+      $scope.loading = false;
+      $scope.lastSaved = new Date();
+    }, function errorCallback(response) {
+      $scope.loading = false;
+      $scope.error = response;
+    });
+  }
+
+
+  $rootScope.$on('integration-code-editor', function(event, args) {
+    $scope.runnable = args.runnable;
+  });
+
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'integration-editor'){
+      $scope.lastSaved = new Date();
+
       if (!$scope.editorObj) {
         $scope.langTools = ace.require("ace/ext/language_tools");
         $scope.editorObj = ace.edit("codeEditor");
@@ -118,6 +158,10 @@ app.controller('EditorController', ["$scope", "$rootScope", function ($scope, $r
             $scope.$digest();
           }
         });
+      }
+      if ($scope.runnable){
+        $scope.editorObj.setValue($scope.runnable.Content);
+        $scope.editorObj.gotoLine(0,0)
       }
       $scope.editorObj.resize();
     }
