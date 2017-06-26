@@ -58,7 +58,79 @@ var codeSubs = [
       kind: 'method',
       detail: 'Prints result + stack trace to the console if the assertion was false.',
     },
-  }
+  },
+  {
+    prefix: 'context.',
+    name: 'run_id',
+    value: 'run_id',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'context.run_id',
+      kind: 'string',
+      detail: '8 character identifier, uniquely identifying the current run.',
+    },
+  },
+  {
+    prefix: 'context.',
+    name: 'run_reason',
+    value: 'run_reason',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'context.run_reason',
+      kind: 'string',
+      detail: 'Cause of the execution. Typically "manual", "CRON" etc',
+    },
+  },
+  {
+    prefix: 'context.',
+    name: 'trigger_id',
+    value: 'trigger_id',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'context.trigger_id',
+      kind: 'int',
+      detail: 'If a trigger caused the current execution, this will be the ID of the trigger.',
+    },
+  },
+  {
+    prefix: 'context.',
+    name: 'start_time',
+    value: 'start_time',
+    meta: 'time.Time',
+    score: 110,
+    reference: {
+      heading: 'context.start_time',
+      kind: 'golang time.Time',
+      detail: 'Time at which execution started.',
+    },
+  },
+  {
+    prefix: 'owner.',
+    name: 'id',
+    value: 'id',
+    meta: 'int',
+    score: 110,
+    reference: {
+      heading: 'owner.id',
+      kind: 'int',
+      detail: 'User ID of the account which owns this integration.',
+    },
+  },
+  {
+    prefix: 'owner.',
+    name: 'get',
+    value: 'get()',
+    meta: 'User',
+    score: 110,
+    reference: {
+      heading: 'owner.get()',
+      kind: 'method',
+      detail: 'Information about the account which owns this integration.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
@@ -82,8 +154,9 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     fullLine = session.getLine(pos.row);
     console.log(fullLine);
 
-    spl = fullLine.split(" ");
+    spl = fullLine.substring(0, pos.column).split(/,| |\(|=/);
     lastWord = spl[spl.length-1];
+    //console.log(lastWord);
 
     if (fullLine == ""){ //nothing typed - show globals
       $scope.codeSuggestions = codeGlobals;

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"nexus/data/integration"
+	integrationState "nexus/integration"
 	"nexus/serv/util"
 )
 
@@ -23,6 +24,7 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/delete/runnable", h.HandleDeleteRunnable)
 	mux.HandleFunc("/web/v1/integrations/edit/runnable", h.HandleEditRunnable)
 	mux.HandleFunc("/web/v1/integrations/code/save", h.HandleSaveCode)
+	mux.HandleFunc("/web/v1/integrations/run/manual", h.HandleRun)
 	return nil
 }
 
@@ -75,6 +77,38 @@ func (h *IntegrationHandler) HandleSaveCode(response http.ResponseWriter, reques
 
 	err = integration.SaveCode(request.Context(), details.UID, details.Code, h.DB)
 	if util.InternalHandlerError("integration.SaveCode(UID, code)", response, request, err) {
+		return
+	}
+}
+
+// HandleRun handles web requests to run a runnable.
+func (h *IntegrationHandler) HandleRun(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var runnableUID int
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&runnableUID)
+	if util.InternalHandlerError("json.Decode(int)", response, request, err) {
+		return
+	}
+
+	runnableInDB, errGetRunnable := integration.GetRunnable(request.Context(), runnableUID, h.DB)
+	if util.InternalHandlerError("integration.GetRunnable(int)", response, request, errGetRunnable) {
+		return
+	}
+	if runnableInDB.OwnerID != usr.UID {
+		http.Error(response, "You do not own this integration.", 403)
+		return
+	}
+
+	err = integrationState.Start(runnableUID, &integrationState.StartContext{
+		TriggerKind: "manual",
+		TriggerUID:  0,
+	})
+	if util.InternalHandlerError("integration.Start(runnable)", response, request, err) {
 		return
 	}
 }

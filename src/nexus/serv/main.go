@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"nexus/data"
+	"nexus/integration"
 	"nexus/messaging"
 	"os"
 	"os/signal"
@@ -37,6 +38,11 @@ func main() {
 		die(err.Error())
 	}
 	defer messaging.Deinit()
+
+	err = integration.Initialise(ctx, db)
+	if err != nil {
+		die(err.Error())
+	}
 
 	mux := makeMux(ctx, db)
 

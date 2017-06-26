@@ -18,6 +18,21 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
     });
   }
 
+  $scope.run = function(runnable){
+    $scope.loading = true;
+    $scope.error = null;
+    $http({
+      method: 'POST',
+      url: '/web/v1/integrations/run/manual',
+      data: runnable.UID,
+    }).then(function successCallback(response) {
+      $scope.update();
+    }, function errorCallback(response) {
+      $scope.loading = false;
+      $scope.error = response;
+    });
+  }
+
   $scope.delete = function(obj){
     $rootScope.$broadcast('check-confirmation', {
       title: 'Confirm Deletion',
