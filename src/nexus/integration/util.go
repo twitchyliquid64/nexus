@@ -54,3 +54,14 @@ func logControlInfo(ctx context.Context, runID, msg string, runnableUID int, db 
 		Kind:      integration.KindControlLog,
 	}, db)
 }
+
+func logControlData(ctx context.Context, runID, msg string, runnableUID, datat int, db *sql.DB) error {
+	return integration.WriteLog(ctx, &integration.Log{
+		ParentUID: runnableUID,
+		RunID:     runID,
+		Value:     msg,
+		Level:     integration.LevelInfo,
+		Kind:      integration.KindStructuredData,
+		Datatype:  datat,
+	}, db)
+}

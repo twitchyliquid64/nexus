@@ -8,6 +8,7 @@ import (
 	"nexus/data/integration"
 	integrationState "nexus/integration"
 	"nexus/serv/util"
+	"time"
 )
 
 // IntegrationHandler handles HTTP endpoints for the integrations UI.
@@ -25,6 +26,7 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/edit/runnable", h.HandleEditRunnable)
 	mux.HandleFunc("/web/v1/integrations/code/save", h.HandleSaveCode)
 	mux.HandleFunc("/web/v1/integrations/run/manual", h.HandleRun)
+	mux.HandleFunc("/web/v1/integrations/log/runs", h.HandleGetRuns)
 	return nil
 }
 
@@ -214,6 +216,48 @@ func (h *IntegrationHandler) HandleGetMine(response http.ResponseWriter, request
 
 	b, err := json.Marshal(integrations)
 	if util.InternalHandlerError("json.Marshal(integrations)", response, request, err) {
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+// HandleGetRuns handles web requests to retrieve a list of runIDs for a given runnableID.
+func (h *IntegrationHandler) HandleGetRuns(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var IDs []int
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&IDs)
+	if util.InternalHandlerError("json.Decode([]int)", response, request, err) {
+		return
+	}
+	if len(IDs) != 1 {
+		http.Error(response, "Can only handle a single runID", 500)
+		return
+	}
+	id := IDs[0]
+
+	runnable, errGetRunnable := integration.GetRunnable(request.Context(), id, h.DB)
+	if util.InternalHandlerError("integration.GetRunnable(int)", response, request, errGetRunnable) {
+		return
+	}
+	if runnable.OwnerID != usr.UID {
+		http.Error(response, "You do not own this integration.", 403)
+		return
+	}
+
+	runs, err := integration.GetRecentRunsForRunnable(request.Context(), id, time.Now().Add(-time.Hour*24*4), h.DB)
+	if util.InternalHandlerError("integration.GetRecentRunsForRunnable()", response, request, err) {
+		return
+	}
+
+	b, err := json.Marshal(runs)
+	if util.InternalHandlerError("json.Marshal(runs)", response, request, err) {
 		return
 	}
 

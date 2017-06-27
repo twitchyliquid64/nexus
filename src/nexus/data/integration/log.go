@@ -11,7 +11,6 @@ const (
 	LevelInfo int = iota
 	LevelWarning
 	LevelError
-	LevelData
 )
 
 // kinds of messages
@@ -26,6 +25,8 @@ const (
 	DatatypeUnstructured int = iota
 	DatatypeString
 	DatatypeInt
+	DatatypeStartInfo
+	DatatypeEndInfo
 )
 
 // LogTable (log) implements the databaseTable interface.
@@ -90,6 +91,27 @@ func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Tim
 			return nil, err
 		}
 		output = append(output, &o)
+	}
+	return output, nil
+}
+
+// GetRecentRunsForRunnable returns the unique runIDs for a given runnable.
+func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]string, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = $1 AND created_at > $2;
+	`, runnableUID, newerThan)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []string
+	for res.Next() {
+		var o string
+		if err := res.Scan(&o); err != nil {
+			return nil, err
+		}
+		output = append(output, o)
 	}
 	return output, nil
 }

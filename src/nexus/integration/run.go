@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"nexus/data/integration"
 	"time"
@@ -13,6 +14,7 @@ import (
 var initialisers = []builtin{
 	&basicInfoInitialiser{},
 	&ownerInfoInitialiser{},
+	&consoleInitialiser{},
 }
 
 // Run contains the state of a running runnable.
@@ -75,7 +77,9 @@ func Start(runnableUID int, startContext *StartContext) error {
 func (r *Run) start() {
 	log.Printf("[run][%s] %q starting", r.ID, r.Base.Name)
 	logControlInfo(r.Ctx, r.ID, "Run starting. Cause: "+r.StartContext.TriggerKind, r.Base.UID, db)
+	logControlData(r.Ctx, r.ID, "cause="+r.StartContext.TriggerKind, r.Base.UID, integration.DatatypeStartInfo, db) //TODO: Sanitize triggerKind string
 	v, runErr := r.VM.Run(r.Base.Content)
 	logControlInfo(r.Ctx, r.ID, "Run finished.", r.Base.UID, db)
+	logControlData(r.Ctx, r.ID, fmt.Sprintf("error=%v,value=%v", runErr, v), r.Base.UID, integration.DatatypeEndInfo, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
 }

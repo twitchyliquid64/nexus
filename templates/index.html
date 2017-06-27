@@ -55,6 +55,8 @@
     <script type="text/javascript" src="/static/js/integration/editor.js"></script>
     <script type="text/javascript" src="/static/js/integration/editModal.js"></script>
     <script type="text/javascript" src="/static/js/integration/list.js"></script>
+    <script type="text/javascript" src="/static/js/integration/runExplorer.js"></script>
+    <script type="text/javascript" src="/static/js/integration/filterDirective.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -216,7 +218,8 @@
         <loader loading="loading" error="error" ></loader>
       </div>
 
-      <div class="row">
+      <div class="row">      <datastore-filter ds="datastore" on-change="filtersChanged(filters, limit, offset)"></datastore-filter>
+
         <div class="col s3">
           <ul class="collection" style="overflow-y: scroll; height: 82%;">
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
@@ -279,6 +282,8 @@
               <a class="btn-floating" href="#" ng-click="delete(runnable)"><i class="material-icons">delete</i></a>
               <a class="btn-floating" href="#" ng-click="open(runnable)"><i class="material-icons">edit</i></a>
               <a class="btn-floating red" href="#" ng-click="run(runnable)"><i class="material-icons">play_arrow</i></a>
+              <a class="btn-floating amber" href="#" ng-click="viewLogs(runnable)"><i class="material-icons">list</i></a>
+
             </td>
           </tr>
         </tbody>
@@ -337,6 +342,17 @@
       </div>
     </div>
   </div>
+
+  <div ng-show="page == 'integration-run-explorer'" style="margin: 0px 9px;">
+    <div ng-controller="IntegrationRunExplorer">
+      <h3>{{runnable.Name}}</h3>
+      <loader loading="loading" error="error"></loader>
+      <run-filter runs="runs" runnable="runnable" on-change="filtersChanged(run, filters, limit, offset)"></run-filter>
+
+      <div id="integrationLogOutput"></div>
+    </div>
+  </div>
+
 
   <confirmation-dialog-modal></confirmation-dialog-modal>
 </body>
