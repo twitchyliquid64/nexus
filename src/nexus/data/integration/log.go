@@ -116,6 +116,30 @@ func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan ti
 	return output, nil
 }
 
+// GetLogsFilteredByRunnable filters to a specific run.
+func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan time.Time, runID string, offset, limit int, db *sql.DB) ([]*Log, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log
+		WHERE run_id = $1 AND created_at > $2 AND integration_parent = $3
+		ORDER BY created_at ASC
+		LIMIT $4 OFFSET $5;
+	`, runID, newerThan, runnableUID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Log
+	for res.Next() {
+		var o Log
+		if err := res.Scan(&o.UID, &o.ParentUID, &o.RunID, &o.CreatedAt, &o.Kind, &o.Level, &o.Datatype, &o.Value); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+	return output, nil
+}
+
 // WriteLog commits a log entry.
 func WriteLog(ctx context.Context, log *Log, db *sql.DB) error {
 	tx, err := db.Begin()

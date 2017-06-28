@@ -27,6 +27,7 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/code/save", h.HandleSaveCode)
 	mux.HandleFunc("/web/v1/integrations/run/manual", h.HandleRun)
 	mux.HandleFunc("/web/v1/integrations/log/runs", h.HandleGetRuns)
+	mux.HandleFunc("/web/v1/integrations/log/entries", h.HandleGetLogs)
 	return nil
 }
 
@@ -258,6 +259,54 @@ func (h *IntegrationHandler) HandleGetRuns(response http.ResponseWriter, request
 
 	b, err := json.Marshal(runs)
 	if util.InternalHandlerError("json.Marshal(runs)", response, request, err) {
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+// HandleGetLogs handles web requests to retrieve log entries
+func (h *IntegrationHandler) HandleGetLogs(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var filter struct {
+		RunnableUID int
+		RunID       string
+		Offset      int
+		Limit       int
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&filter)
+	if util.InternalHandlerError("json.Decode([]int)", response, request, err) {
+		return
+	}
+
+	runnable, errGetRunnable := integration.GetRunnable(request.Context(), filter.RunnableUID, h.DB)
+	if util.InternalHandlerError("integration.GetRunnable(int)", response, request, errGetRunnable) {
+		return
+	}
+	if runnable.OwnerID != usr.UID {
+		http.Error(response, "You do not own this integration.", 403)
+		return
+	}
+
+	var logs []*integration.Log
+
+	if filter.RunID != "" {
+		logs, err = integration.GetLogsFilteredByRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.RunID, filter.Offset, filter.Limit, h.DB)
+	} else {
+		logs, err = integration.GetLogsForRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), h.DB)
+	}
+	if util.InternalHandlerError("integration.GetLogsFilteredByRunnable()", response, request, err) {
+		return
+	}
+
+	b, err := json.Marshal(logs)
+	if util.InternalHandlerError("json.Marshal(logs)", response, request, err) {
 		return
 	}
 
