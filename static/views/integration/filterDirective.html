@@ -17,15 +17,15 @@
     </div>
 
     <div class="col s2">
-      <input type="checkbox" id="showSystem_selector" ng-click="showSystem=!showSystem" ng-checked="showSystem==true" />
+      <input type="checkbox" id="showSystem_selector" ng-click="showSystem=!showSystem; fireChange()" ng-checked="showSystem==true" />
       <label for="showSystem_selector">System</label>
     </div>
     <div class="col s2">
-      <input type="checkbox" id="showInfo_selector" ng-click="showInfo=!showInfo" ng-checked="showInfo==true" />
+      <input type="checkbox" id="showInfo_selector" ng-click="showInfo=!showInfo; fireChange()" ng-checked="showInfo==true" />
       <label for="showInfo_selector">Info</label>
     </div>
     <div class="col s4">
-      <input type="checkbox" id="showProblem_selector" ng-click="showProblem=!showProblem" ng-checked="showProblem==true" />
+      <input type="checkbox" id="showProblem_selector" ng-click="showProblem=!showProblem; fireChange()" ng-checked="showProblem==true" />
       <label for="showProblem_selector">Warn / Error</label>
     </div>
   </div>

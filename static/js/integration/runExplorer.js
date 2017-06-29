@@ -2,8 +2,10 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $scope.loading = false;
   $scope.runnable = null;
   $scope.runs = [];
+  $scope.run = '!!';
   $scope.error = null;
   $scope.limit = 200;
+  $scope.filters = {};
 
   $scope.update = function(){
     $scope.loading = true;
@@ -15,7 +17,6 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
      }).then(function successCallback(response) {
        $scope.loading = false;
        $scope.runs = response.data;
-       console.log($scope.runs);
        $scope.updateEntries();
      }, function errorCallback(response) {
        $scope.loading = false;
@@ -27,6 +28,9 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
     $scope.loading = true;
     $scope.error = null;
     var d = {
+      Sys: $scope.filters.sys,
+      Problem: $scope.filters.prob,
+      Info: $scope.filters.info,
       RunnableUID: $scope.runnable.UID,
       Offset: $scope.offset || 0,
       Limit: $scope.limit,
@@ -55,7 +59,37 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
 
       out += "<div class='log-line'>";
       out += "<div class='log-date'>" + d.format("HH:mm:ss L") + "</div>";
-      out += "<div class='log-class'>" + lines[i].Kind + "</div>";
+
+      out += "<div class='log-class'>";
+      if (lines[i].Level == 1){
+        out += "<div class='log-cell lda'>W</div>";
+      } else if (lines[i].Level == 2){
+        out += "<div class='log-cell ldr'>E</div>";
+      } else {
+        out += "<div class='log-cell'>I</div>";
+      }
+
+      if (lines[i].Kind == 'control'){
+        out += "<div class='log-cell ldg'>C</div>";
+      } else if (lines[i].Kind == 'data'){
+        out += "<div class='log-cell ldl'>D</div>";
+      } else {
+        out += "<div class='log-cell'></div>";
+      }
+
+      if (lines[i].Datatype == 1){
+        out += "<div class='log-cell ldg'>S</div>";
+      } else if (lines[i].Datatype == 2){
+        out += "<div class='log-cell'>I</div>";
+      } else if (lines[i].Datatype == 3){
+        out += "<div class='log-cell ldi'>S</div>";
+      } else if (lines[i].Datatype == 4){
+        out += "<div class='log-cell ldi'>E</div>";
+      } else {
+        out += "<div class='log-cell'></div>";
+      }
+      out += "</div>";
+
       out += "<div class='log-content'>" + lines[i].Value + "</div>";
       out += "</div>";
     }
@@ -75,6 +109,11 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $rootScope.$on('integration-run-explorer', function(event, args) {
     $scope.runnable = args.runnable;
     $scope.runs = [];
+    if (args.runID){
+      $scope.startRun = args.runID;
+    } else {
+      $scope.startRun = null;
+    }
   });
 
   $rootScope.$on('page-change', function(event, args) {

@@ -36,17 +36,17 @@ type StartContext struct {
 }
 
 // Start loads and executes the runnable with the given UID.
-func Start(runnableUID int, startContext *StartContext) error {
+func Start(runnableUID int, startContext *StartContext) (string, error) {
 	ctx := context.Background()
 
 	base, err := integration.GetRunnable(ctx, runnableUID, db)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	rid, err := GenerateRandomString(8)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	r := &Run{
@@ -61,7 +61,7 @@ func Start(runnableUID int, startContext *StartContext) error {
 	for _, initialiser := range initialisers {
 		err := initialiser.Apply(r)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -70,7 +70,7 @@ func Start(runnableUID int, startContext *StartContext) error {
 	mapLock.Unlock()
 
 	go r.start()
-	return nil
+	return rid, nil
 }
 
 // Start is called to actually run

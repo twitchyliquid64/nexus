@@ -67,12 +67,12 @@
 
 .log-date {
   display: inline-block;
-  width: 180px;
+  width: 21ch;
 }
 
 .log-class {
   display: inline-block;
-  width: 12%;
+  width: 8ch;
 }
 
 .log-content {
@@ -80,7 +80,24 @@
 }
 
 .log-cell {
+  display: inline-block;
   width: 2ch;
   text-align: center;
   margin-right: 0!important;
+}
+
+.ldg {
+  background-color: #e8f5e9;
+}
+.ldl {
+  background-color: #f0f4c3;
+}
+.lda {
+  background-color: #ffcc80;
+}
+.ldr {
+  background-color: #e57373;
+}
+.ldi {
+  background-color: #c5cae9;
 }

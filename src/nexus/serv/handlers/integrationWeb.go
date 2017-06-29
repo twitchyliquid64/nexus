@@ -107,13 +107,20 @@ func (h *IntegrationHandler) HandleRun(response http.ResponseWriter, request *ht
 		return
 	}
 
-	err = integrationState.Start(runnableUID, &integrationState.StartContext{
+	runID, err := integrationState.Start(runnableUID, &integrationState.StartContext{
 		TriggerKind: "manual",
 		TriggerUID:  0,
 	})
 	if util.InternalHandlerError("integration.Start(runnable)", response, request, err) {
 		return
 	}
+
+	b, err := json.Marshal(struct{ RunID string }{RunID: runID})
+	if util.InternalHandlerError("json.Marshal(runID)", response, request, err) {
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
 }
 
 // HandleEditRunnable handles web requests to edit a runnable.
