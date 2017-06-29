@@ -75,10 +75,12 @@ type Log struct {
 }
 
 // GetLogsForRunnable is called to get all logs for a runnable.
-func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]*Log, error) {
+func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, offset, limit int, db *sql.DB) ([]*Log, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = $1 AND created_at > $2;
-	`, runnableUID, newerThan)
+		SELECT id(), integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = $1 AND created_at > $2
+		ORDER BY created_at ASC
+		LIMIT $3 OFFSET $4;
+	`, runnableUID, newerThan, limit, offset)
 	if err != nil {
 		return nil, err
 	}

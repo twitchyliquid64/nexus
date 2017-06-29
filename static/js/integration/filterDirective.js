@@ -9,7 +9,7 @@
       //restrict E means its can only be used as an element.
       restrict: 'E',
       templateUrl: function(elem, attr){
-        return '/static/views/integration/filterDirective.html?cache=3';
+        return '/static/views/integration/filterDirective.html?cache=5';
       },
       link: function($scope, elem, attrs) {
         // scope = either parent scope or its own child scope if scope set.
@@ -21,7 +21,7 @@
         $scope.showProblem = true;
 
         $scope.selectedRun = '!!';
-        $scope.maxRows = 40;
+        $scope.maxRows = 200;
         $scope.offset = 0;
 
         $scope.page = 0;
@@ -31,7 +31,7 @@
           console.log($scope.runs);
         }
 
-        $scope.setBounds = function(){
+        $scope.fireChange = function(){
           var f = {
             info: $scope.showInfo,
             prob: $scope.showProblem,

@@ -44,3 +44,43 @@
   padding-left: 23px !important;
   padding-right: 10px;
 }
+
+.nav-wrapper {
+  margin-right: 2px;
+}
+.collection-item.avatar.active {
+  background-color: #e3f2fd;
+}
+.msg-time {
+  padding-left: 12px;
+  font-size: 0.9rem;
+}
+#codeEditor {
+  width: 100%;
+  height: 100%;
+}
+.suggestion-kind {
+  font-size: 50%;
+}
+
+
+
+.log-date {
+  display: inline-block;
+  width: 180px;
+}
+
+.log-class {
+  display: inline-block;
+  width: 12%;
+}
+
+.log-content {
+  display: inline-block;
+}
+
+.log-cell {
+  width: 2ch;
+  text-align: center;
+  margin-right: 0!important;
+}

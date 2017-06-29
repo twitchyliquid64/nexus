@@ -8,7 +8,7 @@
           <label><i class="material-icons left" style="cursor: pointer;">filter_list</i> Filters</label>
         </div>
         <div class="col s10 left-align">
-          <select class="browser-default" ng-model="selectedRun">
+          <select class="browser-default" ng-model="selectedRun" ng-change="fireChange()">
             <option value="!!">[ All Recent Runs ]</option>
             <option ng-repeat="run in runs" value="{{run}}">{{run}}</option>
           </select>
@@ -43,15 +43,15 @@
       </div>
     </div>
     <div class="input-field col s2 offset-s3">
-      <input id="offset_ValInput" type="text" ng-model="offset" ng-class="offsetInputVldn" class="active" ng-keyup="$event.keyCode == 13 && setBounds()">
+      <input id="offset_ValInput" type="text" ng-model="offset" ng-class="offsetInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()">
       <label for="offset_ValInput">Offset</label>
     </div>
     <div class="input-field col s2">
-      <input id="bounds_ValInput" type="text" ng-model="maxRows" ng-class="boundsInputVldn" class="active" ng-keyup="$event.keyCode == 13 && setBounds()">
+      <input id="bounds_ValInput" type="text" ng-model="maxRows" ng-class="boundsInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()">
       <label for="bounds_ValInput">Max Results</label>
     </div>
     <div class="col s1">
-      <a class="btn-flat waves-effect waves-light btn" ng-click="setBounds()">set</a>
+      <a class="btn-flat waves-effect waves-light btn" ng-click="fireChange()">set</a>
     </div>
   </div>
 
