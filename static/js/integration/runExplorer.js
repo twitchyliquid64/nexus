@@ -145,6 +145,8 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $rootScope.$on('integration-run-explorer', function(event, args) {
     $scope.runnable = args.runnable;
     $scope.runs = [];
+    $scope.offset = 0;
+    $scope.limit = 200;
     if (args.runID){
       $scope.startRun = args.runID;
     } else {
