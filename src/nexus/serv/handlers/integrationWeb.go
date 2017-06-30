@@ -33,8 +33,13 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 
 // HandleCreateRunnable handles web requests to create a runnable.
 func (h *IntegrationHandler) HandleCreateRunnable(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -54,8 +59,13 @@ func (h *IntegrationHandler) HandleCreateRunnable(response http.ResponseWriter, 
 
 // HandleSaveCode handles web requests to save the code of a runnable.
 func (h *IntegrationHandler) HandleSaveCode(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -86,8 +96,13 @@ func (h *IntegrationHandler) HandleSaveCode(response http.ResponseWriter, reques
 
 // HandleRun handles web requests to run a runnable.
 func (h *IntegrationHandler) HandleRun(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -125,8 +140,13 @@ func (h *IntegrationHandler) HandleRun(response http.ResponseWriter, request *ht
 
 // HandleEditRunnable handles web requests to edit a runnable.
 func (h *IntegrationHandler) HandleEditRunnable(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -172,8 +192,13 @@ func (h *IntegrationHandler) HandleEditRunnable(response http.ResponseWriter, re
 
 // HandleDeleteRunnable handles web requests to delete a runnable.
 func (h *IntegrationHandler) HandleDeleteRunnable(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -205,8 +230,13 @@ func (h *IntegrationHandler) HandleDeleteRunnable(response http.ResponseWriter, 
 
 // HandleGetMine handles web requests to retrieve the integrations owned by an account.
 func (h *IntegrationHandler) HandleGetMine(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -233,8 +263,13 @@ func (h *IntegrationHandler) HandleGetMine(response http.ResponseWriter, request
 
 // HandleGetRuns handles web requests to retrieve a list of runIDs for a given runnableID.
 func (h *IntegrationHandler) HandleGetRuns(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
@@ -275,8 +310,13 @@ func (h *IntegrationHandler) HandleGetRuns(response http.ResponseWriter, request
 
 // HandleGetLogs handles web requests to retrieve log entries
 func (h *IntegrationHandler) HandleGetLogs(response http.ResponseWriter, request *http.Request) {
-	_, usr, err := util.AuthInfo(request, h.DB)
+	s, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to use integrations", 403)
 		return
 	}
 
