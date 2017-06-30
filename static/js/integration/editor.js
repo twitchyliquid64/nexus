@@ -255,6 +255,17 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
             $scope.$digest();
           }
         });
+        $scope.editorObj.commands.addCommand({
+          name: 'saveFile',
+          bindKey: {
+            win: 'Ctrl-S',
+            mac: 'Command-S',
+            sender: 'editor|cli'
+          },
+          exec: function(env, args, request) {
+            $scope.save();
+          }
+        });
       }
       if ($scope.runnable){
         $scope.editorObj.setValue($scope.runnable.Content);
