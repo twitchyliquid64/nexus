@@ -15,7 +15,8 @@ git clone https://github.com/twitchyliquid64/nexus
 cd nexus
 export GOPATH=`pwd`
 go build nexus/serv
-go build nexus/maintenance-tool```
+go build nexus/maintenance-tool
+```
 
 ### Setup the first account
 
@@ -23,7 +24,8 @@ Both of these commands will prompt you for information.
 
 ```shell
 ./maintenance-tool createuser
-./maintenance-tool resetauth```
+./maintenance-tool resetauth
+```
 
 ### Run the server!
 
