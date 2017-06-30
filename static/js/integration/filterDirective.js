@@ -31,6 +31,19 @@
           console.log($scope.runs);
         }
 
+        $scope.scroll = function(){
+          window.scrollTo(0,document.body.scrollHeight);
+        }
+
+        $scope.add = function(){
+          $scope.offset += $scope.maxRows;
+          $scope.fireChange();
+        }
+        $scope.rem = function(){
+          $scope.offset -= $scope.maxRows;
+          $scope.fireChange();
+        }
+
         $scope.fireChange = function(){
           var f = {
             info: $scope.showInfo,
