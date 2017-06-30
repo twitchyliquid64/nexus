@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"log"
 	"net/http"
 	"nexus/data/session"
@@ -10,6 +11,11 @@ import (
 	"nexus/serv/util"
 	"os"
 	"path"
+	"strconv"
+
+	"github.com/pquerna/otp/totp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // CoreHandler handles feature-critical HTTP endpoints such as authentication
@@ -57,6 +63,49 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), u, response))
 }
 
+func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, error) {
+	usr, err := user.Get(ctx, request.FormValue("user"), db)
+	if err != nil {
+		return false, err
+	}
+	authMethods, err := user.GetAuthForUser(ctx, usr.UID, db)
+	if err != nil {
+		return false, err
+	}
+
+	if len(authMethods) == 0 {
+		return user.CheckBasicAuth(ctx, request.FormValue("user"), request.FormValue("password"), db)
+	}
+
+	didPassOne := false
+	for _, method := range authMethods {
+		didPass := false
+
+		switch method.Kind {
+		case user.KindPassword:
+			hash, err := hex.DecodeString(method.Val1)
+			if err != nil {
+				return false, err
+			}
+			didPass = bcrypt.CompareHashAndPassword(hash, []byte(request.FormValue("password")+"yoloSalty"+strconv.Itoa(usr.UID))) == nil
+		case user.KindOTP:
+			didPass = totp.Validate(request.FormValue("otp"), method.Val1)
+		}
+
+		switch method.Class {
+		case user.ClassAccepted:
+			if didPass {
+				didPassOne = true
+			}
+		case user.ClassRequired:
+			if !didPass {
+				return false, nil
+			}
+		}
+	}
+	return didPassOne, nil
+}
+
 // HandleLogin handles a HTTP request to /login.
 func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Request) {
 	ctx := request.Context()
@@ -69,12 +118,12 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.Error(response, "Could not parse form", 400)
 			return
 		}
-		ok, err := user.CheckBasicAuth(ctx, request.FormValue("user"), request.FormValue("password"), h.DB)
-		if util.InternalHandlerError("user.CheckBasicAuth()", response, request, err) {
+		ok, err := checkAuth(ctx, request, h.DB)
+		if util.InternalHandlerError("checkAuth()", response, request, err) {
 			return
 		}
 		if ok {
-			log.Printf("Got correct basicpass credentials for %s, creating session", request.FormValue("user"))
+			log.Printf("Got correct credentials for %s, creating session", request.FormValue("user"))
 			usr, err := user.Get(ctx, request.FormValue("user"), h.DB)
 			if util.InternalHandlerError("user.Get()", response, request, err) {
 				return

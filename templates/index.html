@@ -3,6 +3,7 @@
     <title>Nexus</title>
 
     <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
     <link rel="stylesheet" href="/static/css/material-icons.css">
     <link rel="stylesheet" href="/static/css/materialize.min.css">
     <link rel="stylesheet" href="/static/css/animations.css">
@@ -29,6 +30,7 @@
     <script type="text/javascript" src="/static/js/accounts/accounts.js"></script>
     <script type="text/javascript" src="/static/js/accounts/accountEditModal.js"></script>
     <script type="text/javascript" src="/static/js/accounts/accountGrantsModal.js"></script>
+    <script type="text/javascript" src="/static/js/accounts/accountsAuth.js"></script>
     <script type="text/javascript" src="/static/js/data/controller.js"></script>
     <script type="text/javascript" src="/static/js/data/editModal.js"></script>
     <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
@@ -114,6 +116,33 @@
 
     <account-edit-modal></account-edit-modal>
     <account-grants-modal></account-grants-modal>
+  </div>
+
+  <div ng-show="page == 'accounts-auth'" class="container">
+    <h3>Auth methods</h3>
+    <div ng-controller="AccountsAuthController">
+      <loader loading="loading" error="error"></loader>
+      <p>Showing authentication methods for <i>{{account.DisplayName}}</i> ({{account.UID}}).</p>
+
+      <ul class="collapsible" data-collapsible="accordion">
+        <li>
+          <div class="collapsible-header"><i class="material-icons">whatshot</i>Test</div>
+          <div class="collapsible-body"><span>Sloot.</span></div>
+        </li>
+        <li>
+          <div class="collapsible-header"><i class="material-icons">add</i>Add New...</div>
+          <div class="collapsible-body section">
+            Hai
+          </div>
+        </li>
+      </ul>
+
+      <div class="fixed-action-btn">
+        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Auth Method" ng-click="createAuth()">
+          <i class="large material-icons">add</i>
+        </a>
+      </div>
+    </div>
   </div>
 
   <div ng-show="page == 'data'" class="container">

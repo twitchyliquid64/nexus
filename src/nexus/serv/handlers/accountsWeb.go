@@ -27,6 +27,7 @@ func (h *AccountsWebHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/account/setbasicpass", h.HandleSetBasicPassV1)
 	mux.HandleFunc("/web/v1/account/addgrant", h.HandleAddGrantV1)
 	mux.HandleFunc("/web/v1/account/delgrant", h.HandleDeleteGrantV1)
+	mux.HandleFunc("/web/v1/account/auths", h.HandleListAuthV1)
 	return nil
 }
 
@@ -230,6 +231,39 @@ func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, 
 	}
 
 	b, err := json.Marshal(accounts)
+	if util.InternalHandlerError("json.Marshal([]*user.DAO)", response, request, err) {
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+// HandleListAuthV1 handles web requests to list the auths for a user.
+func (h *AccountsWebHandler) HandleListAuthV1(response http.ResponseWriter, request *http.Request) {
+	s, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to manage accounts", 403)
+		return
+	}
+
+	var uid int
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&uid)
+	if util.InternalHandlerError("json.Decode(int)", response, request, err) {
+		return
+	}
+
+	auths, err := user.GetAuthForUser(request.Context(), uid, h.DB)
+	if util.InternalHandlerError("user.GetAuthForUser()", response, request, err) {
+		return
+	}
+
+	b, err := json.Marshal(auths)
 	if util.InternalHandlerError("json.Marshal([]*user.DAO)", response, request, err) {
 		return
 	}
