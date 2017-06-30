@@ -54,7 +54,6 @@ func (t *LogTable) Setup(ctx context.Context, db *sql.DB) error {
 
   CREATE INDEX IF NOT EXISTS integration_log_by_parent_id ON integration_log(integration_parent);
   CREATE INDEX IF NOT EXISTS integration_log_by_run_id ON integration_log(run_id);
-  CREATE INDEX IF NOT EXISTS integration_log_by_time ON integration_log(created_at);
 	`)
 	if err != nil {
 		return err
