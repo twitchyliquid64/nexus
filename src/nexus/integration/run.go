@@ -79,7 +79,10 @@ func (r *Run) start() {
 	logControlInfo(r.Ctx, r.ID, "Run starting. Cause: "+r.StartContext.TriggerKind, r.Base.UID, db)
 	logControlData(r.Ctx, r.ID, "cause="+r.StartContext.TriggerKind, r.Base.UID, integration.DatatypeStartInfo, db) //TODO: Sanitize triggerKind string
 	v, runErr := r.VM.Run(r.Base.Content)
-	logControlInfo(r.Ctx, r.ID, "Run finished.", r.Base.UID, db)
-	logControlData(r.Ctx, r.ID, fmt.Sprintf("error=%v,value=%v", runErr, v), r.Base.UID, integration.DatatypeEndInfo, db)
+
+	if runErr != nil {
+		logSystemError(r.Ctx, r.ID, runErr, r.Base.UID, db)
+	}
+	logControlData(r.Ctx, r.ID, fmt.Sprintf("value=%v,error='%v'", v, runErr), r.Base.UID, integration.DatatypeEndInfo, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
 }

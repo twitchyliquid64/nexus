@@ -1,3 +1,24 @@
+var jsonPrettyPrint = {
+   replacer: function(match, pIndent, pKey, pVal, pEnd) {
+      var key = '<span class=json-key>';
+      var val = '<span class=json-value>';
+      var str = '<span class=json-string>';
+      var r = pIndent || '';
+      if (pKey)
+         r = r + key + pKey.replace(/[": ]/g, '') + '</span>: ';
+      if (pVal)
+         r = r + (pVal[0] == '"' ? str : val) + pVal + '</span>';
+      return r + (pEnd || '');
+      },
+   toHtml: function(obj) {
+      var jsonLine = /^( *)("[\w]+": )?("[^"]*"|[\w.+-]*)?([,[{])?$/mg;
+      return JSON.stringify(obj, null, 3)
+         .replace(/&/g, '&amp;').replace(/\\"/g, '&quot;')
+         .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+         .replace(jsonLine, jsonPrettyPrint.replacer);
+      }
+   };
+
 app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
   $scope.loading = false;
   $scope.runnable = null;
@@ -79,6 +100,8 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
         out += "<div class='log-cell ldg'>C</div>";
       } else if (lines[i].Kind == 'data'){
         out += "<div class='log-cell ldl'>D</div>";
+      } else if (lines[i].Kind == 'json'){
+        out += "<div class='log-cell ldl'>J</div>";
       } else {
         out += "<div class='log-cell'></div>";
       }
@@ -91,12 +114,19 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
         out += "<div class='log-cell ldi'>S</div>";
       } else if (lines[i].Datatype == 4){
         out += "<div class='log-cell ldi'>E</div>";
+      } else if (lines[i].Datatype == 5){
+        out += "<div class='log-cell ldi'>T</div>";
       } else {
         out += "<div class='log-cell'></div>";
       }
       out += "</div>";
 
-      out += "<div class='log-content'>" + lines[i].Value + "</div>";
+      if (lines[i].Kind == 'json'){
+        var obj = JSON.parse(lines[i].Value);
+        out += "<div class='log-content'>" + jsonPrettyPrint.toHtml(obj) + "</div>";
+      } else {
+        out += "<div class='log-content'>" + lines[i].Value + "</div>";
+      }
       out += "</div>";
     }
     out += "</div>";

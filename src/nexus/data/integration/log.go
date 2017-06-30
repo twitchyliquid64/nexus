@@ -18,6 +18,7 @@ const (
 	KindLog            = "log"
 	KindControlLog     = "control"
 	KindStructuredData = "data"
+	KindJSONData       = "json"
 )
 
 // datatypes
@@ -27,6 +28,7 @@ const (
 	DatatypeInt
 	DatatypeStartInfo
 	DatatypeEndInfo
+	DatatypeTrace
 )
 
 // LogTable (log) implements the databaseTable interface.

@@ -65,3 +65,22 @@ func logControlData(ctx context.Context, runID, msg string, runnableUID, datat i
 		Datatype:  datat,
 	}, db)
 }
+
+func logSystemError(ctx context.Context, runID string, err error, runnableUID int, db *sql.DB) error {
+	var msg string
+
+	if ottoErr, isOttoError := err.(*otto.Error); isOttoError {
+		msg = ottoErr.String()
+	} else {
+		msg = err.Error()
+	}
+
+	return integration.WriteLog(ctx, &integration.Log{
+		ParentUID: runnableUID,
+		RunID:     runID,
+		Value:     msg,
+		Level:     integration.LevelError,
+		Kind:      integration.KindStructuredData,
+		Datatype:  integration.DatatypeTrace,
+	}, db)
+}

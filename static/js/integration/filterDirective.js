@@ -36,11 +36,12 @@
         }
 
         $scope.add = function(){
-          $scope.offset += $scope.maxRows;
+          $scope.offset = parseInt($scope.offset) + parseInt($scope.maxRows);
           $scope.fireChange();
         }
         $scope.rem = function(){
-          $scope.offset -= $scope.maxRows;
+          $scope.offset = parseInt($scope.offset) - $scope.maxRows;
+          if ($scope.offset < 0)$scope.offset = 0;
           $scope.fireChange();
         }
 

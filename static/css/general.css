@@ -68,15 +68,18 @@
 .log-date {
   display: inline-block;
   width: 21ch;
+  vertical-align: top;
 }
 
 .log-class {
   display: inline-block;
   width: 8ch;
+  vertical-align: top;
 }
 
 .log-content {
   display: inline-block;
+  white-space: pre-wrap;
 }
 
 .log-cell {
@@ -101,3 +104,7 @@
 .ldi {
   background-color: #c5cae9;
 }
+
+.json-key    { color: brown; }
+.json-value  { color: navy; }
+.json-string { color: olive; }
