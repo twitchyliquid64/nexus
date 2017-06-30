@@ -201,8 +201,7 @@
         <loader loading="loading" error="error" ></loader>
       </div>
 
-      <div class="row">      <datastore-filter ds="datastore" on-change="filtersChanged(filters, limit, offset)"></datastore-filter>
-
+      <div class="row">
         <div class="col s3">
           <ul class="collection" style="overflow-y: scroll; height: 82%;">
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
