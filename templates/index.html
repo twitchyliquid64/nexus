@@ -53,9 +53,9 @@
       <ul class="right hide-on-med-and-down">
         <li ng-class="{active: page == 'messenger'}"><a href="#" ng-click="changePage('messenger')"><i class="material-icons">message</i></a></li>
         <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
-        <li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>
+        {!{if .AdminPerms.Accounts}!}<li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>{!{end}!}
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
-        <li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>
+        {!{if .AdminPerms.Integrations}!}<li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>{!{end}!}
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
@@ -63,6 +63,9 @@
 
   <ul id="nav-mobile" class="side-nav">
     <li><a href="#" ng-click="changePage('home')">Home</a></li>
+    <li><a href="#" ng-click="changePage('messenger')">Messenger</a></li>
+    {!{if .AdminPerms.Accounts}!}<li><a href="#" ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
+    {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
   </ul>
 
   <div ng-show="page == 'accounts'" class="container">

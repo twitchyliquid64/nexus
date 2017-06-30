@@ -45,7 +45,7 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	_, _, err := util.AuthInfo(request, h.DB)
+	_, u, err := util.AuthInfo(request, h.DB)
 	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
 		http.Redirect(response, request, "/login", 303)
 		return
@@ -54,7 +54,7 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 		http.Error(response, "Internal server error", 500)
 		return
 	}
-	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), nil, response))
+	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), u, response))
 }
 
 // HandleLogin handles a HTTP request to /login.
