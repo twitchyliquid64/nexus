@@ -26,7 +26,7 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $scope.run = '!!';
   $scope.error = null;
   $scope.limit = 200;
-  $scope.filters = {};
+  $scope.filters = {info: true, prob: true, sys: true};
 
   $scope.update = function(){
     $scope.loading = true;

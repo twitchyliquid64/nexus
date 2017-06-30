@@ -285,6 +285,9 @@ func (h *IntegrationHandler) HandleGetLogs(response http.ResponseWriter, request
 		RunID       string
 		Offset      int
 		Limit       int
+		Info        bool
+		Problem     bool
+		Sys         bool
 	}
 	decoder := json.NewDecoder(request.Body)
 	err = decoder.Decode(&filter)
@@ -304,9 +307,11 @@ func (h *IntegrationHandler) HandleGetLogs(response http.ResponseWriter, request
 	var logs []*integration.Log
 
 	if filter.RunID != "" {
-		logs, err = integration.GetLogsFilteredByRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.RunID, filter.Offset, filter.Limit, h.DB)
+		logs, err = integration.GetLogsFilteredByRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.RunID, filter.Offset, filter.Limit,
+			filter.Info, filter.Problem, filter.Sys, h.DB)
 	} else {
-		logs, err = integration.GetLogsForRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.Offset, filter.Limit, h.DB)
+		logs, err = integration.GetLogsForRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.Offset, filter.Limit,
+			filter.Info, filter.Problem, filter.Sys, h.DB)
 	}
 	if util.InternalHandlerError("integration.GetLogsFilteredByRunnable()", response, request, err) {
 		return
