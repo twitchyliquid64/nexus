@@ -47,6 +47,9 @@
 
         $scope.$on('run-filter-update-run', function(event, args) {
           $scope.selectedRun = args.run;
+          $scope.maxRows = 200;
+          $scope.offset = 0;
+          $scope.page = 0;
         });
 
         $scope.fireChange = function(){
