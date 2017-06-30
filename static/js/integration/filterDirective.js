@@ -44,6 +44,10 @@
           $scope.fireChange();
         }
 
+        $scope.$on('run-filter-update-run', function(event, args) {
+          $scope.selectedRun = args.run;
+        });
+
         $scope.fireChange = function(){
           var f = {
             info: $scope.showInfo,

@@ -25,6 +25,12 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   }
 
   $scope.updateEntries = function(){
+    if ($scope.startRun){
+      $scope.run = $scope.startRun;
+      $scope.startRun = undefined;
+      $scope.$broadcast('run-filter-update-run', {run: $scope.run});
+    }
+
     $scope.loading = true;
     $scope.error = null;
     var d = {
