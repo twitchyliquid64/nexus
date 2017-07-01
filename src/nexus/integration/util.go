@@ -45,6 +45,13 @@ func makeObject(o *otto.Otto) (*otto.Object, error) {
 	return v.Object(), nil
 }
 
+// Panics with an otto Error. This will be caught by otto and converted into a
+// JavaScript exception. Only valid inside otto function calls!!
+func throwOttoException(vm *otto.Otto, string message) {
+	// https://www.bountysource.com/issues/33978990-best-way-to-throw-an-exception-from-go-land
+	panic(vm.MakeCustomError("LibException", message))
+}
+
 func logControlInfo(ctx context.Context, runID, msg string, runnableUID int, db *sql.DB) error {
 	return integration.WriteLog(ctx, &integration.Log{
 		ParentUID: runnableUID,
