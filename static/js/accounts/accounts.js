@@ -40,6 +40,8 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
         $scope.error = response;
       });
     }
+    //$rootScope.$broadcast('accounts-auth-setup', {user: user});
+    //$scope.changePage('accounts-auth');
   }
 
   $scope.delete = function(uid){

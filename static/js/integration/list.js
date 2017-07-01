@@ -26,6 +26,10 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
       url: '/web/v1/integrations/run/manual',
       data: runnable.UID,
     }).then(function successCallback(response) {
+      if (response.data.RunID) {
+        $rootScope.$broadcast('integration-run-explorer', {runnable: runnable, runID: response.data.RunID});
+        $scope.changePage('integration-run-explorer');
+      }
       $scope.update();
     }, function errorCallback(response) {
       $scope.loading = false;

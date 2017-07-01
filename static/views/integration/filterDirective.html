@@ -1,7 +1,7 @@
 <div>
 
   <!-- FILTER display -->
-  <div class="row valign-wrapper" ng-hide="page>0" style="min-height: 81px;">
+  <div class="row valign-wrapper" ng-hide="page>0">
     <div class="col s4">
       <div class="row valign-wrapper" style="margin-bottom: 0px;">
         <div class="col s2" ng-click="next()" style="cursor: pointer;">
@@ -17,22 +17,26 @@
     </div>
 
     <div class="col s2">
-      <input type="checkbox" id="showSystem_selector" ng-click="showSystem=!showSystem" ng-checked="showSystem==true" />
+      <input type="checkbox" id="showSystem_selector" ng-click="showSystem=!showSystem; fireChange()" ng-checked="showSystem==true" />
       <label for="showSystem_selector">System</label>
     </div>
     <div class="col s2">
-      <input type="checkbox" id="showInfo_selector" ng-click="showInfo=!showInfo" ng-checked="showInfo==true" />
+      <input type="checkbox" id="showInfo_selector" ng-click="showInfo=!showInfo; fireChange()" ng-checked="showInfo==true" />
       <label for="showInfo_selector">Info</label>
     </div>
-    <div class="col s4">
-      <input type="checkbox" id="showProblem_selector" ng-click="showProblem=!showProblem" ng-checked="showProblem==true" />
+    <div class="col s2">
+      <input type="checkbox" id="showProblem_selector" ng-click="showProblem=!showProblem; fireChange()" ng-checked="showProblem==true" />
       <label for="showProblem_selector">Warn / Error</label>
+    </div>
+    <div class="col s2">
+      <a class="btn-flat waves-effect waves-light btn" ng-click="fireChange()"><i class="material-icons">refresh</i></a>
+      <a class="btn-flat waves-effect waves-light btn" ng-click="scroll()"><i class="material-icons">keyboard_arrow_down</i></a>
     </div>
   </div>
 
 
   <!-- BOUNDS display -->
-  <div class="row valign-wrapper" ng-hide="page!=1">
+  <div class="row valign-wrapper" ng-hide="page!=1" style="margin-bottom: 4px;">
     <div class="col s4">
       <div class="row valign-wrapper" style="margin-bottom: 0px;">
         <div class="col s2" ng-click="next()" style="cursor: pointer;">
@@ -42,12 +46,16 @@
         </div>
       </div>
     </div>
-    <div class="input-field col s2 offset-s3">
-      <input id="offset_ValInput" type="text" ng-model="offset" ng-class="offsetInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()">
+    <div class="col s2 offset-s1">
+      <a class="btn-flat waves-effect waves-light btn" ng-click="rem()"><i class="material-icons">keyboard_arrow_left</i></a>
+      <a class="btn-flat waves-effect waves-light btn" ng-click="add()"><i class="material-icons">keyboard_arrow_right</i></a>
+    </div>
+    <div class="input-field col s2">
+      <input id="offset_ValInput" type="text" ng-model="offset" ng-class="offsetInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()" style="margin-bottom: 0px;">
       <label for="offset_ValInput">Offset</label>
     </div>
     <div class="input-field col s2">
-      <input id="bounds_ValInput" type="text" ng-model="maxRows" ng-class="boundsInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()">
+      <input id="bounds_ValInput" type="text" ng-model="maxRows" ng-class="boundsInputVldn" class="active" ng-keyup="$event.keyCode == 13 && fireChange()" style="margin-bottom: 0px;">
       <label for="bounds_ValInput">Max Results</label>
     </div>
     <div class="col s1">

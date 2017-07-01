@@ -19,7 +19,6 @@ import (
 	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
-	"nexus/integration"
 )
 
 func die(msg string) {
@@ -42,7 +41,6 @@ var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"LISTGRANTS":           listGrants,
 	"LISTDATASTORES":       listDatastores,
 	"CREATEGRANT":          createGrant,
-	"TESTPYTHON":           testPython,
 }
 
 func printCommands() {
@@ -159,11 +157,6 @@ func resetAuthCommand(ctx context.Context, db *sql.DB) error {
 	integrationAdmin := booleanPrompt("Allowed to manage integrations?")
 
 	return user.SetAuth(ctx, usr.UID, pw, accAdmin, dataAdmin, integrationAdmin, db)
-}
-
-func testPython(ctx context.Context, db *sql.DB) error {
-	integration.Test()
-	return nil
 }
 
 func createSession(ctx context.Context, db *sql.DB) error {

@@ -36,17 +36,17 @@ type StartContext struct {
 }
 
 // Start loads and executes the runnable with the given UID.
-func Start(runnableUID int, startContext *StartContext) error {
+func Start(runnableUID int, startContext *StartContext) (string, error) {
 	ctx := context.Background()
 
 	base, err := integration.GetRunnable(ctx, runnableUID, db)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	rid, err := GenerateRandomString(8)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	r := &Run{
@@ -61,7 +61,7 @@ func Start(runnableUID int, startContext *StartContext) error {
 	for _, initialiser := range initialisers {
 		err := initialiser.Apply(r)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -70,7 +70,7 @@ func Start(runnableUID int, startContext *StartContext) error {
 	mapLock.Unlock()
 
 	go r.start()
-	return nil
+	return rid, nil
 }
 
 // Start is called to actually run
@@ -79,7 +79,10 @@ func (r *Run) start() {
 	logControlInfo(r.Ctx, r.ID, "Run starting. Cause: "+r.StartContext.TriggerKind, r.Base.UID, db)
 	logControlData(r.Ctx, r.ID, "cause="+r.StartContext.TriggerKind, r.Base.UID, integration.DatatypeStartInfo, db) //TODO: Sanitize triggerKind string
 	v, runErr := r.VM.Run(r.Base.Content)
-	logControlInfo(r.Ctx, r.ID, "Run finished.", r.Base.UID, db)
-	logControlData(r.Ctx, r.ID, fmt.Sprintf("error=%v,value=%v", runErr, v), r.Base.UID, integration.DatatypeEndInfo, db)
+
+	if runErr != nil {
+		logSystemError(r.Ctx, r.ID, runErr, r.Base.UID, db)
+	}
+	logControlData(r.Ctx, r.ID, fmt.Sprintf("value=%v,error='%v'", v, runErr), r.Base.UID, integration.DatatypeEndInfo, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
 }

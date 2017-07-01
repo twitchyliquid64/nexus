@@ -44,19 +44,43 @@ var codeSubs = [
     reference: {
       heading: 'console.log()',
       kind: 'method',
-      detail: 'Prints arguments to the console.',
+      detail: 'Logs arguments to the console.',
     },
   },
   {
     prefix: 'console.',
-    name: 'assert',
-    value: 'assert',
-    meta: 'trace on failure',
+    name: 'warn',
+    value: 'warn',
+    meta: 'warn to console',
     score: 100,
     reference: {
-      heading: 'console.assert()',
+      heading: 'console.warn()',
       kind: 'method',
-      detail: 'Prints result + stack trace to the console if the assertion was false.',
+      detail: 'Logs arguments to the console as a warning.',
+    },
+  },
+  {
+    prefix: 'console.',
+    name: 'error',
+    value: 'error',
+    meta: 'error to console',
+    score: 100,
+    reference: {
+      heading: 'console.error()',
+      kind: 'method',
+      detail: 'Logs arguments to the console as an error.',
+    },
+  },
+  {
+    prefix: 'console.',
+    name: 'data',
+    value: 'data',
+    meta: 'object debug',
+    score: 100,
+    reference: {
+      heading: 'console.data(<object>)',
+      kind: 'method',
+      detail: 'Logs a single object to the console.',
     },
   },
   {
@@ -229,6 +253,17 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
             console.log('clearing suggestions');
             $scope.codeSuggestions = [];
             $scope.$digest();
+          }
+        });
+        $scope.editorObj.commands.addCommand({
+          name: 'saveFile',
+          bindKey: {
+            win: 'Ctrl-S',
+            mac: 'Command-S',
+            sender: 'editor|cli'
+          },
+          exec: function(env, args, request) {
+            $scope.save();
           }
         });
       }
