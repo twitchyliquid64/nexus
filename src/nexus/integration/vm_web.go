@@ -140,13 +140,13 @@ func makeWebCall(vm *otto.Otto, method string, details *reqArgs) error {
 		return readErr
 	}
 
-	details.successCallback.Call(otto.NullValue(), body, resp.StatusCode)
+	details.successCallback.Call(otto.NullValue(), string(body), resp.StatusCode)
 	return nil
 }
 
 func addWebCall(vm *otto.Otto, obj *otto.Object, name string) error {
-	return obj.Set(name, func(call *otto.FunctionCall) otto.Value {
-		makeWebCall(vm, strings.ToUpper(name), determineArgs(vm, call))
+	return obj.Set(name, func(call otto.FunctionCall) otto.Value {
+		makeWebCall(vm, strings.ToUpper(name), determineArgs(vm, &call))
 		return otto.NullValue()
 	})
 }
@@ -165,5 +165,5 @@ func (b *webInitialiser) Apply(r *Run) error {
 		return err
 	}
 
-	return nil
+	return r.VM.Set("web", obj)
 }
