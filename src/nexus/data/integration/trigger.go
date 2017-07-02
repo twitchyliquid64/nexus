@@ -121,6 +121,27 @@ func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([
 	return output, nil
 }
 
+// GetAllTriggers is called to get all triggers.
+func GetAllTriggers(ctx context.Context, db *sql.DB) ([]*Trigger, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger;
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Trigger
+	for res.Next() {
+		var o Trigger
+		if err := res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind, &o.Val1, &o.Val2); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+	return output, nil
+}
+
 func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, error) {
 	x, err := tx.ExecContext(ctx, `
 		INSERT INTO
