@@ -40,6 +40,7 @@ func (t *CronTriggers) calcNextRunTime(trigger *integration.Trigger) {
 	t.nextCronRun[trigger.UID] = expr.Next(time.Now())
 }
 
+// runs every x seconds to check when a cron should run, and fire them off
 func (t *CronTriggers) tickCheck() {
 	t.changeLock.Lock()
 	defer t.changeLock.Unlock()

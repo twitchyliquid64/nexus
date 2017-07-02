@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"nexus/integration"
 	"nexus/serv/handlers"
 	"reflect"
 )
@@ -35,6 +36,8 @@ func makeMux(ctx context.Context, db *sql.DB) *http.ServeMux {
 			log.Printf("[mux] Registered %s", reflect.TypeOf(handler).String()[len("*handlers."):])
 		}
 	}
+
+	mux.Handle("/integration/", integration.WebTrigger)
 
 	return mux
 }

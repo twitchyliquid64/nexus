@@ -17,9 +17,13 @@ type triggerImplementation interface {
 
 var triggerMapLock sync.Mutex
 
+// WebTrigger is public to expose ServeHTTP, which is used to handle incoming web requests
+var WebTrigger = &triggers.WebTriggers{Start: startRunHandler}
+
 // trigger kind -> handler mapping
 var triggerHandlers = map[string]triggerImplementation{
 	"CRON": &triggers.CronTriggers{Start: startRunHandler},
+	"HTTP": WebTrigger,
 }
 
 // function pointer injected into trigger handlers. Used to kick off a run.

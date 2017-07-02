@@ -31,6 +31,28 @@ var codeGlobals = [
       kind: 'global object',
       detail: 'Information pertaining to the context/reason this integration was executed.',
     },
+  },
+  {
+    name: 'cronspec',
+    value: 'cronspec',
+    meta: 'CRON trigger only',
+    score: 105,
+    reference: {
+      heading: 'cronspec',
+      kind: 'global object',
+      detail: 'Only available when triggered by a CRON. Set to the cronspec which triggered the current execution',
+    },
+  },
+  {
+    name: 'request',
+    value: 'request',
+    meta: 'HTTP trigger only',
+    score: 110,
+    reference: {
+      heading: 'request',
+      kind: 'global object',
+      detail: 'Only available when triggered by a HTTP request. Information/methods pertaining to the HTTP request which triggered the run, such as the URL or Host.',
+    },
   }
 ];
 
@@ -155,6 +177,102 @@ var codeSubs = [
       detail: 'Information about the account which owns this integration.',
     },
   },
+  {
+    prefix: 'request.',
+    name: 'matched_pattern',
+    value: 'matched_pattern',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.matched_pattern',
+      kind: 'string',
+      detail: 'Regex which was matched to the URL of the request, and triggered the current run.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'matched_name',
+    value: 'matched_name',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.matched_name',
+      kind: 'string',
+      detail: 'Name of the trigger which triggered the current run.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'user_agent',
+    value: 'user_agent',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.user_agent',
+      kind: 'string',
+      detail: 'User Agent of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'url',
+    value: 'url',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.url',
+      kind: 'object',
+      detail: 'Parsed URL of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'referer',
+    value: 'referer',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.referer',
+      kind: 'string',
+      detail: 'Referer header of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'method',
+    value: 'method',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.method',
+      kind: 'string',
+      detail: 'Method (GET/POST etc) of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'write',
+    value: 'write()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.write(<data>)',
+      kind: 'method',
+      detail: 'Writes response data to handle the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'done',
+    value: 'done()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.done()',
+      kind: 'method',
+      detail: 'Finalizes the HTTP response.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
@@ -205,7 +323,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
       case 'CRON':
         return 'schedule';
       case 'HTTP':
-        return 'schedule';
+        return 'http';
     }
     return '?'
   }

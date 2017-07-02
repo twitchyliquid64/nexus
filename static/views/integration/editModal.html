@@ -26,6 +26,7 @@
       <div class="row" style="margin-bottom: 2px;"> <!-- Columns -->
         <label>Add Triggers</label>
         <a class="btn-floating" ng-click="newTrigger('CRON')"><i class="material-icons">timer</i></a>
+        <a class="btn-floating" ng-click="newTrigger('HTTP')"><i class="material-icons">http</i></a>
       </div>
       <div class="row" style="margin-bottom: 2px;" ng-repeat="trigger in triggers"> <!-- Columns Actual -->
         <div class="input-field col s4">
@@ -35,6 +36,10 @@
         <div class="input-field col s5" ng-if="trigger.Kind=='CRON'">
           <input id="int_c_cronspec_{{$index}}" ng-model="trigger.Val1" type="text">
           <label for="int_c_cronspec_{{$index}}">Cron spec</label>
+        </div>
+        <div class="input-field col s5" ng-if="trigger.Kind=='HTTP'">
+          <input id="int_c_httpspec_{{$index}}" ng-model="trigger.Val1" type="text">
+          <label for="int_c_httpspec_{{$index}}">URL match regex</label>
         </div>
         <div class="col s3 input-field" style="height: 3rem;">
           <a class="btn-floating red" ng-click="deleteTrigger($index)"><i class="material-icons left">delete</i></a>
