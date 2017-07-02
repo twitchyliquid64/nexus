@@ -22,12 +22,12 @@ func Initialise(ctx context.Context, database *sql.DB) error {
 
 	triggers, err := integration.GetAllTriggers(ctx, database)
 	if err != nil {
-		return nil
+		return err
 	}
 	for _, t := range triggers {
 		err := initialiseTrigger(t)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
