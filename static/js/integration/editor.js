@@ -273,6 +273,42 @@ var codeSubs = [
       detail: 'Finalizes the HTTP response.',
     },
   },
+  {
+    prefix: 'request.',
+    name: 'host',
+    value: 'host',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.host',
+      kind: 'string',
+      detail: 'Host header of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'uri',
+    value: 'uri',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.uri',
+      kind: 'string',
+      detail: 'Unparsed URI of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'remote_addr',
+    value: 'remote_addr',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.remote_addr',
+      kind: 'string',
+      detail: 'Remote address (ip:port) of the client making the request.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
