@@ -131,6 +131,24 @@ func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia Aut
 	return sid, tx.Commit()
 }
 
+// Revoke sets REVOKE=TRUE for a given session.
+func Revoke(ctx context.Context, sid string, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(`
+	UPDATE
+		sessions SET revoked = TRUE WHERE sid = $1;
+	`, sid)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
+
 // GenerateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random
 // number generator fails to function correctly, in which

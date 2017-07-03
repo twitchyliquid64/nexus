@@ -41,6 +41,7 @@ func (h *CoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.D
 
 	mux.HandleFunc("/", h.HandleIndex)
 	mux.HandleFunc("/login", h.HandleLogin)
+	mux.HandleFunc("/logout", h.HandleLogout)
 	return nil
 }
 
@@ -106,11 +107,32 @@ func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, er
 	return didPassOne, nil
 }
 
+
+// HandleLogout handles a HTTP request to /logout.
+func (h *CoreHandler) HandleLogout(response http.ResponseWriter, request *http.Request) {
+	s, _, err := util.AuthInfo(request, h.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	revokeErr := session.Revoke(request.Context(), s.SID, h.DB)
+	if revokeErr != nil {
+		http.Error(response, "Failed to revoke session", 500)
+		return
+	}
+	http.Redirect(response, request, "/", 303)
+}
+
 // HandleLogin handles a HTTP request to /login.
 func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Request) {
 	ctx := request.Context()
 	if request.Method == "GET" {
-		util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), nil, response))
+		util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), request.FormValue("msg"), response))
 	}
 
 	if request.Method == "POST" {
@@ -119,7 +141,7 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			return
 		}
 		ok, err := checkAuth(ctx, request, h.DB)
-		if util.InternalHandlerError("checkAuth()", response, request, err) {
+		if err != user.ErrUserDoesntExist && util.InternalHandlerError("checkAuth()", response, request, err) {
 			return
 		}
 		if ok {
@@ -142,7 +164,7 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid})
 			http.Redirect(response, request, "/", 303)
 		} else {
-			http.Redirect(response, request, "/login", 303) //303 = must GET
+			http.Redirect(response, request, "/login?msg=Invalid%20credentials,%20please%20try%20again.", 303) //303 = must GET
 		}
 	}
 }

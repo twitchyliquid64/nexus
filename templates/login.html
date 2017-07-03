@@ -49,32 +49,28 @@
   <div class="section"></div>
     <main>
       <center>
-        <h2 class="light-blue-text darken-3"><b>Nexus</b></h2>
-        <div class="section"></div>
-
-        <h5 class="light-blue-text darken-3">Please login into your account</h5>
-        <div class="section"></div>
 
         <div class="container">
           <div class="z-depth-1 grey lighten-4 row" style="display: inline-block; padding: 32px 48px 0px 48px; border: 1px solid #EEE; min-width: 400px;">
 
+            <h2 class="light-blue-text darken-3"><b>Nexus</b></h2>
+
+            <h5 class="light-blue-text darken-3">Please login into your account</h5>
+            {!{if .}!}<p class="red-text">{!{.}!}</p>{!{end}!}
+
             <form class="col s12" method="post" action="/login">
-              <div class='row'>
-                <div class='col s12'>
-                </div>
-              </div>
 
               <div class='row'>
                 <div class='input-field col s12'>
                   <input class='validate' type='text' name='user' id='user' />
-                  <label for='user'>Enter your username</label>
+                  <label for='user'>username</label>
                 </div>
               </div>
 
               <div class='row'>
                 <div class='input-field col s12'>
                   <input class='validate' type='password' name='password' id='password' />
-                  <label for='password'>Enter your password</label>
+                  <label for='password'>password</label>
                 </div>
                 <label style='float: right; display: none;'>
   								<a class='pink-text' href='#!'><b>Forgot Password?</b></a>
