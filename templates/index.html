@@ -123,25 +123,77 @@
     <div ng-controller="AccountsAuthController">
       <loader loading="loading" error="error"></loader>
       <p>Showing authentication methods for <i>{{account.DisplayName}}</i> ({{account.UID}}).</p>
+      <p>For a sign in to succeed, at least one auth method must pass, and all required auth methods must pass.</p>
+      <p ng-hide="auths">No auth methods are currently setup for this user. The user will only be able to login with the accounts basic password, if one exists.</p>
 
       <ul class="collapsible" data-collapsible="accordion">
-        <li>
-          <div class="collapsible-header"><i class="material-icons">whatshot</i>Test</div>
-          <div class="collapsible-body"><span>Sloot.</span></div>
+        <li ng-repeat="auth in auths">
+          <div class="collapsible-header"><i class="material-icons">{{icon(auth)}}</i> {{auth.Val2}}</div>
+          <div class="collapsible-body">
+            <span>Method class: {{cName(auth.Class)}}</span><br>
+            <span>Method kind: {{kName(auth.Kind)}}</span><br><br>
+            <div class="row" style="margin-bottom: 4px; margin-left: 10px;"> <!-- Columns -->
+              <label>Actions</label>
+              <a class="btn-floating" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
+            </div>
+          </div>
         </li>
         <li>
           <div class="collapsible-header"><i class="material-icons">add</i>Add New...</div>
-          <div class="collapsible-body section">
-            Hai
+          <div class="collapsible-body"  style="padding: 24px;">
+            <div class="fields-container">
+              <div class="row" style="margin-bottom: 3px;"><!-- Class selector -->
+                <div class="col s4">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authClassNewSelect" type="radio" id="authSelectorOptional" ng-click="new.Class=1" ng-checked="new.Class==1" />
+                    <label for="authSelectorOptional">Optional</label>
+                  </span>
+                </div>
+                <div class="col s8">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authClassNewSelect" type="radio" id="authSelectorRequired" ng-click="new.Class=0" ng-checked="new.Class==0" />
+                    <label for="authSelectorRequired">Required</label>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 3px;"><!-- Kind selector -->
+                <div class="col s4">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorOTP" ng-click="new.Kind=0" ng-checked="new.Kind==0" />
+                    <label for="kindSelectorOTP">OTP</label>
+                  </span>
+                </div>
+                <div class="col s8">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorPassword" ng-click="new.Kind=1" ng-checked="new.Kind==1" />
+                    <label for="kindSelectorPassword">Password</label>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 6px;"> <!-- Name -->
+                <div class="input-field col s12">
+                  <input id="authNameNewInput" type="text" ng-model="new.Val2">
+                  <label for="authNameNewInput">Name</label>
+                </div>
+              </div>
+              <div class="row" style="margin-bottom: 6px;"> <!-- Secret -->
+                <div class="input-field col s12">
+                  <input id="authSecretNewInput" type="text" ng-model="new.Val1">
+                  <label for="authSecretNewInput">Secret / Password</label>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 3px;">
+                <a href="#!" class="waves-effect waves-light btn" ng-click="newAuth()"><i class="material-icons left">add</i> Create</a>
+                <a href="#!" class="waves-effect waves-light btn-flat" ng-click="newOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
+              </div>
+
+            </div>
           </div>
         </li>
       </ul>
-
-      <div class="fixed-action-btn">
-        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Auth Method" ng-click="createAuth()">
-          <i class="large material-icons">add</i>
-        </a>
-      </div>
     </div>
   </div>
 

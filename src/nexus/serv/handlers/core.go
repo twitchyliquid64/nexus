@@ -64,14 +64,14 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), u, response))
 }
 
-func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, error) {
+func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, string, error) {
 	usr, err := user.Get(ctx, request.FormValue("user"), db)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	authMethods, err := user.GetAuthForUser(ctx, usr.UID, db)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
 	if len(authMethods) == 0 {
@@ -79,6 +79,7 @@ func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, er
 	}
 
 	didPassOne := false
+	authReason := ""
 	for _, method := range authMethods {
 		didPass := false
 
@@ -86,7 +87,7 @@ func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, er
 		case user.KindPassword:
 			hash, err := hex.DecodeString(method.Val1)
 			if err != nil {
-				return false, err
+				return false, "", err
 			}
 			didPass = bcrypt.CompareHashAndPassword(hash, []byte(request.FormValue("password")+"yoloSalty"+strconv.Itoa(usr.UID))) == nil
 		case user.KindOTP:
@@ -97,16 +98,16 @@ func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, er
 		case user.ClassAccepted:
 			if didPass {
 				didPassOne = true
+				authReason += strconv.Itoa(method.Kind) + ","
 			}
 		case user.ClassRequired:
 			if !didPass {
-				return false, nil
+				return false, authReason, nil
 			}
 		}
 	}
-	return didPassOne, nil
+	return didPassOne, authReason, nil
 }
-
 
 // HandleLogout handles a HTTP request to /logout.
 func (h *CoreHandler) HandleLogout(response http.ResponseWriter, request *http.Request) {
@@ -140,12 +141,12 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.Error(response, "Could not parse form", 400)
 			return
 		}
-		ok, err := checkAuth(ctx, request, h.DB)
+		ok, authMessage, err := checkAuth(ctx, request, h.DB)
 		if err != user.ErrUserDoesntExist && util.InternalHandlerError("checkAuth()", response, request, err) {
 			return
 		}
 		if ok {
-			log.Printf("Got correct credentials for %s, creating session", request.FormValue("user"))
+			log.Printf("Got correct credentials for %s using %s, creating session", request.FormValue("user"), authMessage)
 			usr, err := user.Get(ctx, request.FormValue("user"), h.DB)
 			if util.InternalHandlerError("user.Get()", response, request, err) {
 				return

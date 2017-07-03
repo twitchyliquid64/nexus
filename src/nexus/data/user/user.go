@@ -138,25 +138,25 @@ func GetAll(ctx context.Context, db *sql.DB) ([]*DAO, error) {
 }
 
 // CheckBasicAuth returns true if the given password matches the stored hash of the user.
-func CheckBasicAuth(ctx context.Context, username, password string, db *sql.DB) (bool, error) {
+func CheckBasicAuth(ctx context.Context, username, password string, db *sql.DB) (bool, string, error) {
 	res, err := db.QueryContext(ctx, `
 		SELECT id(), passhash_if_no_auth_methods FROM users WHERE username = $1;
 	`, username)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	defer res.Close()
 
 	if !res.Next() {
-		return false, ErrUserDoesntExist
+		return false, "", ErrUserDoesntExist
 	}
 
 	var uid int
 	var hash []byte
 	if err = res.Scan(&uid, &hash); err != nil {
-		return false, err
+		return false, "", err
 	}
-	return bcrypt.CompareHashAndPassword(hash, []byte(password+"yoloSalt"+strconv.Itoa(uid))) == nil, nil
+	return bcrypt.CompareHashAndPassword(hash, []byte(password+"yoloSalt"+strconv.Itoa(uid))) == nil, "BASICPASS", nil
 }
 
 // SetAuth sets the default authentication hash for a uid.

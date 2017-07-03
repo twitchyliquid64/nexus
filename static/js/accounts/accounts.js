@@ -25,23 +25,23 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
   }
 
   $scope.changeAuth = function(user){
-    var pass = prompt("Enter the new password for '" + user.DisplayName + "'");
-    if (pass) {
-      $scope.loading = true;
-      $scope.error = null;
-      $http({
-        method: 'POST',
-        url: '/web/v1/account/setbasicpass',
-        data: {UID: user.UID, Pass: pass},
-      }).then(function successCallback(response) {
-        $scope.update();
-      }, function errorCallback(response) {
-        $scope.loading = false;
-        $scope.error = response;
-      });
-    }
-    //$rootScope.$broadcast('accounts-auth-setup', {user: user});
-    //$scope.changePage('accounts-auth');
+    // var pass = prompt("Enter the new password for '" + user.DisplayName + "'");
+    // if (pass) {
+    //   $scope.loading = true;
+    //   $scope.error = null;
+    //   $http({
+    //     method: 'POST',
+    //     url: '/web/v1/account/setbasicpass',
+    //     data: {UID: user.UID, Pass: pass},
+    //   }).then(function successCallback(response) {
+    //     $scope.update();
+    //   }, function errorCallback(response) {
+    //     $scope.loading = false;
+    //     $scope.error = response;
+    //   });
+    // }
+    $rootScope.$broadcast('accounts-auth-setup', {user: user});
+    $scope.changePage('accounts-auth');
   }
 
   $scope.delete = function(uid){

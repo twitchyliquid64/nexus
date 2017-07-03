@@ -37,7 +37,7 @@ func (h *RoboCoreHandler) HandleAuth(response http.ResponseWriter, request *http
 		return
 	}
 
-	ok, err := user.CheckBasicAuth(ctx, data.Username, data.Password, h.DB)
+	ok, _, err := user.CheckBasicAuth(ctx, data.Username, data.Password, h.DB)
 	if util.InternalHandlerError("user.CheckBasicAuth()", response, request, err) {
 		return
 	}
