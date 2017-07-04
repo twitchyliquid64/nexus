@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"database/sql"
-	"encoding/hex"
 	"log"
 	"net/http"
 	"nexus/data/session"
@@ -11,11 +10,6 @@ import (
 	"nexus/serv/util"
 	"os"
 	"path"
-	"strconv"
-
-	"github.com/pquerna/otp/totp"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // CoreHandler handles feature-critical HTTP endpoints such as authentication
@@ -64,51 +58,6 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), u, response))
 }
 
-func checkAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, string, error) {
-	usr, err := user.Get(ctx, request.FormValue("user"), db)
-	if err != nil {
-		return false, "", err
-	}
-	authMethods, err := user.GetAuthForUser(ctx, usr.UID, db)
-	if err != nil {
-		return false, "", err
-	}
-
-	if len(authMethods) == 0 {
-		return user.CheckBasicAuth(ctx, request.FormValue("user"), request.FormValue("password"), db)
-	}
-
-	didPassOne := false
-	authReason := ""
-	for _, method := range authMethods {
-		didPass := false
-
-		switch method.Kind {
-		case user.KindPassword:
-			hash, err := hex.DecodeString(method.Val1)
-			if err != nil {
-				return false, "", err
-			}
-			didPass = bcrypt.CompareHashAndPassword(hash, []byte(request.FormValue("password")+"yoloSalty"+strconv.Itoa(usr.UID))) == nil
-		case user.KindOTP:
-			didPass = totp.Validate(request.FormValue("otp"), method.Val1)
-		}
-
-		switch method.Class {
-		case user.ClassAccepted:
-			if didPass {
-				didPassOne = true
-				authReason += strconv.Itoa(method.Kind) + ","
-			}
-		case user.ClassRequired:
-			if !didPass {
-				return false, authReason, nil
-			}
-		}
-	}
-	return didPassOne, authReason, nil
-}
-
 // HandleLogout handles a HTTP request to /logout.
 func (h *CoreHandler) HandleLogout(response http.ResponseWriter, request *http.Request) {
 	s, _, err := util.AuthInfo(request, h.DB)
@@ -141,12 +90,12 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.Error(response, "Could not parse form", 400)
 			return
 		}
-		ok, authMessage, err := checkAuth(ctx, request, h.DB)
+		ok, authDetails, err := util.CheckAuth(ctx, request, h.DB)
 		if err != user.ErrUserDoesntExist && util.InternalHandlerError("checkAuth()", response, request, err) {
 			return
 		}
 		if ok {
-			log.Printf("Got correct credentials for %s using %s, creating session", request.FormValue("user"), authMessage)
+			log.Printf("Got correct credentials for %s using %+v, creating session", request.FormValue("user"), authDetails)
 			usr, err := user.Get(ctx, request.FormValue("user"), h.DB)
 			if util.InternalHandlerError("user.Get()", response, request, err) {
 				return

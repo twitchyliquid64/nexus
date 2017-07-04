@@ -5,6 +5,7 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
   $scope.auths = [];
   $scope.error = null;
   $scope.inputType = "password";
+  $scope.imgdata = null;
 
   $scope.update = function(){
     $scope.loading = true;
@@ -42,6 +43,30 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
     return 'Password';
   }
 
+  $scope.genOTP = function(){
+    $scope.loading = true;
+    $scope.error = null;
+    if ($scope.new.Val2 == "") {
+      $scope.new.Val2 = "OTP";
+    }
+    $http({
+      method: 'POST',
+      url: '/web/v1/genotp',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      data: 'account='+$scope.new.Val2,
+    }).then(function successCallback(response) {
+      $scope.loading = false;
+      console.log(response.data);
+      $scope.new.Val1 = response.data.Key;
+      $scope.new.Kind = 0;
+      $scope.inputType = 'text';
+      $scope.imgdata = response.data.Img;
+    }, function errorCallback(response) {
+      $scope.loading = false;
+      $scope.error = response;
+    });
+  }
+
   $scope.newAuth = function(){
     $scope.loading = true;
     $scope.error = null;
@@ -76,6 +101,7 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
 
   $scope.resetNew = function(){
     $scope.inputType = 'password';
+    $scope.imgdata = null;
     $scope.new = {
       Kind: 1,
       Class: 1,

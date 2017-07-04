@@ -188,9 +188,13 @@
                 </div>
               </div>
 
+              <div class="row" style="margin-bottom: 6px;" ng-show="imgdata">
+                <img data-ng-src="data:image/png;base64,{{imgdata}}" />
+              </div>
+
               <div class="row" style="margin-bottom: 3px;">
                 <a href="#!" class="waves-effect waves-light btn" ng-click="newAuth()"><i class="material-icons left">add</i> Create</a>
-                <a href="#!" class="waves-effect waves-light btn-flat" ng-click="newOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
+                <a href="#!" class="waves-effect waves-light btn-flat" ng-click="genOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
               </div>
 
             </div>
