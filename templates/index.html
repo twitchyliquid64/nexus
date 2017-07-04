@@ -111,6 +111,9 @@
         <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Account" ng-click="createAccount()">
           <i class="large material-icons">person_add</i>
         </a>
+        <ul>
+          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Logout" href="/logout"><i class="material-icons">exit_to_app</i></a></li>
+        </ul>
       </div>
     </div>
 
@@ -126,18 +129,18 @@
       <p>For a sign in to succeed, at least one auth method must pass, and all required auth methods must pass.</p>
       <p ng-hide="auths">No auth methods are currently setup for this user. The user will only be able to login with the accounts basic password, if one exists.</p>
 
-      <ul class="collapsible" data-collapsible="accordion">
-        <li ng-repeat="auth in auths">
-          <div class="collapsible-header"><i class="material-icons">{{icon(auth)}}</i> {{auth.Val2}}</div>
-          <div class="collapsible-body">
-            <span>Method class: {{cName(auth.Class)}}</span><br>
-            <span>Method kind: {{kName(auth.Kind)}}</span><br><br>
-            <div class="row" style="margin-bottom: 4px; margin-left: 10px;"> <!-- Columns -->
-              <label>Actions</label>
-              <a class="btn-floating" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
-            </div>
-          </div>
+      <ul class="collection">
+        <li class="collection-item avatar" ng-repeat="auth in auths">
+          <i class="material-icons circle">{{icon(auth)}}</i>
+          <span class="title">{{auth.Val2}}</span>
+          <p>{{kName(auth.Kind)}} <br>
+             <label>{{cName(auth.Class)}}</label>
+          </p>
+          <a href="#!" class="secondary-content" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
         </li>
+      </ul>
+
+      <ul class="collapsible" data-collapsible="accordion">
         <li>
           <div class="collapsible-header"><i class="material-icons">add</i>Add New...</div>
           <div class="collapsible-body"  style="padding: 24px;">
@@ -160,13 +163,13 @@
               <div class="row" style="margin-bottom: 3px;"><!-- Kind selector -->
                 <div class="col s4">
                   <span style="margin-right: 25px;">
-                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorOTP" ng-click="new.Kind=0" ng-checked="new.Kind==0" />
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorOTP" ng-click="new.Kind=0;inputType='text'" ng-checked="new.Kind==0" />
                     <label for="kindSelectorOTP">OTP</label>
                   </span>
                 </div>
                 <div class="col s8">
                   <span style="margin-right: 25px;">
-                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorPassword" ng-click="new.Kind=1" ng-checked="new.Kind==1" />
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorPassword" ng-click="new.Kind=1;inputType='password'" ng-checked="new.Kind==1" />
                     <label for="kindSelectorPassword">Password</label>
                   </span>
                 </div>
@@ -180,7 +183,7 @@
               </div>
               <div class="row" style="margin-bottom: 6px;"> <!-- Secret -->
                 <div class="input-field col s12">
-                  <input id="authSecretNewInput" type="text" ng-model="new.Val1">
+                  <input id="authSecretNewInput" type="{{inputType}}" ng-model="new.Val1">
                   <label for="authSecretNewInput">Secret / Password</label>
                 </div>
               </div>

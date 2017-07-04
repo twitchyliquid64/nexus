@@ -4,6 +4,7 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
   $scope.account = null;
   $scope.auths = [];
   $scope.error = null;
+  $scope.inputType = "password";
 
   $scope.update = function(){
     $scope.loading = true;
@@ -51,6 +52,7 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
       data: $scope.new,
     }).then(function successCallback(response) {
       $scope.update();
+      $scope.resetNew();
     }, function errorCallback(response) {
       $scope.loading = false;
       $scope.error = response;
@@ -73,10 +75,12 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
   }
 
   $scope.resetNew = function(){
+    $scope.inputType = 'password';
     $scope.new = {
       Kind: 1,
-      Class: 0,
+      Class: 1,
       Val1: '',
+      Val2: '',
     };
   }
 
