@@ -71,6 +71,11 @@
     {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
   </ul>
 
+
+  <div ng-show="page == 'home'" class="container row">
+
+  </div>
+
   <div ng-show="page == 'accounts'" class="container">
     <h3>Accounts</h3>
     <div ng-controller="AccountViewController">
@@ -295,7 +300,7 @@
 
       <div class="row">
         <div class="col s3">
-          <ul class="collection" style="overflow-y: scroll; height: 82%;">
+          <ul class="collection" style="overflow-y: scroll; height: 72%;">
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
               <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
               <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
@@ -307,7 +312,7 @@
 
         <div class="s9">
           <h3>{{currentConvoTitle}}</h3>
-          <div id="messages-container" style="overflow-y: auto; height: 62%;">
+          <div id="messages-container" style="overflow-y: auto; height: 64%;">
             <div ng-repeat="msg in currentConvoMessages">
               <div class="message-section">
                 <h5 style="font-size: 1.2rem; display: inline-block; margin: 0.52rem 0 0.156rem 0;">{{msg.From}}</h5><span am-time-ago="msg.CreatedAt" class="msg-time"></span>
@@ -316,15 +321,15 @@
               <div class="divider"></div>
             </div>
           </div>
-          <div style="height: 10%;" class="valign-wrapper">
-            <div class="col s9 input-field">
-              <input id="messengerMsg" type="text" ng-model="msg" ng-keyup="$event.keyCode == 13 && send()">
-              <label for="messengerMsg">Message</label>
-            </div>
-            <div class="col s3">
-              <a class="waves-effect waves-light btn" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
-            </div>
-          </div>
+        </div>
+      </div>
+      <div class="row valign-wrapper">
+        <div class="col s9 offset-s1 input-field">
+          <input id="messengerMsg" type="text" ng-model="msg" ng-keyup="$event.keyCode == 13 && send()">
+          <label for="messengerMsg">Message</label>
+        </div>
+        <div class="col s2">
+          <a class="waves-effect waves-light btn right-align" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
         </div>
       </div>
     </div>
