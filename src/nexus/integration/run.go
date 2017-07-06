@@ -90,4 +90,8 @@ func (r *Run) start() {
 	}
 	logControlData(r.Ctx, r.ID, fmt.Sprintf("value=%v,error='%v'", v, runErr), r.Base.UID, integration.DatatypeEndInfo, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
+
+	mapLock.Lock()
+	delete(runs, r.ID)
+	mapLock.Unlock()
 }

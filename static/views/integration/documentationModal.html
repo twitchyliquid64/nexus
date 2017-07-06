@@ -1,0 +1,10 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='integrationDocumentationModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="integrationDocumentationModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content" ng-bind-html="docs"></div>
+
+  <div class="modal-footer">
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="close()"><span>Close</span></a>
+  </div>
+</div>

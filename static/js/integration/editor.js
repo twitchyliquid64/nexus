@@ -1,3 +1,31 @@
+var browserDocs = "\
+<h4>Browser object</h4>\
+<h5>Methods</h5>\
+<ul>\
+<li>open('https://google.com') - navigate the browser.</li>\
+<li>title() - Returns the title of the current page.</li>\
+<li>body() - Returns the body of the current page.</li>\
+<li>bodyRaw() - Returns the raw body of the current page.</li>\
+<li>cookies() - Returns the cookies set on the current session.</li>\
+<li>setUserAgent('some user agent') - Sets the browsers user agent.</li>\
+<li>setChromeAgent() - Sets the user agent to Chrome.</li>\
+<li>setFirefoxAgent() - Sets the user agent to Firefox.</li>\
+<li>form('#form') - Returns a form object.\
+  <ul style='margin-left: 10px;'>\
+    <li>set('selector', 'value') - Sets an input.</li>\
+    <li>submit() - Submits the form.</li>\
+  </ul>\
+</li>\
+<li>find('#form') - Returns a selector object.\
+  <ul style='margin-left: 10px;'>\
+    <li>text() - Returns the text in the selector.</li>\
+    <li>html() - Returns the HTML in the selector.</li>\
+  </ul>\
+</li>\
+<li>cookies() - Returns the cookies set on the current session.</li>\
+</ul>\
+";
+
 var codeGlobals = [
   {
     name: 'console',
@@ -53,7 +81,18 @@ var codeGlobals = [
       kind: 'global object',
       detail: 'Only available when triggered by a HTTP request. Information/methods pertaining to the HTTP request which triggered the run, such as the URL or Host.',
     },
-  }
+  },
+  {
+    name: 'browser',
+    value: 'browser',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'browser()',
+      kind: 'method',
+      detail: 'Creates a \'fake browser\'. Press Control-B to see a reference of methods for this object.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -418,6 +457,18 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
           },
           exec: function(env, args, request) {
             $scope.save();
+          }
+        });
+        $scope.editorObj.commands.addCommand({
+          name: 'browserDocs',
+          bindKey: {
+            win: 'Ctrl-B',
+            mac: 'Command-B',
+            sender: 'editor|cli'
+          },
+          exec: function(env, args, request) {
+            $rootScope.$broadcast('documentation-modal', {docs: browserDocs});
+            $rootScope.$digest();
           }
         });
       }
