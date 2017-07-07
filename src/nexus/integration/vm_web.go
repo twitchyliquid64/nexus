@@ -25,7 +25,7 @@ type reqArgs struct {
 	successCallback, errorCallback otto.Value
 }
 
-func ToStringArray(obj otto.Value) ([]string, bool) {
+func toStringArray(obj otto.Value) ([]string, bool) {
 	switch t, _ := obj.Export(); exp := t.(type) {
 	case string:
 		return []string { exp }, true
@@ -48,7 +48,7 @@ func ToStringArray(obj otto.Value) ([]string, bool) {
 	}
 }
 
-func ToHttpValues(vm *otto.Otto, obj *otto.Object) url.Values {
+func toHttpValues(vm *otto.Otto, obj *otto.Object) url.Values {
 	result := url.Values{}
 	for _, key := range obj.Keys() {
 		val, err := obj.Get(key)
@@ -96,7 +96,7 @@ func determineArgs(vm *otto.Otto, call *otto.FunctionCall) *reqArgs {
 	return &result
 }
 
-func CallError(r *reqArgs, err string) {
+func tallError(r *reqArgs, err string) {
 	if r.errorCallback.IsFunction() {
 		r.errorCallback.Call(otto.NullValue(), err)
 	}
