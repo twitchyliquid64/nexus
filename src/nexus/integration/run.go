@@ -19,6 +19,7 @@ var initialisers = []builtin{
 	&basicInfoInitialiser{},
 	&ownerInfoInitialiser{},
 	&consoleInitialiser{},
+	&webInitialiser{},
 	&browserInitialiser{},
 	&emailInitialiser{},
 }
