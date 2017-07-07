@@ -93,6 +93,17 @@ var codeGlobals = [
       detail: 'Creates a \'fake browser\'. Press Control-B to see a reference of methods for this object.',
     },
   },
+  {
+    name: 'email',
+    value: 'email',
+    meta: 'emailer',
+    score: 110,
+    reference: {
+      heading: 'email',
+      kind: 'global object',
+      detail: 'Has methods and constants to send email.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -346,6 +357,30 @@ var codeSubs = [
       heading: 'request.remote_addr',
       kind: 'string',
       detail: 'Remote address (ip:port) of the client making the request.',
+    },
+  },
+  {
+    prefix: 'email.',
+    name: 'gmail_addr',
+    value: 'gmail_addr',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'email.gmail_addr',
+      kind: 'string',
+      detail: 'Domain and port to communicate with Gmail.',
+    },
+  },
+  {
+    prefix: 'email.',
+    name: 'send()',
+    value: 'send()',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'email.send()',
+      kind: 'method(addr,pass,{info})',
+      detail: 'Sends an email using password authentication. The info object should contain to, from, subject, body.',
     },
   },
 ]

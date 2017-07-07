@@ -20,6 +20,7 @@ var initialisers = []builtin{
 	&ownerInfoInitialiser{},
 	&consoleInitialiser{},
 	&browserInitialiser{},
+	&emailInitialiser{},
 }
 
 // Run contains the state of a running runnable.
