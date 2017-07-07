@@ -56,7 +56,7 @@ func toHttpValues(vm *otto.Otto, obj *otto.Object) url.Values {
 			throwOttoException(vm, "Data object is bad")
 		}
 
-		converted, worked := ToStringArray(val)
+		converted, worked := toStringArray(val)
 		if !worked {
 			throwOttoException(vm, "Data values must be strings or arrays of strings")
 		}
@@ -79,7 +79,7 @@ func determineArgs(vm *otto.Otto, call *otto.FunctionCall) *reqArgs {
 
 	callbackIndex := 1
 	if data := call.Argument(1); data.IsObject() {
-		result.data = ToHttpValues(vm, data.Object())
+		result.data = toHttpValues(vm, data.Object())
 		callbackIndex += 1
 	}
 
@@ -96,7 +96,7 @@ func determineArgs(vm *otto.Otto, call *otto.FunctionCall) *reqArgs {
 	return &result
 }
 
-func tallError(r *reqArgs, err string) {
+func callError(r *reqArgs, err string) {
 	if r.errorCallback.IsFunction() {
 		r.errorCallback.Call(otto.NullValue(), err)
 	}
@@ -129,14 +129,14 @@ func makeWebCall(vm *otto.Otto, method string, details *reqArgs) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		CallError(details, err.Error())
+		callError(details, err.Error())
 		return err
 	}
 
 	defer resp.Body.Close()
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
-		CallError(details, readErr.Error())
+		callError(details, readErr.Error())
 		return readErr
 	}
 
