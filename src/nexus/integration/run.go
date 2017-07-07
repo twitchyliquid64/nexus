@@ -10,12 +10,17 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
+type builtin interface {
+	Apply(r *Run) error
+}
+
 // register all builtins here
 var initialisers = []builtin{
 	&basicInfoInitialiser{},
 	&ownerInfoInitialiser{},
 	&consoleInitialiser{},
 	&webInitialiser{},
+	&browserInitialiser{},
 }
 
 // Run contains the state of a running runnable.
@@ -37,7 +42,7 @@ type StartContext struct {
 }
 
 // Start loads and executes the runnable with the given UID.
-func Start(runnableUID int, startContext *StartContext) (string, error) {
+func Start(runnableUID int, startContext *StartContext, vm *otto.Otto) (string, error) {
 	ctx := context.Background()
 
 	base, err := integration.GetRunnable(ctx, runnableUID, db)
@@ -56,7 +61,7 @@ func Start(runnableUID int, startContext *StartContext) (string, error) {
 		Base:         base,
 		StartContext: startContext,
 		Started:      time.Now(),
-		VM:           otto.New(),
+		VM:           vm,
 	}
 
 	for _, initialiser := range initialisers {
@@ -86,4 +91,8 @@ func (r *Run) start() {
 	}
 	logControlData(r.Ctx, r.ID, fmt.Sprintf("value=%v,error='%v'", v, runErr), r.Base.UID, integration.DatatypeEndInfo, db)
 	log.Printf("[run][%s] Finished with: %+v and error %v", r.ID, v, runErr)
+
+	mapLock.Lock()
+	delete(runs, r.ID)
+	mapLock.Unlock()
 }

@@ -1,14 +1,23 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"image/png"
 	"log"
 	"net/http"
 	"nexus/data/datastore"
 	"nexus/data/user"
 	"nexus/serv/util"
+	"strconv"
+
+	"github.com/pquerna/otp/totp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AccountsWebHandler handles HTTP endpoints looking up and setting accounts information.
@@ -28,6 +37,9 @@ func (h *AccountsWebHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/account/addgrant", h.HandleAddGrantV1)
 	mux.HandleFunc("/web/v1/account/delgrant", h.HandleDeleteGrantV1)
 	mux.HandleFunc("/web/v1/account/auths", h.HandleListAuthV1)
+	mux.HandleFunc("/web/v1/account/addauth", h.HandleAddAuthV1)
+	mux.HandleFunc("/web/v1/account/delauth", h.HandleDeleteAuthV1)
+	mux.HandleFunc("/web/v1/genotp", h.GenOTPImg)
 	return nil
 }
 
@@ -239,6 +251,39 @@ func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, 
 	response.Write(b)
 }
 
+// GenOTPImg generates an OTP QR code and secret.
+func (h *AccountsWebHandler) GenOTPImg(response http.ResponseWriter, request *http.Request) {
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "nexus",
+		AccountName: request.FormValue("account"),
+	})
+	if util.InternalHandlerError("totp.Generate()", response, request, err) {
+		return
+	}
+	// Convert TOTP key into a QR code encoded as a PNG image.
+	var buf bytes.Buffer
+	img, err := key.Image(250, 250)
+	if util.InternalHandlerError("key.Image()", response, request, err) {
+		return
+	}
+
+	png.Encode(&buf, img)
+	qrStr := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	out := struct {
+		Img string
+		Key string
+	}{Img: qrStr, Key: key.Secret()}
+
+	b, err := json.Marshal(&out)
+	if util.InternalHandlerError("json.Marshal(struct)", response, request, err) {
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
 // HandleListAuthV1 handles web requests to list the auths for a user.
 func (h *AccountsWebHandler) HandleListAuthV1(response http.ResponseWriter, request *http.Request) {
 	s, usr, err := util.AuthInfo(request, h.DB)
@@ -263,6 +308,10 @@ func (h *AccountsWebHandler) HandleListAuthV1(response http.ResponseWriter, requ
 		return
 	}
 
+	for i := range auths {
+		auths[i].Val1 = "{REDACTED}" //lets not expose password hashes and OTPs to the frontend
+	}
+
 	b, err := json.Marshal(auths)
 	if util.InternalHandlerError("json.Marshal([]*user.DAO)", response, request, err) {
 		return
@@ -270,4 +319,63 @@ func (h *AccountsWebHandler) HandleListAuthV1(response http.ResponseWriter, requ
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(b)
+}
+
+// HandleAddAuthV1 handles web requests to add auth for a user
+func (h *AccountsWebHandler) HandleAddAuthV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts {
+		http.Error(response, "You do not have permission to manage accounts", 403)
+		return
+	}
+
+	var input user.Auth
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&input)
+	if util.InternalHandlerError("json.Decode(user.Auth)", response, request, err) {
+		return
+	}
+
+	if input.Kind == user.KindPassword {
+		b, err2 := bcrypt.GenerateFromPassword([]byte(input.Val1+"yoloSalty"+strconv.Itoa(input.UserID)), bcrypt.DefaultCost)
+		if util.InternalHandlerError("bcrypt.GenerateFromPassword()", response, request, err2) {
+			return
+		}
+		input.Val1 = hex.EncodeToString(b)
+	}
+
+	err = user.CreateAuth(request.Context(), &input, h.DB)
+	if util.InternalHandlerError("user.CreateAuth()", response, request, err) {
+		return
+	}
+}
+
+// HandleDeleteAuthV1 handles web requests to remove an auth for a user
+func (h *AccountsWebHandler) HandleDeleteAuthV1(response http.ResponseWriter, request *http.Request) {
+	s, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	if !usr.AdminPerms.Accounts || !s.AccessWeb {
+		http.Error(response, "You do not have permission to manage accounts", 403)
+		return
+	}
+
+	var uids []int
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&uids)
+	if util.InternalHandlerError("json.Decode([]int])", response, request, err) {
+		return
+	}
+	for _, uid := range uids {
+		if err := user.DeleteAuth(request.Context(), uid, h.DB); err != nil {
+			http.Error(response, "Database error", 500)
+			log.Printf("Error when deleting UID %d: %s", uid, err)
+		}
+	}
 }

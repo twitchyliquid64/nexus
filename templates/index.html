@@ -42,6 +42,7 @@
     <script type="text/javascript" src="/static/js/integration/list.js"></script>
     <script type="text/javascript" src="/static/js/integration/runExplorer.js"></script>
     <script type="text/javascript" src="/static/js/integration/filterDirective.js"></script>
+    <script type="text/javascript" src="/static/js/integration/documentationModal.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -69,6 +70,11 @@
     {!{if .AdminPerms.Accounts}!}<li><a href="#" ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
     {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
   </ul>
+
+
+  <div ng-show="page == 'home'" class="container row">
+
+  </div>
 
   <div ng-show="page == 'accounts'" class="container">
     <h3>Accounts</h3>
@@ -111,6 +117,9 @@
         <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Account" ng-click="createAccount()">
           <i class="large material-icons">person_add</i>
         </a>
+        <ul>
+          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Logout" href="/logout"><i class="material-icons">exit_to_app</i></a></li>
+        </ul>
       </div>
     </div>
 
@@ -123,25 +132,81 @@
     <div ng-controller="AccountsAuthController">
       <loader loading="loading" error="error"></loader>
       <p>Showing authentication methods for <i>{{account.DisplayName}}</i> ({{account.UID}}).</p>
+      <p>For a sign in to succeed, at least one auth method must pass, and all required auth methods must pass.</p>
+      <p ng-hide="auths">No auth methods are currently setup for this user. The user will only be able to login with the accounts basic password, if one exists.</p>
 
-      <ul class="collapsible" data-collapsible="accordion">
-        <li>
-          <div class="collapsible-header"><i class="material-icons">whatshot</i>Test</div>
-          <div class="collapsible-body"><span>Sloot.</span></div>
-        </li>
-        <li>
-          <div class="collapsible-header"><i class="material-icons">add</i>Add New...</div>
-          <div class="collapsible-body section">
-            Hai
-          </div>
+      <ul class="collection">
+        <li class="collection-item avatar" ng-repeat="auth in auths">
+          <i class="material-icons circle">{{icon(auth)}}</i>
+          <span class="title">{{auth.Val2}}</span>
+          <p>{{kName(auth.Kind)}} <br>
+             <label>{{cName(auth.Class)}}</label>
+          </p>
+          <a href="#!" class="secondary-content" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
         </li>
       </ul>
 
-      <div class="fixed-action-btn">
-        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Create Auth Method" ng-click="createAuth()">
-          <i class="large material-icons">add</i>
-        </a>
-      </div>
+      <ul class="collapsible" data-collapsible="accordion">
+        <li>
+          <div class="collapsible-header"><i class="material-icons">add</i>Add New...</div>
+          <div class="collapsible-body"  style="padding: 24px;">
+            <div class="fields-container">
+              <div class="row" style="margin-bottom: 3px;"><!-- Class selector -->
+                <div class="col s4">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authClassNewSelect" type="radio" id="authSelectorOptional" ng-click="new.Class=1" ng-checked="new.Class==1" />
+                    <label for="authSelectorOptional">Optional</label>
+                  </span>
+                </div>
+                <div class="col s8">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authClassNewSelect" type="radio" id="authSelectorRequired" ng-click="new.Class=0" ng-checked="new.Class==0" />
+                    <label for="authSelectorRequired">Required</label>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 3px;"><!-- Kind selector -->
+                <div class="col s4">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorOTP" ng-click="new.Kind=0;inputType='text'" ng-checked="new.Kind==0" />
+                    <label for="kindSelectorOTP">OTP</label>
+                  </span>
+                </div>
+                <div class="col s8">
+                  <span style="margin-right: 25px;">
+                    <input class="with-gap" name="authKindNewSelect" type="radio" id="kindSelectorPassword" ng-click="new.Kind=1;inputType='password'" ng-checked="new.Kind==1" />
+                    <label for="kindSelectorPassword">Password</label>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 6px;"> <!-- Name -->
+                <div class="input-field col s12">
+                  <input id="authNameNewInput" type="text" ng-model="new.Val2">
+                  <label for="authNameNewInput">Name</label>
+                </div>
+              </div>
+              <div class="row" style="margin-bottom: 6px;"> <!-- Secret -->
+                <div class="input-field col s12">
+                  <input id="authSecretNewInput" type="{{inputType}}" ng-model="new.Val1">
+                  <label for="authSecretNewInput">Secret / Password</label>
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 6px;" ng-show="imgdata">
+                <img data-ng-src="data:image/png;base64,{{imgdata}}" />
+              </div>
+
+              <div class="row" style="margin-bottom: 3px;">
+                <a href="#!" class="waves-effect waves-light btn" ng-click="newAuth()"><i class="material-icons left">add</i> Create</a>
+                <a href="#!" class="waves-effect waves-light btn-flat" ng-click="genOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
+              </div>
+
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
   </div>
 
@@ -235,7 +300,7 @@
 
       <div class="row">
         <div class="col s3">
-          <ul class="collection" style="overflow-y: scroll; height: 82%;">
+          <ul class="collection" style="overflow-y: scroll; height: 72%;">
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
               <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
               <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
@@ -247,7 +312,7 @@
 
         <div class="s9">
           <h3>{{currentConvoTitle}}</h3>
-          <div id="messages-container" style="overflow-y: auto; height: 62%;">
+          <div id="messages-container" style="overflow-y: auto; height: 64%;">
             <div ng-repeat="msg in currentConvoMessages">
               <div class="message-section">
                 <h5 style="font-size: 1.2rem; display: inline-block; margin: 0.52rem 0 0.156rem 0;">{{msg.From}}</h5><span am-time-ago="msg.CreatedAt" class="msg-time"></span>
@@ -256,15 +321,15 @@
               <div class="divider"></div>
             </div>
           </div>
-          <div style="height: 10%;" class="valign-wrapper">
-            <div class="col s9 input-field">
-              <input id="messengerMsg" type="text" ng-model="msg" ng-keyup="$event.keyCode == 13 && send()">
-              <label for="messengerMsg">Message</label>
-            </div>
-            <div class="col s3">
-              <a class="waves-effect waves-light btn" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
-            </div>
-          </div>
+        </div>
+      </div>
+      <div class="row valign-wrapper">
+        <div class="col s9 offset-s1 input-field">
+          <input id="messengerMsg" type="text" ng-model="msg" ng-keyup="$event.keyCode == 13 && send()">
+          <label for="messengerMsg">Message</label>
+        </div>
+        <div class="col s2">
+          <a class="waves-effect waves-light btn right-align" ng-click="send()"><i class="material-icons left">mail</i> Send</a>
         </div>
       </div>
     </div>
@@ -355,6 +420,8 @@
         </div>
       </div>
     </div>
+
+    <integration-documentation-modal></integration-documentation-modal>
   </div>
 
   <div ng-show="page == 'integration-run-explorer'" style="margin: 0px 9px;">

@@ -9,6 +9,8 @@ import (
 	integrationState "nexus/integration"
 	"nexus/serv/util"
 	"time"
+
+	"github.com/robertkrimen/otto"
 )
 
 // IntegrationHandler handles HTTP endpoints for the integrations UI.
@@ -53,6 +55,11 @@ func (h *IntegrationHandler) HandleCreateRunnable(response http.ResponseWriter, 
 
 	err = integration.DoCreateRunnable(request.Context(), &runnable, h.DB)
 	if util.InternalHandlerError("integration.DoCreateRunnable(struct)", response, request, err) {
+		return
+	}
+
+	err = integrationState.RunnableChanged(&runnable)
+	if util.InternalHandlerError("integrationState.RunnableChanged(runnable)", response, request, err) {
 		return
 	}
 }
@@ -125,7 +132,7 @@ func (h *IntegrationHandler) HandleRun(response http.ResponseWriter, request *ht
 	runID, err := integrationState.Start(runnableUID, &integrationState.StartContext{
 		TriggerKind: "manual",
 		TriggerUID:  0,
-	})
+	}, otto.New())
 	if util.InternalHandlerError("integration.Start(runnable)", response, request, err) {
 		return
 	}
@@ -188,6 +195,11 @@ func (h *IntegrationHandler) HandleEditRunnable(response http.ResponseWriter, re
 	if util.InternalHandlerError("integration.DoEditRunnable(struct)", response, request, err) {
 		return
 	}
+
+	err = integrationState.RunnableChanged(&runnable)
+	if util.InternalHandlerError("integrationState.RunnableChanged(runnable)", response, request, err) {
+		return
+	}
 }
 
 // HandleDeleteRunnable handles web requests to delete a runnable.
@@ -223,6 +235,10 @@ func (h *IntegrationHandler) HandleDeleteRunnable(response http.ResponseWriter, 
 	for _, id := range IDs {
 		err = integration.DoDeleteRunnable(request.Context(), id, h.DB)
 		if util.InternalHandlerError("integration.DoDeleteRunnable(int)", response, request, err) {
+			return
+		}
+		err = integrationState.RunnableChanged(&integration.Runnable{UID: id})
+		if util.InternalHandlerError("integrationState.RunnableChanged(runnable)", response, request, err) {
 			return
 		}
 	}

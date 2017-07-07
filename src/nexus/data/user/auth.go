@@ -113,6 +113,21 @@ func CreateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 	return tx.Commit()
 }
 
+// DeleteAuth removes an auth method.
+func DeleteAuth(ctx context.Context, id int, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		DELETE FROM
+			user_auth WHERE id() = $1;`, id)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 // UpdateAuth updates an Auth object.
 func UpdateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 	tx, err := db.Begin()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	util "nexus/data/util"
 	"time"
 )
 
@@ -30,10 +31,42 @@ func (t *TriggerTable) Setup(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
 	if err = tx.Commit(); err != nil {
 		return err
 	}
-	return nil
+	return t.doCheckV2Columns(ctx, db)
+}
+
+// check new columns exist, nd do migration if necessary
+func (t *TriggerTable) doCheckV2Columns(ctx context.Context, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	valExists, err := util.ColumnExists(tx, "val1", "integration_trigger")
+	if err != nil {
+		return err
+	}
+	if !valExists {
+		_, err2 := tx.Exec("ALTER TABLE integration_trigger ADD val1 STRING NOT NULL;")
+		if err2 != nil {
+			return err2
+		}
+	}
+
+	valExists2, err := util.ColumnExists(tx, "val2", "integration_trigger")
+	if err != nil {
+		return err
+	}
+	if !valExists2 {
+		_, err2 := tx.Exec("ALTER TABLE integration_trigger ADD val2 STRING NOT NULL;")
+		if err2 != nil {
+			return err2
+		}
+	}
+	return tx.Commit()
 }
 
 // Trigger is the DAO representing a runnables triggers.
@@ -44,12 +77,15 @@ type Trigger struct {
 	CreatedAt time.Time
 	Name      string
 	Kind      string
+
+	Val1 string
+	Val2 string
 }
 
 // GetTriggerByUID returns a specific Trigger DAO.
 func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, owner_uid, created_at, name, kind FROM integration_trigger WHERE id() = $1;
+		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE id() = $1;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -61,13 +97,13 @@ func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error)
 	}
 
 	var o Trigger
-	return &o, res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind)
+	return &o, res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind, &o.Val1, &o.Val2)
 }
 
 // GetTriggersForRunnable is called to get all triggers for a runnable.
 func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([]*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, owner_uid, created_at, name, kind FROM integration_trigger WHERE integration_parent = $1;
+		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE integration_parent = $1;
 	`, runnableUID)
 	if err != nil {
 		return nil, err
@@ -77,7 +113,28 @@ func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([
 	var output []*Trigger
 	for res.Next() {
 		var o Trigger
-		if err := res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind); err != nil {
+		if err := res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind, &o.Val1, &o.Val2); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+	return output, nil
+}
+
+// GetAllTriggers is called to get all triggers.
+func GetAllTriggers(ctx context.Context, db *sql.DB) ([]*Trigger, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger;
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Trigger
+	for res.Next() {
+		var o Trigger
+		if err := res.Scan(&o.UID, &o.ParentUID, &o.OwnerUID, &o.CreatedAt, &o.Name, &o.Kind, &o.Val1, &o.Val2); err != nil {
 			return nil, err
 		}
 		output = append(output, &o)
@@ -88,10 +145,10 @@ func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([
 func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, error) {
 	x, err := tx.ExecContext(ctx, `
 		INSERT INTO
-			integration_trigger (integration_parent, owner_uid, name, kind)
+			integration_trigger (integration_parent, owner_uid, name, kind, val1, val2)
 			VALUES (
-				$1, $2,	$3, $4
-			);`, t.ParentUID, t.OwnerUID, t.Name, t.Kind)
+				$1, $2,	$3, $4, $5, $6
+			);`, t.ParentUID, t.OwnerUID, t.Name, t.Kind, t.Val1, t.Val2)
 	if err != nil {
 		return 0, err
 	}
@@ -105,7 +162,7 @@ func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, 
 func editTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) error {
 	_, err := tx.ExecContext(ctx, `
 		UPDATE integration_trigger
-			SET name=$2, kind=$3
-			WHERE id() = $1;`, t.UID, t.Name, t.Kind)
+			SET name=$2, kind=$3, val1=$4, val2=$5
+			WHERE id() = $1;`, t.UID, t.Name, t.Kind, t.Val1, t.Val2)
 	return err
 }

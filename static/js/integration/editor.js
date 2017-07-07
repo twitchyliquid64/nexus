@@ -1,3 +1,31 @@
+var browserDocs = "\
+<h4>Browser object</h4>\
+<h5>Methods</h5>\
+<ul>\
+<li>open('https://google.com') - navigate the browser.</li>\
+<li>title() - Returns the title of the current page.</li>\
+<li>body() - Returns the body of the current page.</li>\
+<li>bodyRaw() - Returns the raw body of the current page.</li>\
+<li>cookies() - Returns the cookies set on the current session.</li>\
+<li>setUserAgent('some user agent') - Sets the browsers user agent.</li>\
+<li>setChromeAgent() - Sets the user agent to Chrome.</li>\
+<li>setFirefoxAgent() - Sets the user agent to Firefox.</li>\
+<li>form('#form') - Returns a form object.\
+  <ul style='margin-left: 10px;'>\
+    <li>set('selector', 'value') - Sets an input.</li>\
+    <li>submit() - Submits the form.</li>\
+  </ul>\
+</li>\
+<li>find('#form') - Returns a selector object.\
+  <ul style='margin-left: 10px;'>\
+    <li>text() - Returns the text in the selector.</li>\
+    <li>html() - Returns the HTML in the selector.</li>\
+  </ul>\
+</li>\
+<li>cookies() - Returns the cookies set on the current session.</li>\
+</ul>\
+";
+
 var codeGlobals = [
   {
     name: 'console',
@@ -31,7 +59,40 @@ var codeGlobals = [
       kind: 'global object',
       detail: 'Information pertaining to the context/reason this integration was executed.',
     },
-  }
+  },
+  {
+    name: 'cronspec',
+    value: 'cronspec',
+    meta: 'CRON trigger only',
+    score: 105,
+    reference: {
+      heading: 'cronspec',
+      kind: 'global object',
+      detail: 'Only available when triggered by a CRON. Set to the cronspec which triggered the current execution',
+    },
+  },
+  {
+    name: 'request',
+    value: 'request',
+    meta: 'HTTP trigger only',
+    score: 110,
+    reference: {
+      heading: 'request',
+      kind: 'global object',
+      detail: 'Only available when triggered by a HTTP request. Information/methods pertaining to the HTTP request which triggered the run, such as the URL or Host.',
+    },
+  },
+  {
+    name: 'browser',
+    value: 'browser',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'browser()',
+      kind: 'method',
+      detail: 'Creates a \'fake browser\'. Press Control-B to see a reference of methods for this object.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -155,6 +216,138 @@ var codeSubs = [
       detail: 'Information about the account which owns this integration.',
     },
   },
+  {
+    prefix: 'request.',
+    name: 'matched_pattern',
+    value: 'matched_pattern',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.matched_pattern',
+      kind: 'string',
+      detail: 'Regex which was matched to the URL of the request, and triggered the current run.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'matched_name',
+    value: 'matched_name',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.matched_name',
+      kind: 'string',
+      detail: 'Name of the trigger which triggered the current run.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'user_agent',
+    value: 'user_agent',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.user_agent',
+      kind: 'string',
+      detail: 'User Agent of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'url',
+    value: 'url',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.url',
+      kind: 'object',
+      detail: 'Parsed URL of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'referer',
+    value: 'referer',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.referer',
+      kind: 'string',
+      detail: 'Referer header of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'method',
+    value: 'method',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.method',
+      kind: 'string',
+      detail: 'Method (GET/POST etc) of the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'write',
+    value: 'write()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.write(<data>)',
+      kind: 'method',
+      detail: 'Writes response data to handle the request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'done',
+    value: 'done()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.done()',
+      kind: 'method',
+      detail: 'Finalizes the HTTP response.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'host',
+    value: 'host',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.host',
+      kind: 'string',
+      detail: 'Host header of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'uri',
+    value: 'uri',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.uri',
+      kind: 'string',
+      detail: 'Unparsed URI of the HTTP request.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'remote_addr',
+    value: 'remote_addr',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.remote_addr',
+      kind: 'string',
+      detail: 'Remote address (ip:port) of the client making the request.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
@@ -205,7 +398,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
       case 'CRON':
         return 'schedule';
       case 'HTTP':
-        return 'schedule';
+        return 'http';
     }
     return '?'
   }
@@ -264,6 +457,18 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
           },
           exec: function(env, args, request) {
             $scope.save();
+          }
+        });
+        $scope.editorObj.commands.addCommand({
+          name: 'browserDocs',
+          bindKey: {
+            win: 'Ctrl-B',
+            mac: 'Command-B',
+            sender: 'editor|cli'
+          },
+          exec: function(env, args, request) {
+            $rootScope.$broadcast('documentation-modal', {docs: browserDocs});
+            $rootScope.$digest();
           }
         });
       }
