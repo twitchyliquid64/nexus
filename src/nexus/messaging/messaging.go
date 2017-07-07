@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"nexus/data/messaging"
+	"nexus/messaging/irc"
 	"nexus/messaging/slack"
 	"sync"
 )
@@ -27,6 +28,12 @@ func Init(ctx context.Context, db *sql.DB) error {
 
 	for i := range srcs {
 		switch srcs[i].Kind {
+		case messaging.IRC:
+			src, err := irc.Make(ctx, srcs[i], db, &wg)
+			if err != nil {
+				return err
+			}
+			workingSources = append(workingSources, src)
 		case messaging.Slack:
 			src, err := slack.Make(ctx, srcs[i], db, &wg)
 			if err != nil {

@@ -137,3 +137,26 @@ func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Co
 
 	return output, nil
 }
+
+// GetConversationsForSource returns a list of convos for a given source.
+func GetConversationsForSource(ctx context.Context, sourceID int, db *sql.DB) ([]*Conversation, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
+		WHERE source_uid  = $1;
+	`, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []*Conversation
+	for res.Next() {
+		var o Conversation
+		if err := res.Scan(&o.UID, &o.Name, &o.SourceUID, &o.CreatedAt, &o.UniqueID, &o.Kind); err != nil {
+			return nil, err
+		}
+		output = append(output, &o)
+	}
+
+	return output, nil
+}

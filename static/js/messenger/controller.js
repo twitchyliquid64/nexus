@@ -59,6 +59,10 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     }).then(function successCallback(response) {
       $scope.loading = false;
       $scope.currentConvoMessages = response.data;
+      $scope.$$postDigest(function(){
+        var objDiv = document.getElementById("messages-container");
+        objDiv.scrollTop = objDiv.scrollHeight;
+      });
     }, function errorCallback(response) {
       $scope.loading = false;
       $scope.error = response;
@@ -84,5 +88,5 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     if ($scope.selected){
       $scope.loadCurrentConvo({UID: $scope.selected});
     }
-  }, 7500);
+  }, 5500);
 }]);

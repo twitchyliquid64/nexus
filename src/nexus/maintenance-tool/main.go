@@ -32,21 +32,21 @@ var usernameFlag = flag.String("username", "", "")
 var kindFlag = flag.String("kind", "", "")
 
 var commandTable = map[string]func(context.Context, *sql.DB) error{
-	"CREATEUSER":           createUserCommand,
-	"RESETAUTH":            resetAuthCommand,
-	"CREATESESSION":        createSession,
-	"LISTSESSIONS":         listSessions,
-	"ADDMESSAGINGSOURCE":   addMessagingSource,
-	"LISTMESSAGINGSOURCES": listMessagingSources,
-	"LISTGRANTS":           listGrants,
-	"LISTDATASTORES":       listDatastores,
-	"CREATEGRANT":          createGrant,
+	"CREATEUSER":     createUserCommand,
+	"RESETAUTH":      resetAuthCommand,
+	"CREATESESSION":  createSession,
+	"LISTSESSIONS":   listSessions,
+	"ADDMSGSOURCE":   addMessagingSource,
+	"LISTMSGSOURCES": listMessagingSources,
+	"LISTGRANTS":     listGrants,
+	"LISTDATASTORES": listDatastores,
+	"CREATEGRANT":    createGrant,
 }
 
 func printCommands() {
 	fmt.Println("Commands:")
 
-	w := tabwriter.NewWriter(os.Stdout, 8, 3, 1, '\t', tabwriter.TabIndent|tabwriter.StripEscape)
+	w := tabwriter.NewWriter(os.Stdout, 12, 3, 3, ' ', tabwriter.TabIndent|tabwriter.StripEscape)
 	counter := 0
 	for command := range commandTable {
 		counter++
