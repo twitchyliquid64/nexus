@@ -22,6 +22,7 @@ var initialisers = []builtin{
 	&webInitialiser{},
 	&browserInitialiser{},
 	&emailInitialiser{},
+	&kvInitialiser{},
 }
 
 // Run contains the state of a running runnable.

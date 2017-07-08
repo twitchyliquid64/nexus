@@ -26,6 +26,7 @@ var tables = []DatabaseTable{
 	&integration.Table{},
 	&integration.TriggerTable{},
 	&integration.LogTable{},
+	&integration.StdDataTable{},
 }
 
 // DatabaseTable represents the manager object for a database table.

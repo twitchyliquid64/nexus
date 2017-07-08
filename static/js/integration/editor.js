@@ -104,6 +104,17 @@ var codeGlobals = [
       detail: 'Has methods and constants to send email.',
     },
   },
+  {
+    name: 'kv',
+    value: 'kv',
+    meta: 'storage',
+    score: 110,
+    reference: {
+      heading: 'kv',
+      kind: 'global object',
+      detail: 'Key value store, where you can get/set objects with a string key.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -381,6 +392,30 @@ var codeSubs = [
       heading: 'email.send()',
       kind: 'method(addr,pass,{info})',
       detail: 'Sends an email using password authentication. The info object should contain to, from, subject, body.',
+    },
+  },
+  {
+    prefix: 'kv.',
+    name: 'get()',
+    value: 'get()',
+    meta: 'obj',
+    score: 110,
+    reference: {
+      heading: 'kv.get(<key>)',
+      kind: 'method',
+      detail: 'Gets an object from the KV store. Returns null if the specified key does not exist.',
+    },
+  },
+  {
+    prefix: 'kv.',
+    name: 'set()',
+    value: 'set()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'kv.set(<key>,<obj>)',
+      kind: 'method',
+      detail: 'Saves an object in the KV store.',
     },
   },
 ]
