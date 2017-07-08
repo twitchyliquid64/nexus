@@ -80,7 +80,7 @@ func determineArgs(vm *otto.Otto, call *otto.FunctionCall) *reqArgs {
 	}
 
 	callbackArgOffset := 1
-	if data := call.Argument(1); data.IsObject() {
+	if data := call.Argument(1); !data.IsFunction() {
 		result.data = toHTTPValues(vm, data.Object())
 		callbackArgOffset++
 	}

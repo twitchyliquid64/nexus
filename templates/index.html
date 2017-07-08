@@ -37,10 +37,10 @@
     <script type="text/javascript" src="/static/js/data/inserterController.js"></script>
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/messenger/controller.js"></script>
-    <script type="text/javascript" src="/static/js/integration/editor.js"></script>
     <script type="text/javascript" src="/static/js/integration/editModal.js"></script>
     <script type="text/javascript" src="/static/js/integration/list.js"></script>
     <script type="text/javascript" src="/static/js/integration/runExplorer.js"></script>
+    <script type="text/javascript" src="/static/js/integration/editor.js"></script>
     <script type="text/javascript" src="/static/js/integration/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/integration/documentationModal.js"></script>
 
@@ -400,7 +400,7 @@
                   {{suggestion.reference.heading}}
                   <span class="suggestion-kind">{{suggestion.reference.kind}}</span>
                 </span>
-                <p>{{suggestion.reference.detail}}</p>
+                <p>{{suggestion.reference.detail}} <a ng-if="suggestion.reference.more" href="#" ng-click="moreReference(suggestion.reference.more)">more</a></p>
               </div>
             </div>
           </div>

@@ -1,10 +1,13 @@
 package triggers
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
 	"nexus/data/integration"
+	"nexus/data/session"
+	"nexus/data/user"
 	"regexp"
 	"sync"
 	"time"
@@ -97,6 +100,30 @@ func (t *WebTriggers) makeRequestVMObj(trig *integration.Trigger, r *http.Reques
 		resp.WriteHeader(int(i))
 		return otto.Value{}
 	})
+	requestObj.Set("auth", func(call otto.FunctionCall) otto.Value {
+		sidCookie, err := r.Cookie("sid")
+		if err != nil {
+			return otto.Value{}
+		}
+
+		session, err := session.Get(context.Background(), sidCookie.Value, db)
+		if err != nil {
+			return vm.MakeCustomError("web", err.Error())
+		}
+
+		usr, err := user.GetByUID(context.Background(), session.UID, db)
+		if err != nil {
+			return vm.MakeCustomError("web", err.Error())
+		}
+
+		o, _ := vm.Object(`authObj = {}`)
+		o.Set("session", session)
+		o.Set("user", usr)
+		o.Set("authenticated", true)
+
+		return o.Value()
+	})
+
 	return requestObj
 }
 

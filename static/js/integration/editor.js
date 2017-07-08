@@ -215,6 +215,30 @@ var codeSubs = [
     },
   },
   {
+    prefix: 'web.',
+    name: 'get',
+    value: 'get',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'web.get()',
+      kind: 'method(url,cb,cb)',
+      detail: 'Does a GET web request. The first callback is called with the response as a string on success, and the second callback is called on failure.',
+    },
+  },
+  {
+    prefix: 'web.',
+    name: 'post',
+    value: 'post',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'web.post()',
+      kind: 'method(url,[data],cb,cb)',
+      detail: 'This method is fucked and will be fixed.',
+    },
+  },
+  {
     prefix: 'owner.',
     name: 'id',
     value: 'id',
@@ -371,6 +395,44 @@ var codeSubs = [
     },
   },
   {
+    prefix: 'request.',
+    name: 'auth',
+    value: 'auth()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'request.auth()',
+      kind: 'object',
+      detail: 'Returns an object describing the currently authenticated Nexus user if any. If authed, \'authenticated\' is set to true.',
+      more: '<h4>request.auth() object</h4><br><label>Example object for authenticated user:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
+        authenticated: true,
+        session: {
+          SessionUID: 1325,
+          UID: 28,
+          SID: "<session ID>",
+          Created: "2017-07-08T21:29:00.417359564+10:00",
+          AccessWeb: true,
+          AccessAPI: true,
+          AuthedVia: "PASS",
+          Revoked: false
+        },
+        user: {
+          UID: 28,
+          DisplayName: "Tom",
+          Username: "jsonp",
+          CreatedAt: "2017-05-13T17:59:45.769387303+10:00",
+          IsRobot: false,
+          AdminPerms: {
+             Accounts: true,
+             Data: true,
+             Integrations: true
+          },
+          Grants: null
+        }
+      }) + '</div>',
+    },
+  },
+  {
     prefix: 'email.',
     name: 'gmail_addr',
     value: 'gmail_addr',
@@ -492,6 +554,10 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     });
   }
 
+  $scope.moreReference = function(moreObj) {
+    $rootScope.$broadcast('documentation-modal', {docs: moreObj});
+  }
+
 
   $rootScope.$on('integration-code-editor', function(event, args) {
     $scope.runnable = args.runnable;
@@ -544,7 +610,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
       }
       if ($scope.runnable){
         $scope.editorObj.setValue($scope.runnable.Content);
-        $scope.editorObj.gotoLine(0,0)
+        $scope.editorObj.gotoLine(0,0);
       }
       $scope.editorObj.resize();
     }

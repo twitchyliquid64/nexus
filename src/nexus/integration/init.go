@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"nexus/data/integration"
+	"nexus/integration/triggers"
 	"sync"
 )
 
@@ -20,16 +21,17 @@ func Initialise(ctx context.Context, database *sql.DB) error {
 		triggerHandler.Setup()
 	}
 
-	triggers, err := integration.GetAllTriggers(ctx, database)
+	trigs, err := integration.GetAllTriggers(ctx, database)
 	if err != nil {
 		return err
 	}
-	for _, t := range triggers {
+	for _, t := range trigs {
 		err := initialiseTrigger(t)
 		if err != nil {
 			return err
 		}
 	}
 
+	triggers.Initialise(database)
 	return nil
 }
