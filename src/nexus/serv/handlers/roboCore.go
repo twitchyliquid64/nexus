@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"nexus/data/session"
 	"nexus/data/user"
 	"nexus/serv/util"
@@ -37,8 +38,11 @@ func (h *RoboCoreHandler) HandleAuth(response http.ResponseWriter, request *http
 		return
 	}
 
-	ok, _, err := user.CheckBasicAuth(ctx, data.Username, data.Password, h.DB)
-	if util.InternalHandlerError("user.CheckBasicAuth()", response, request, err) {
+	u, _ := url.Parse("http://kek/path?user=" + url.QueryEscape(data.Username) + "&password=" + url.QueryEscape(data.Password))
+	r := http.Request{URL: u}
+
+	ok, _, err := util.CheckAuth(ctx, &r, h.DB)
+	if util.InternalHandlerError("util.CheckAuth()", response, request, err) {
 		return
 	}
 

@@ -17,6 +17,7 @@ import (
 // AuthDetails contains semantic information about a successful or unsuccessful auth
 type AuthDetails struct {
 	BasicFallbackUsed bool
+	OTPWanted         bool
 	OTPUsed           bool
 	PassUsed          bool
 	PassedMethod      []string
@@ -68,8 +69,12 @@ func CheckAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, Au
 			}
 		case user.ClassRequired:
 			if !didPass {
+				if method.Kind == user.KindOTP {
+					details.OTPWanted = true
+				}
 				return false, details, nil
 			}
+			didPassOne = true
 		}
 
 		if didPass {

@@ -56,26 +56,32 @@
             <h2 class="light-blue-text darken-3"><b>Nexus</b></h2>
 
             <h5 class="light-blue-text darken-3">Please login into your account</h5>
-            {!{if .}!}<p class="red-text">{!{.}!}</p>{!{end}!}
+            {!{if .Msg}!}<p class="red-text">{!{.Msg}!}</p>{!{end}!}
 
             <form class="col s12" method="post" action="/login">
 
               <div class='row'>
                 <div class='input-field col s12'>
-                  <input class='validate' type='text' name='user' id='user' />
-                  <label for='user'>username</label>
+                  <input class='validate' type='text' name='user' id='user' {!{if .Username}!}value="{!{.Username}!}"{!{end}!} />
+                  <label for='user'>Username</label>
                 </div>
               </div>
 
               <div class='row'>
                 <div class='input-field col s12'>
-                  <input class='validate' type='password' name='password' id='password' />
-                  <label for='password'>password</label>
+                  <input class='validate' type='password' name='password' id='password' {!{if .Password}!}value="{!{.Password}!}"{!{end}!} />
+                  <label for='password'>Password</label>
                 </div>
-                <label style='float: right; display: none;'>
-  								<a class='pink-text' href='#!'><b>Forgot Password?</b></a>
-  							</label>
               </div>
+
+              {!{if .ShowOTP}!}
+              <div class='row'>
+                <div class='input-field col s12'>
+                  <input class='validate' type='text' name='otp' id='otp' />
+                  <label for='otp'>OTP code</label>
+                </div>
+              </div>
+              {!{end}!}
 
               <br />
               <center>

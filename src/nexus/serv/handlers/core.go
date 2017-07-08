@@ -78,11 +78,18 @@ func (h *CoreHandler) HandleLogout(response http.ResponseWriter, request *http.R
 	http.Redirect(response, request, "/", 303)
 }
 
+type loginTemplateData struct {
+	Msg      string
+	ShowOTP  bool
+	Username string
+	Password string
+}
+
 // HandleLogin handles a HTTP request to /login.
 func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Request) {
 	ctx := request.Context()
 	if request.Method == "GET" {
-		util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), request.FormValue("msg"), response))
+		util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), loginTemplateData{Msg: request.FormValue("msg")}, response))
 	}
 
 	if request.Method == "POST" {
@@ -91,6 +98,7 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			return
 		}
 		ok, authDetails, err := util.CheckAuth(ctx, request, h.DB)
+		log.Printf("Attempted auth for %s: %+v", request.FormValue("user"), authDetails)
 		if err != user.ErrUserDoesntExist && util.InternalHandlerError("checkAuth()", response, request, err) {
 			return
 		}
@@ -114,6 +122,16 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid})
 			http.Redirect(response, request, "/", 303)
 		} else {
+			if authDetails.OTPWanted {
+				tData := loginTemplateData{
+					ShowOTP:  true,
+					Username: request.FormValue("user"),
+					Password: request.FormValue("password"),
+				}
+				util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), tData, response))
+				return
+			}
+
 			http.Redirect(response, request, "/login?msg=Invalid%20credentials,%20please%20try%20again.", 303) //303 = must GET
 		}
 	}
