@@ -100,6 +100,18 @@ func DoDeleteRunnable(ctx context.Context, uid int, db *sql.DB) error {
 		return err
 	}
 
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_stddata WHERE integration_parent=$1;`, uid)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_log WHERE integration_parent=$1;`, uid)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	_, err = tx.ExecContext(ctx, `DELETE FROM integration_runnable WHERE id()=$1;`, uid)
 	if err != nil {
 		tx.Rollback()
