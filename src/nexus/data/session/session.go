@@ -148,6 +148,49 @@ func Revoke(ctx context.Context, sid string, db *sql.DB) error {
 	return tx.Commit()
 }
 
+// RevokeByAge revokes sessions past a certain age
+func RevokeByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := tx.ExecContext(ctx, `UPDATE sessions SET revoked = TRUE WHERE created_at < $1 AND revoked = FALSE;`, time.Now().AddDate(0, 0, -days))
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	num, err := l.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return num, tx.Commit()
+}
+
+// DeleteRevokedByAge deletes revoked sessions past a certain age
+func DeleteRevokedByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := tx.ExecContext(ctx, `DELETE FROM sessions WHERE created_at < $1 AND revoked = TRUE;`, time.Now().AddDate(0, 0, -days))
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	num, err := l.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return num, tx.Commit()
+}
 
 // GenerateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random

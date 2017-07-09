@@ -17,6 +17,7 @@ var httpHandlers = []handler{
 	&handlers.MessengerHandler{},
 	&handlers.RoboCoreHandler{},
 	&handlers.IntegrationHandler{},
+	&handlers.MaintainenceHandler{},
 }
 
 type handler interface {

@@ -1,0 +1,74 @@
+<html>
+<head>
+    <title>Nexus</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+</head>
+<body>
+  <nav class="light-blue darken-2" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus - System Maintainence results</a>
+    </div>
+  </nav>
+
+  <div class="container row">
+    <table class="highlight section">
+      <thead>
+        <tr>
+            <th>Operation</th>
+            <th>Results</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>Logs deletion</td>
+          <td>
+            {!{if .LogsDeleteErr}!}
+              <p class="text-red"><b>Error!: </b> {!{.LogsDeleteErr}!}</p>
+            {!{else}!}
+              <p><b>Logs retention: </b> {!{.LogsRetentionDays}!} days</p>
+              <p><b>Rows deleted: </b> {!{.NumLogsDeleted}!}</p>
+              <p><b>Operation took: </b> {!{.LogsCleanupTime}!}</p>
+            {!{end}!}
+          </td>
+        </tr>
+
+        <tr>
+          <td>Revoke old sessions</td>
+          <td>
+            {!{if .SessionRevokeErr}!}
+              <p class="text-red"><b>Error!: </b> {!{.SessionRevokeErr}!}</p>
+            {!{else}!}
+              <p><b>Max session age: </b> {!{.MaxSessionDays}!} days</p>
+              <p><b>Sessions affected: </b> {!{.NumSessionsRevoked}!}</p>
+              <p><b>Operation took: </b> {!{.SessionRevokeTime}!}</p>
+            {!{end}!}
+          </td>
+        </tr>
+
+        <tr>
+          <td>Revoked session deletion</td>
+          <td>
+            {!{if .SessionDeleteErr}!}
+              <p class="red-text"><b>Error!: </b> {!{.SessionDeleteErr}!}</p>
+            {!{else}!}
+              <p><b>Max session retention: </b> {!{.MaxSessionRetentionDays}!} days</p>
+              <p><b>Sessions deleted: </b> {!{.NumSessionsDeleted}!}</p>
+              <p><b>Operation took: </b> {!{.SessionDeleteTime}!}</p>
+            {!{end}!}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

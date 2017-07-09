@@ -3,7 +3,30 @@ package integration
 import (
 	"context"
 	"database/sql"
+	"time"
 )
+
+// DoLogsCleanup deletes old log entries.
+func DoLogsCleanup(ctx context.Context, days int, db *sql.DB) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := tx.ExecContext(ctx, `DELETE FROM integration_log WHERE created_at < $1;`, time.Now().AddDate(0, 0, -days))
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	num, err := l.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return num, tx.Commit()
+}
 
 // DoCreateRunnable implements all the logic to create a runnable and its triggers.
 func DoCreateRunnable(ctx context.Context, ds *Runnable, db *sql.DB) error {
