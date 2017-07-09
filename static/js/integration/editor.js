@@ -526,6 +526,18 @@ function startsWith(s, prefix) {
   return s.substring(0, prefix.length) === prefix;
 }
 
+function topSort(word, set) {
+  var output = [];
+  for (var i = 0; i < set.length; i++) {
+    if (startsWith(set[i].prefix + set[i].name, word)){
+      output.unshift(set[i]);
+    } else {
+      output.push(set[i]);
+    }
+  }
+  return output;
+}
+
 app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
   $scope.editorObj = null;
   $scope.langTools = null;
@@ -551,11 +563,11 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     }
 
     if (lastWord.indexOf('.') === -1) { //no dots
-      $scope.codeSuggestions = codeGlobals.filter(function(g){return startsWith(g.name, lastWord)});
+      $scope.codeSuggestions = topSort(lastWord, codeGlobals.filter(function(g){return startsWith(g.name, lastWord)}));
       $scope.$digest();
       return callback(null, $scope.codeSuggestions);
     } else { //try and resolve subs
-      $scope.codeSuggestions = codeSubs.filter(function(g){return startsWith(lastWord, g.prefix)});
+      $scope.codeSuggestions = topSort(lastWord, codeSubs.filter(function(g){return startsWith(lastWord, g.prefix)}));
       $scope.$digest();
       return callback(null, $scope.codeSuggestions);
     }
