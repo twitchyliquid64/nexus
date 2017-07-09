@@ -156,13 +156,13 @@ func (s *Source) Stop() {
 func (s *Source) Send(cID int, msg string) error {
 	for uid, id := range s.channelCache {
 		if cID == id {
-			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{})
+			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{AsUser: true})
 			return err
 		}
 	}
 	for uid, id := range s.imCache {
 		if cID == id {
-			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{})
+			_, _, err := s.slack.PostMessage(uid, msg, slack.PostMessageParameters{AsUser: true})
 			return err
 		}
 	}
