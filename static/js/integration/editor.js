@@ -221,9 +221,27 @@ var codeSubs = [
     meta: 'method',
     score: 110,
     reference: {
-      heading: 'web.get()',
-      kind: 'method(url,cb,cb)',
-      detail: 'Does a GET web request. The first callback is called with the response as a string on success, and the second callback is called on failure.',
+      heading: 'web.get(url[,opts])',
+      kind: 'method',
+      detail: 'Does a GET web request, returning either an error or an object describing the result.',
+      more: '<h4>web.get() documentation</h4><br><label>Example success result:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
+        "Code":200,
+        "CodeStr":"200 OK",
+        "Cookies":[],
+        "Data":"{\"ip\":\"REDACTED\"}",
+        "Header":{
+          "Access-Control-Allow-Origin":["*"],
+          "Connection":["keep-alive"],
+          "Content-Length":["23"],
+          "Content-Type":["application/json"],
+          "Date":["Sun, 09 Jul 2017 04:45:36 GMT"],
+          "Server":["Cowboy"],
+          "Via":["1.1 vegur"]
+        },
+        "URL":"https://api.ipify.org/?format=json"}) + '</div>' + '<label>Permitted options fields:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
+          content_type: 'string (eg: application/json)',
+          headers: {key: 'value'},
+        }) + '</div>',
     },
   },
   {
@@ -233,9 +251,28 @@ var codeSubs = [
     meta: 'method',
     score: 110,
     reference: {
-      heading: 'web.post()',
-      kind: 'method(url,[data],cb,cb)',
-      detail: 'This method is fucked and will be fixed.',
+      heading: 'web.post(url[,opts])',
+      kind: 'method',
+      detail: 'Does a POST web request, returning either an error or an object describing the result.',
+      more: '<h4>web.get() documentation</h4><br><label>Example success result:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
+        "Code":200,
+        "CodeStr":"200 OK",
+        "Cookies":[],
+        "Data":"{\"ip\":\"REDACTED\"}",
+        "Header":{
+          "Access-Control-Allow-Origin":["*"],
+          "Connection":["keep-alive"],
+          "Content-Length":["23"],
+          "Content-Type":["application/json"],
+          "Date":["Sun, 09 Jul 2017 04:45:36 GMT"],
+          "Server":["Cowboy"],
+          "Via":["1.1 vegur"]
+        },
+        "URL":"https://api.ipify.org/?format=json"}) + '</div>' + '<label>Permitted options fields:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
+          content_type: 'string (eg: application/json)',
+          headers: {key: 'value'},
+          data: 'string',
+        }) + '</div>',
     },
   },
   {

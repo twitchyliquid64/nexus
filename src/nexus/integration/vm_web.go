@@ -1,11 +1,9 @@
 package integration
 
 import (
-	"bytes"
-	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/robertkrimen/otto"
@@ -13,158 +11,145 @@ import (
 
 type webInitialiser struct{}
 
-type reqType int
-
-const (
-	getMethod = iota
-	postMethod
-)
-
-type reqArgs struct {
-	url                            string
-	data                           url.Values
-	headers                        map[string]string
-	successCallback, errorCallback otto.Value
-}
-
-func toStringArray(obj otto.Value) ([]string, bool) {
-	switch t, _ := obj.Export(); exp := t.(type) {
-	case string:
-		return []string{exp}, true
-
-	case []interface{}:
-		result := make([]string, len(exp))
-		for _, val := range exp {
-			str, success := val.(string)
-			if !success {
-				return nil, false
-			}
-
-			result = append(result, str)
-		}
-
-		return result, true
-
-	default:
-		return nil, false
-	}
-}
-
-func toHTTPValues(vm *otto.Otto, obj *otto.Object) url.Values {
-	result := url.Values{}
-	for _, key := range obj.Keys() {
-		val, err := obj.Get(key)
-		if err != nil {
-			throwOttoException(vm, "Data object is bad")
-		}
-
-		converted, worked := toStringArray(val)
-		if !worked {
-			throwOttoException(vm, "Data values must be strings or arrays of strings")
-		}
-
-		result[key] = converted
-	}
-
-	return result
-}
-
-func determineArgs(vm *otto.Otto, call *otto.FunctionCall) *reqArgs {
-	if len(call.ArgumentList) < 2 {
-		throwOttoException(vm, "Need atleast url and callback")
-	}
-
-	result := reqArgs{}
-	if result.url = call.Argument(0).String(); len(result.url) == 0 {
-		throwOttoException(vm, "first arg must be the url")
-	}
-
-	callbackArgOffset := 1
-	if data := call.Argument(1); !data.IsFunction() {
-		result.data = toHTTPValues(vm, data.Object())
-		callbackArgOffset++
-	}
-
-	result.successCallback = call.Argument(callbackArgOffset)
-	if !result.successCallback.IsFunction() {
-		throwOttoException(vm, "successCallback must be a function")
-	}
-
-	result.errorCallback = call.Argument(callbackArgOffset + 1)
-	if !result.errorCallback.IsFunction() {
-		throwOttoException(vm, "errorCallback must be a function")
-	}
-
-	return &result
-}
-
-func callError(r *reqArgs, err string) {
-	if r.errorCallback.IsFunction() {
-		r.errorCallback.Call(otto.NullValue(), err)
-	}
-}
-
-func createRequest(method, rawURL string, data url.Values) (*http.Request, error) {
-	if data == nil || len(data) == 0 {
-		return http.NewRequest(method, rawURL, nil)
-	} else if method == "POST" {
-		return http.NewRequest(method, rawURL, bytes.NewBufferString(data.Encode()))
-	} else if method == "GET" {
-		req, err := http.NewRequest(method, rawURL, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		req.URL.RawQuery = data.Encode()
-		return req, nil
-	}
-	return nil, errors.New("Unknown request type")
-}
-
-func makeWebCall(vm *otto.Otto, method string, details *reqArgs) error {
-	req, err := createRequest(method, details.url, details.data)
-	for k, v := range details.headers {
-		req.Header.Add(k, v)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		callError(details, err.Error())
-		return err
-	}
-
-	defer resp.Body.Close()
-	body, readErr := ioutil.ReadAll(resp.Body)
-	if readErr != nil {
-		callError(details, readErr.Error())
-		return readErr
-	}
-
-	details.successCallback.Call(otto.NullValue(), string(body), resp.StatusCode)
-	return nil
-}
-
-func addWebCall(vm *otto.Otto, obj *otto.Object, name string) error {
-	return obj.Set(name, func(call otto.FunctionCall) otto.Value {
-		makeWebCall(vm, strings.ToUpper(name), determineArgs(vm, &call))
-		return otto.NullValue()
-	})
-}
-
 func (b *webInitialiser) Apply(r *Run) error {
 	obj, err := makeObject(r.VM)
 	if err != nil {
 		return err
 	}
 
-	if err = addWebCall(r.VM, obj, "get"); err != nil {
-		return err
-	}
-
-	if err = addWebCall(r.VM, obj, "post"); err != nil {
+	if err := b.bindGet(obj, r); err != nil {
 		return err
 	}
 
 	return r.VM.Set("web", obj)
+}
+
+func applyRequestParams(obj otto.Value, request *http.Request, client *http.Client) error {
+	//tr := &http.Transport{}
+	if obj.IsObject() {
+		o := obj.Object()
+		for _, key := range o.Keys() {
+			switch key {
+			case "body":
+				d, _ := o.Get(key)
+				request.Body = ioutil.NopCloser(strings.NewReader(d.String()))
+			case "content_type":
+				fallthrough
+			case "Content-Type":
+				fallthrough
+			case "contentType":
+				ct, _ := o.Get(key)
+				request.Header.Add("Content-Type", ct.String())
+			case "headers":
+				headers, err := o.Get("headers")
+				if err != nil {
+					return err
+				}
+				for _, headerName := range headers.Object().Keys() {
+					headerData, _ := headers.Object().Get(headerName)
+					request.Header.Add(headerName, headerData.String())
+				}
+			}
+		}
+	}
+	//client.Transport = tr
+	return nil
+}
+
+func (b *webInitialiser) bindGet(obj *otto.Object, r *Run) error {
+	err := obj.Set("get", func(call otto.FunctionCall) otto.Value {
+
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", call.Argument(0).String(), nil)
+		if err != nil {
+			log.Printf("[RUN][%s][web.get] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		err = applyRequestParams(call.Argument(1), req, client)
+		if err != nil {
+			log.Printf("[RUN][%s][web.get] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[RUN][%s][web.get] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("[RUN][%s][web.get] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		result, _ := r.VM.ToValue(struct {
+			Code    int
+			CodeStr string
+			Data    string
+			URL     string
+			Cookies []*http.Cookie
+			Header  http.Header
+		}{
+			Data:    string(body),
+			URL:     call.Argument(0).String(),
+			Code:    resp.StatusCode,
+			CodeStr: resp.Status,
+			Cookies: resp.Cookies(),
+			Header:  resp.Header,
+		})
+		return result
+	})
+	return err
+}
+
+func (b *webInitialiser) bindPost(obj *otto.Object, r *Run) error {
+	err := obj.Set("post", func(call otto.FunctionCall) otto.Value {
+
+		client := &http.Client{}
+		req, err := http.NewRequest("POST", call.Argument(0).String(), nil)
+		if err != nil {
+			log.Printf("[RUN][%s][web.post] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		err = applyRequestParams(call.Argument(1), req, client)
+		if err != nil {
+			log.Printf("[RUN][%s][web.post] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[RUN][%s][web.post] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("[RUN][%s][web.post] Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("web", err.Error())
+		}
+
+		result, _ := r.VM.ToValue(struct {
+			Code    int
+			CodeStr string
+			Data    string
+			URL     string
+			Cookies []*http.Cookie
+			Header  http.Header
+		}{
+			Data:    string(body),
+			URL:     call.Argument(0).String(),
+			Code:    resp.StatusCode,
+			CodeStr: resp.Status,
+			Cookies: resp.Cookies(),
+			Header:  resp.Header,
+		})
+		return result
+	})
+	return err
 }

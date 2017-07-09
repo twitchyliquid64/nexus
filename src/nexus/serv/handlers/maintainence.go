@@ -75,7 +75,7 @@ func (h *MaintainenceHandler) CleanupHandler(response http.ResponseWriter, reque
 		return
 	}
 
-	if !u.AdminPerms.Data && !u.AdminPerms.Accounts {
+	if !u.AdminPerms.Accounts {
 		http.Error(response, "Not authorized", 403)
 		return
 	}
