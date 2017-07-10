@@ -225,14 +225,17 @@ func (s *Source) onMessage(e *slack.MessageEvent) error {
 		return err
 	}
 
-	_, err := messaging.AddMessage(context.Background(), &messaging.Message{
-		Data:           e.Text,
-		ConversationID: conversationID,
-		UniqueID:       mID,
-		Kind:           messaging.Msg,
-		From:           "Me",
-	}, s.db)
-	return err
+	if e.Text != "" {
+		_, err := messaging.AddMessage(context.Background(), &messaging.Message{
+			Data:           e.Text,
+			ConversationID: conversationID,
+			UniqueID:       mID,
+			Kind:           messaging.Msg,
+			From:           "Me",
+		}, s.db)
+		return err
+	}
+	return nil
 }
 
 func (s *Source) runLoop() {
