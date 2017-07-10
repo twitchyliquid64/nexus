@@ -81,6 +81,9 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'messenger'){
       $scope.update();
+    } else {
+      $scope.baseData = [];
+      $scope.currentConvoMessages = [];
     }
   });
 

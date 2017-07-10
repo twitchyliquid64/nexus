@@ -125,6 +125,8 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'accounts'){
       $scope.update();
+    } else {
+      $scope.accounts = [];
     }
   });
 }]);

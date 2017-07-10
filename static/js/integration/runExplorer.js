@@ -157,6 +157,8 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'integration-run-explorer'){
       $scope.update();
+    } else {
+      document.getElementById('integrationLogOutput').innerHTML = '';
     }
   });
 

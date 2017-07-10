@@ -38,6 +38,13 @@ app.controller('DataExplorerController', ["$scope", "$rootScope", "$http", funct
     $scope.filters = [];
     $scope.update();
   });
+
+  // reset on page change
+  $rootScope.$on('page-change', function(event, args) {
+    if (args.page != 'data-explorer'){
+      $scope.data = [];
+    }
+  });
 }]);
 
 

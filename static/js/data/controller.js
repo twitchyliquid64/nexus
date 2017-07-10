@@ -87,6 +87,8 @@ app.controller('DatastoreController', ["$scope", "$rootScope", "$http", function
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'data'){
       $scope.update();
+    } else {
+      $scope.datastores = [];
     }
   });
 }]);

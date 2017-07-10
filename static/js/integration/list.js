@@ -131,6 +131,8 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'integrations'){
       $scope.update();
+    } else {
+      $scope.integrations = [];
     }
   });
 

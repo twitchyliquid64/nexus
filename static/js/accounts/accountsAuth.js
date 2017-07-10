@@ -118,6 +118,8 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'accounts-auth'){
       $scope.update();
+    } else {
+      $scope.auths = [];
     }
   });
 }]);
