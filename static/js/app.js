@@ -18,15 +18,29 @@ app.directive('loader', function($rootScope){
     restrict: 'E',
     template: '<div class="progress" ng-show="loading"><div class="indeterminate"></div></div>  <blockquote ng-show="error"><h5>Error</h5>' +
         '<ul class="collection">' +
-        '<li class="collection-item"><b>Error code</b>: {{error.status}}</li>' +
-        '<li class="collection-item"><b>Explanation</b>: <span ng-if="error.status==-1">Network Error or server offline</span>{{error.statusText}}</li>' +
-        '<li class="collection-item"><b>The server said</b>: {{error.data}}</li>' +
+        '<li class="collection-item"><b>Error code</b>: {{ec()}}</li>' +
+        '<li class="collection-item"><b>Explanation</b>: {{exp()}}</li>' +
+        '<li class="collection-item"><b>The server said</b>: {{error.data}}{{error.reason}}</li>' +
         '</ul></blockquote>',
     link: function($scope, elem, attrs) {
       // scope = either parent scope or its own child scope if scope set.
       // elem = jqLite wrapped element of: root object inside the template, so we can setup event handlers etc
     },
     controller: function($scope) {
+      $scope.ec = function(){
+        if (!$scope.error)return null;
+        if ($scope.error.success === false)
+          return 'N/A';
+        return $scope.error.status;
+      }
+      $scope.exp = function(){
+        if (!$scope.error)return null;
+        if ($scope.error.status === -1)
+          return "Network Error or server offline";
+        if ($scope.error.success === false)
+          return 'The server encountered a problem handling the request';
+        return $scope.error.statusText;
+      }
     },
   };
 });

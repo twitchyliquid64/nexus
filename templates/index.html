@@ -43,6 +43,7 @@
     <script type="text/javascript" src="/static/js/integration/editor.js"></script>
     <script type="text/javascript" src="/static/js/integration/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/integration/documentationModal.js"></script>
+    <script type="text/javascript" src="/static/js/fs/controller.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -55,10 +56,13 @@
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus</a>
       <ul class="right hide-on-med-and-down">
         <li ng-class="{active: page == 'messenger'}"><a href="#" ng-click="changePage('messenger')"><i class="material-icons">message</i></a></li>
-        <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons left">home</i> Home</a></li>
+        <li ng-class="{active: page == 'files'}"><a href="#" ng-click="changePage('files')"><i class="material-icons">sd_storage</i></a></li>
+        <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons">home</i></a></li>
         {!{if .AdminPerms.Accounts}!}<li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>{!{end}!}
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
         {!{if .AdminPerms.Integrations}!}<li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>{!{end}!}
+        <li><a href="/logout"><i class="material-icons">exit_to_app</i></a></li>
+
       </ul>
       <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
@@ -74,6 +78,46 @@
 
   <div ng-show="page == 'home'" class="container row">
 
+  </div>
+
+  <div ng-show="page == 'files'" class="container row">
+    <div ng-controller="FSController">
+      <div>
+        <h3 style="display: inline-block;">Storage</h3>
+        <label ng-bind="path" style="font-size:21px; margin-left: 15px;"></label>
+      </div>
+      <loader loading="loading" error="error"></loader>
+
+      <table class="highlight">
+        <thead>
+          <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Last Modified</th>
+              <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="file in files">
+            <td style="width: 4ch;" ng-click="nav(file)" style="cursor: pointer;"><i class="material-icons left">{{icon(file)}}</i></td>
+            <td ng-click="nav(file)" style="cursor: pointer;">{{name(file)}}</td>
+            <td am-time-ago="file.Modified" ng-click="nav(file)" style="cursor: pointer;"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="fixed-action-btn">
+        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="New File" ng-click="newFile()">
+          <i class="large material-icons">add</i>
+        </a>
+        <ul>
+          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#"><i class="material-icons">file_upload</i></a></li>
+          <li><a class="btn-floating blue tooltipped" data-position="left" data-delay="50" data-tooltip="New source" href="#"><i class="material-icons">library_add</i></a></li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <div ng-show="page == 'accounts'" class="container">
@@ -118,7 +162,6 @@
           <i class="large material-icons">person_add</i>
         </a>
         <ul>
-          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Logout" href="/logout"><i class="material-icons">exit_to_app</i></a></li>
           <li><a class="btn-floating blue tooltipped" data-position="left" data-delay="50" data-tooltip="Cleanup" href="/admin/cleanup"><i class="material-icons">build</i></a></li>
         </ul>
       </div>
