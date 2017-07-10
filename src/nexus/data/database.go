@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"nexus/data/datastore"
+	"nexus/data/fs"
 	"nexus/data/integration"
 	"nexus/data/messaging"
 	"nexus/data/session"
@@ -27,6 +28,8 @@ var tables = []DatabaseTable{
 	&integration.TriggerTable{},
 	&integration.LogTable{},
 	&integration.StdDataTable{},
+	&fs.MiniFsTable{},
+	&fs.SourceTable{},
 }
 
 // DatabaseTable represents the manager object for a database table.
