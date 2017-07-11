@@ -7,6 +7,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
   $scope.currentConvoTitle = '';
   $scope.currentConvoMessages = [];
   $scope.msg = '';
+  $scope.searchText = '';
 
   $scope.update = function(){
     $scope.loading = true;
@@ -17,6 +18,10 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     }).then(function successCallback(response) {
       $scope.loading = false;
       $scope.baseData = response.data;
+      for (var i = 0; i < $scope.baseData.Conversations.length; i++) {
+        $scope.baseData.Conversations[i].convo_name = $scope.calcConvoName($scope.baseData.Conversations[i]);
+      }
+      console.log($scope.baseData);
       $scope.openConvo($scope.baseData.Conversations[0]);
     }, function errorCallback(response) {
       $scope.loading = false;
@@ -69,7 +74,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     });
   }
 
-  $scope.getConvoSecondLine = function(convo){
+  $scope.calcConvoName = function(convo){
     for (var i = 0; i < $scope.baseData.Sources.length; i++) {
       if (convo.SourceUID == $scope.baseData.Sources[i].UID) {
         return $scope.baseData.Sources[i].Name;
