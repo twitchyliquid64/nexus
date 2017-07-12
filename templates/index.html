@@ -344,12 +344,15 @@
 
       <div class="row">
         <div class="col s3">
-          <ul class="collection" style="overflow-y: scroll; height: 72%;">
-            <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
+          <div class="input-field">
+            <input placeholder="Search..." ng-model="searchText" type="text">
+          </div>
+          <ul class="collection" style="overflow-y: scroll; height: 63%;">
+            <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations | filter:searchText" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
               <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
               <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
               <span class="title">{{convo.Name}}</span>
-              <p>{{getConvoSecondLine(convo)}}</p>
+              <p>{{convo.convo_name}}</p>
             </a>
           </ul>
         </div>
