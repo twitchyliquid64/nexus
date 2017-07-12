@@ -21,7 +21,7 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 
 	h.DB = db
 	mux.HandleFunc("/web/v1/fs/list", h.ListHandler)
-	mux.HandleFunc("/web/v1/fs/add", h.AddHandler)
+	mux.HandleFunc("/web/v1/fs/save", h.AddHandler)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (h *FSHandler) AddHandler(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = fs.Add(request.Context(), details.Path, usr.UID, []byte(""))
+	err = fs.Save(request.Context(), details.Path, usr.UID, []byte(""))
 	if err != nil {
 		h.error(response, request, "Add() failed", err, nil)
 		return

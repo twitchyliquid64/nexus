@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-func addMiniFS(ctx context.Context, p string, userID int, data []byte) error {
-	err := addMiniFSDirectory(ctx, p, userID, data)
+func saveMiniFS(ctx context.Context, p string, userID int, data []byte) error {
+	err := saveMiniFSDirectory(ctx, p, userID, data)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func addMiniFS(ctx context.Context, p string, userID int, data []byte) error {
 	return err
 }
 
-func addMiniFSDirectory(ctx context.Context, p string, userID int, data []byte) error {
+func saveMiniFSDirectory(ctx context.Context, p string, userID int, data []byte) error {
 	// check/update the directory file
 	dir, err := fs.MiniFSGetFile(ctx, userID, path.Dir(p), db)
 	if err == os.ErrNotExist {
@@ -65,18 +65,19 @@ func addMiniFSDirectory(ctx context.Context, p string, userID int, data []byte) 
 	return nil
 }
 
-func addFromSource(ctx context.Context, source *fs.Source, path string, userID int, data []byte) error {
+func saveFromSource(ctx context.Context, source *fs.Source, path string, userID int, data []byte) error {
 	return errors.New("Not implemented")
 }
 
-// Add creates a file for the specified user at the specified path.
-func Add(ctx context.Context, p string, userID int, data []byte) error {
+// Save saves changes to a file for the specified user at the specified path. It creates it if it
+// does not exist
+func Save(ctx context.Context, p string, userID int, data []byte) error {
 	if err := validatePath(p); err != nil {
 		return err
 	}
 
 	if strings.HasPrefix(p, "/minifs") {
-		return addMiniFS(ctx, p[len("/minifs"):], userID, data)
+		return saveMiniFS(ctx, p[len("/minifs"):], userID, data)
 	}
 
 	// identify the source and query that
@@ -91,7 +92,7 @@ func Add(ctx context.Context, p string, userID int, data []byte) error {
 	}
 	for _, source := range sources {
 		if splitPath[1] == source.Prefix {
-			return addFromSource(ctx, source, strings.Join(splitPath, "/"), userID, data)
+			return saveFromSource(ctx, source, strings.Join(splitPath, "/"), userID, data)
 		}
 	}
 	return errors.New("No such root source")

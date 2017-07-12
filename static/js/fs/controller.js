@@ -62,7 +62,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       $scope.error = null;
       $http({
         method: 'POST',
-        url: '/web/v1/fs/add',
+        url: '/web/v1/fs/save',
         data: {path: $scope.path + '/' + newName},
       }).then(function successCallback(response) {
         $scope.loading = false;
