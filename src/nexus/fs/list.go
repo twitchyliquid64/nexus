@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"log"
 )
 
 // ListResultItem represents a single file returned in a List request.
@@ -22,6 +23,16 @@ type ListResultItem struct {
 
 func listMiniFSFiles(ctx context.Context, path string, userID int) ([]ListResultItem, error) {
 	f, err := fs.MiniFSGetFile(ctx, userID, path, db)
+	if err == os.ErrNotExist && path == ""{
+		id, err := fs.MiniFSSaveFile(ctx, &fs.File{
+			OwnerID:     userID,
+			Kind:        fs.FSKindDirectory,
+			AccessLevel: fs.FSAccessPrivate,
+			Path:        "",
+		}, db)
+		log.Printf("[FS] Made root directory for miniFS - UID: %d, Err: %v", id, err)
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
