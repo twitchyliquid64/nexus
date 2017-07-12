@@ -102,7 +102,7 @@
           <tr ng-repeat="file in files">
             <td style="width: 4ch;" ng-click="nav(file)" style="cursor: pointer;"><i class="material-icons left">{{icon(file)}}</i></td>
             <td ng-click="nav(file)" style="cursor: pointer;">{{name(file)}}</td>
-            <td am-time-ago="file.Modified" ng-click="nav(file)" style="cursor: pointer;"></td>
+            <td ng-click="nav(file)" style="cursor: pointer;">{{date(file)}}</td>
             <td></td>
           </tr>
         </tbody>

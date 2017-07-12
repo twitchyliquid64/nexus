@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"log"
 	"nexus/data/fs"
 	"os"
 	"strings"
 	"time"
-	"log"
 )
 
 // ListResultItem represents a single file returned in a List request.
@@ -22,16 +22,20 @@ type ListResultItem struct {
 }
 
 func listMiniFSFiles(ctx context.Context, path string, userID int) ([]ListResultItem, error) {
+	if path == "" {
+		path = "/"
+	}
+
 	f, err := fs.MiniFSGetFile(ctx, userID, path, db)
-	if err == os.ErrNotExist && path == ""{
-		id, err := fs.MiniFSSaveFile(ctx, &fs.File{
+	if err == os.ErrNotExist && path == "/" {
+		id, errDir := fs.MiniFSSaveFile(ctx, &fs.File{
 			OwnerID:     userID,
 			Kind:        fs.FSKindDirectory,
 			AccessLevel: fs.FSAccessPrivate,
-			Path:        "",
+			Path:        "/",
 		}, db)
-		log.Printf("[FS] Made root directory for miniFS - UID: %d, Err: %v", id, err)
-		return nil, err
+		log.Printf("[FS] Made root directory for miniFS - UID: %d, Err: %v", id, errDir)
+		return nil, errDir
 	}
 	if err != nil {
 		return nil, err
@@ -48,6 +52,9 @@ func listMiniFSFiles(ctx context.Context, path string, userID int) ([]ListResult
 	var output []ListResultItem
 	iterator := bufio.NewScanner(listing)
 	for iterator.Scan() {
+		if iterator.Text() == "" {
+			continue
+		}
 		fileInfo, err := fs.MiniFSGetFile(ctx, userID, iterator.Text(), db)
 		if err != nil {
 			return nil, err
@@ -96,9 +103,8 @@ func listFromSource(ctx context.Context, source *fs.Source, path string, userID 
 
 // List returns a list of files at the specified path for the specified user.
 func List(ctx context.Context, path string, userID int) ([]ListResultItem, error) {
-
-	if !strings.HasPrefix(path, "/") {
-		return nil, errors.New("all paths must lead with '/'")
+	if err := validatePath(path); err != nil {
+		return nil, err
 	}
 
 	if path == "/" { //special case - list root sources
