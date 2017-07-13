@@ -12,7 +12,7 @@ import (
 )
 
 func saveMiniFS(ctx context.Context, p string, userID int, data []byte) error {
-	err := saveMiniFSDirectory(ctx, p, userID, data)
+	err := saveMiniFSDirectory(ctx, p, userID)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func saveMiniFS(ctx context.Context, p string, userID int, data []byte) error {
 	return err
 }
 
-func saveMiniFSDirectory(ctx context.Context, p string, userID int, data []byte) error {
+func saveMiniFSDirectory(ctx context.Context, p string, userID int) error {
 	// check/update the directory file
 	dir, err := fs.MiniFSGetFile(ctx, userID, path.Dir(p), db)
 	if err == os.ErrNotExist {

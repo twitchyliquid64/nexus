@@ -125,6 +125,32 @@ func MiniFSFileExists(ctx context.Context, tx *sql.Tx, path string, ownerUID int
 	return true, o, res.Scan(&o)
 }
 
+// MiniFSDeleteFile deletes a file.
+func MiniFSDeleteFile(ctx context.Context, f *File, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	r, err := tx.Exec(`
+    DELETE FROM
+      fs_minifiles
+    WHERE owner_uid = $1 AND path = $2;
+  `, f.OwnerID, f.Path)
+	if affected, errAffected := r.RowsAffected(); affected == 0 || errAffected != nil {
+		if errAffected != nil {
+			err = errAffected
+		} else {
+			err = os.ErrNotExist
+		}
+	}
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 // MiniFSSaveFile saves a file in miniFS. DO NOT use for ownership transfers or renames.
 func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
 	var err error

@@ -5,15 +5,54 @@ import (
 	"errors"
 	"nexus/data/fs"
 	"strings"
+	"path"
+	"os"
+	"io/ioutil"
 )
 
 func deleteMiniFS(ctx context.Context, p string, userID int) error {
-	return errors.New("Not implemented")
+	err := deleteMiniFSDirectory(ctx, p, userID)
+	if err != nil {
+		return err
+	}
+	return fs.MiniFSDeleteFile(ctx, &fs.File{
+		OwnerID: userID,
+		Path: p,
+	}, db)
 }
 
 func deleteFromSource(ctx context.Context, source *fs.Source, p string, userID int) error {
 	return errors.New("Not implemented")
 }
+
+func deleteMiniFSDirectory(ctx context.Context, p string, userID int) error {
+	// check/update the directory file
+	dir, err := fs.MiniFSGetFile(ctx, userID, path.Dir(p), db)
+	if err == os.ErrNotExist {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	if dir.Kind != fs.FSKindDirectory {
+		return errors.New("Cannot base a file off another file")
+	}
+	listing, err := dir.GetReader(ctx, db)
+	if err != nil {
+		return err
+	}
+	listingData, err := ioutil.ReadAll(listing)
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(string(listingData), "\n"+p+"\n") {
+		dir.CachedData = []byte(strings.Replace(string(listingData), "\n"+p+"\n", "", -1))
+		_, err = fs.MiniFSSaveFile(ctx, dir, db)
+	}
+	return err
+}
+
 
 // Delete removes a file from the filesystem, throwing an error if it doesnt exist.
 func Delete(ctx context.Context, p string, userID int) error {
