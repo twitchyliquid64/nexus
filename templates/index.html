@@ -83,8 +83,8 @@
   <div ng-show="page == 'files'" class="container row">
     <div ng-controller="FSController">
       <div>
-        <h3 style="display: inline-block;">Storage</h3>
-        <label ng-bind="path" style="font-size:21px; margin-left: 15px;"></label>
+        <h3 style="display: inline-block;" ng-click="back();">Storage</h3>
+        <label ng-bind="path" style="font-size:21px; margin-left: 15px;cursor: pointer;" ng-click="back();"></label>
       </div>
       <loader loading="loading" error="error"></loader>
 
@@ -103,7 +103,9 @@
             <td style="width: 4ch;" ng-click="nav(file)" style="cursor: pointer;"><i class="material-icons left">{{icon(file)}}</i></td>
             <td ng-click="nav(file)" style="cursor: pointer;">{{name(file)}}</td>
             <td ng-click="nav(file)" style="cursor: pointer;">{{date(file)}}</td>
-            <td></td>
+            <td>
+              <a class="btn-floating" href="#" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -115,6 +117,7 @@
         <ul>
           <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#"><i class="material-icons">file_upload</i></a></li>
           <li><a class="btn-floating blue tooltipped" data-position="left" data-delay="50" data-tooltip="New source" href="#"><i class="material-icons">library_add</i></a></li>
+          <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="New folder" href="#" ng-click="newFolder()"><i class="material-icons">create_new_folder</i></a></li>
         </ul>
       </div>
     </div>

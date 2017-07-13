@@ -22,6 +22,8 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 	h.DB = db
 	mux.HandleFunc("/web/v1/fs/list", h.ListHandler)
 	mux.HandleFunc("/web/v1/fs/save", h.AddHandler)
+	mux.HandleFunc("/web/v1/fs/delete", h.DeleteHandler)
+	mux.HandleFunc("/web/v1/fs/newFolder", h.NewFolderHandler)
 	return nil
 }
 
@@ -99,6 +101,59 @@ func (h *FSHandler) AddHandler(response http.ResponseWriter, request *http.Reque
 	err = fs.Save(request.Context(), details.Path, usr.UID, []byte(""))
 	if err != nil {
 		h.error(response, request, "Add() failed", err, nil)
+		return
+	}
+}
+
+// DeleteHandler handles requests to delete files
+func (h *FSHandler) DeleteHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		Path string `json:"path"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if err != nil {
+		h.error(response, request, "Request decode failed", err, nil)
+		return
+	}
+
+	err = fs.Delete(request.Context(), details.Path, usr.UID)
+	if err != nil {
+		switch err {
+		case fs.ErrHasFiles:
+			h.error(response, request, "Cannot delete a folder which contains files", err, map[string]interface{}{"path": details.Path})
+		default:
+			h.error(response, request, "Delete() failed", err, nil)
+		}
+		return
+	}
+}
+
+// NewFolderHandler handles requests to create folders
+func (h *FSHandler) NewFolderHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		Path string `json:"path"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if err != nil {
+		h.error(response, request, "Request decode failed", err, nil)
+		return
+	}
+
+	err = fs.NewFolder(request.Context(), details.Path, usr.UID)
+	if err != nil {
+		h.error(response, request, "NewFolder() failed", err, nil)
 		return
 	}
 }

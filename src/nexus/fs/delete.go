@@ -3,21 +3,42 @@ package fs
 import (
 	"context"
 	"errors"
-	"nexus/data/fs"
-	"strings"
-	"path"
-	"os"
 	"io/ioutil"
+	"nexus/data/fs"
+	"os"
+	"path"
+	"strings"
 )
 
+// ErrHasFiles is returned if one attempts to delete a non-empty directory.
+var ErrHasFiles = errors.New("Cannot delete non-empty directory")
+
 func deleteMiniFS(ctx context.Context, p string, userID int) error {
-	err := deleteMiniFSDirectory(ctx, p, userID)
+	f, err := fs.MiniFSGetFile(ctx, userID, p, db)
+	if err != nil {
+		return err
+	}
+	if f.Kind == fs.FSKindDirectory {
+		r, err2 := f.GetReader(ctx, db)
+		if err2 != nil {
+			return err2
+		}
+		d, err2 := ioutil.ReadAll(r)
+		if err2 != nil {
+			return err2
+		}
+		if len(d) > 0 {
+			return ErrHasFiles
+		}
+	}
+
+	err = deleteMiniFSFromDirectory(ctx, p, userID)
 	if err != nil {
 		return err
 	}
 	return fs.MiniFSDeleteFile(ctx, &fs.File{
 		OwnerID: userID,
-		Path: p,
+		Path:    p,
 	}, db)
 }
 
@@ -25,7 +46,7 @@ func deleteFromSource(ctx context.Context, source *fs.Source, p string, userID i
 	return errors.New("Not implemented")
 }
 
-func deleteMiniFSDirectory(ctx context.Context, p string, userID int) error {
+func deleteMiniFSFromDirectory(ctx context.Context, p string, userID int) error {
 	// check/update the directory file
 	dir, err := fs.MiniFSGetFile(ctx, userID, path.Dir(p), db)
 	if err == os.ErrNotExist {
@@ -52,7 +73,6 @@ func deleteMiniFSDirectory(ctx context.Context, p string, userID int) error {
 	}
 	return err
 }
-
 
 // Delete removes a file from the filesystem, throwing an error if it doesnt exist.
 func Delete(ctx context.Context, p string, userID int) error {
