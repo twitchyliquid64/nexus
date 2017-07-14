@@ -24,6 +24,7 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 	mux.HandleFunc("/web/v1/fs/save", h.AddHandler)
 	mux.HandleFunc("/web/v1/fs/delete", h.DeleteHandler)
 	mux.HandleFunc("/web/v1/fs/newFolder", h.NewFolderHandler)
+	mux.HandleFunc("/web/v1/fs/download/", h.DownloadHandler)
 	return nil
 }
 
@@ -154,6 +155,26 @@ func (h *FSHandler) NewFolderHandler(response http.ResponseWriter, request *http
 	err = fs.NewFolder(request.Context(), details.Path, usr.UID)
 	if err != nil {
 		h.error(response, request, "NewFolder() failed", err, nil)
+		return
+	}
+}
+
+// DownloadHandler handles requests to download a file
+func (h *FSHandler) DownloadHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	// TODO: Get metadata first to check if exists / get filename.
+	// Dont set the headers if we get an error there.
+
+	response.Header().Set("Content-Disposition", "attachment;")
+	path := request.URL.Path[len("/web/v1/fs/download"):]
+	err = fs.Contents(request.Context(), path, usr.UID, response)
+	if err != nil {
+		log.Printf("Path: %q", path)
+		h.error(response, request, "Contents() failed", err, nil)
 		return
 	}
 }

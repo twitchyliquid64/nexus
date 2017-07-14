@@ -105,6 +105,7 @@
             <td ng-click="nav(file)" style="cursor: pointer;">{{date(file)}}</td>
             <td>
               <a class="btn-floating" href="#" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" href="#" ng-click="download(file)" ng-if="file.ItemKind==2"><i class="material-icons">file_download</i></a>
             </td>
           </tr>
         </tbody>

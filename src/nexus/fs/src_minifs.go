@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"nexus/data/fs"
@@ -12,6 +13,20 @@ import (
 )
 
 type miniFS struct{}
+
+func (_ *miniFS) Contents(ctx context.Context, p string, userID int, writer io.Writer) error {
+	f, err := fs.MiniFSGetFile(ctx, userID, p, db)
+	if err != nil {
+		return err
+	}
+
+	r, err := f.GetReader(ctx, db)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(writer, r)
+	return err
+}
 
 func (_ *miniFS) Save(ctx context.Context, p string, userID int, data []byte) error {
 	err := saveMiniFSDirectory(ctx, p, userID)

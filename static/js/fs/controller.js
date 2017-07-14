@@ -16,6 +16,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       $scope.loading = false;
       if (response.data && response.data.success == false){
         $scope.error = response.data;
+        $scope.files = [];
         return
       }
       $scope.files = response.data;
@@ -55,6 +56,9 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
     return moment(file.Modified).format("dddd, MMMM Do YYYY, h:mm:ss a");
   }
 
+  $scope.download = function(f){
+    window.location.href = '/web/v1/fs/download/' + $scope.path.split('/')[1] + '/' + f.Name;
+  }
   $scope.nav = function(f){
     if (f.ItemKind == 2) {//file
 
@@ -114,22 +118,31 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
   }
 
   $scope.delete = function(file){
-    $scope.loading = true;
-    $scope.error = null;
-    $http({
-      method: 'POST',
-      url: '/web/v1/fs/delete',
-      data: {path: '/' + $scope.path.split('/')[1] + '/' + file.Name},
-    }).then(function successCallback(response) {
-      $scope.loading = false;
-      if (response.data && response.data.success == false){
-        $scope.error = response.data;
-        return
-      }
-      $scope.update();
-    }, function errorCallback(response) {
-      $scope.loading = false;
-      $scope.error = response;
+    $rootScope.$broadcast('check-confirmation', {
+      title: 'Confirm Deletion',
+      content: 'Are you sure you want to delete the file \'' + file.Name + '\'?',
+      actions: [
+        {text: 'No'},
+        {text: 'Yes', onAction: function(){
+          $scope.loading = true;
+          $scope.error = null;
+          $http({
+            method: 'POST',
+            url: '/web/v1/fs/delete',
+            data: {path: '/' + $scope.path.split('/')[1] + '/' + file.Name},
+          }).then(function successCallback(response) {
+            $scope.loading = false;
+            if (response.data && response.data.success == false){
+              $scope.error = response.data;
+              return
+            }
+            $scope.update();
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+          });
+        }},
+      ]
     });
   }
 

@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"errors"
+  "io"
 	"nexus/data/fs"
 )
 
@@ -12,6 +13,7 @@ type source interface {
 	List(ctx context.Context, path string, userID int) ([]ListResultItem, error)
 	Delete(ctx context.Context, p string, userID int) error
 	NewFolder(ctx context.Context, p string, userID int) error
+  Contents(ctx context.Context, p string, userID int, writer io.Writer) error
 }
 
 func expandSource(s *fs.Source) (source, error) {
