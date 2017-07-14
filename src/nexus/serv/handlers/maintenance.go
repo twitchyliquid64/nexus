@@ -19,14 +19,14 @@ const (
 	maxSessionRetentionDays = 28
 )
 
-// MaintainenceHandler handles endpoints which represent maintainence operations.
-type MaintainenceHandler struct {
+// MaintenanceHandler handles endpoints which represent maintainence operations.
+type MaintenanceHandler struct {
 	TemplatePath string
 	DB           *sql.DB
 }
 
 // BindMux registers HTTP handlers on the given mux.
-func (h *MaintainenceHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) error {
+func (h *MaintenanceHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) error {
 	templatePath := ctx.Value("templatePath")
 	if templatePath != nil {
 		h.TemplatePath = templatePath.(string)
@@ -62,7 +62,7 @@ type cleanupData struct {
 }
 
 // CleanupHandler handles a HTTP request to /admin/cleanup.
-func (h *MaintainenceHandler) CleanupHandler(response http.ResponseWriter, request *http.Request) {
+func (h *MaintenanceHandler) CleanupHandler(response http.ResponseWriter, request *http.Request) {
 	var templateData cleanupData
 
 	_, u, err := util.AuthInfo(request, h.DB)
@@ -95,5 +95,5 @@ func (h *MaintainenceHandler) CleanupHandler(response http.ResponseWriter, reque
 	templateData.NumSessionsDeleted, templateData.SessionDeleteErr = session.DeleteRevokedByAge(request.Context(), maxSessionRetentionDays, h.DB)
 	templateData.SessionDeleteTime = time.Now().Sub(sessionDeleteStart)
 
-	util.LogIfErr("CleanupHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/maintainenceResult.html"), templateData, response))
+	util.LogIfErr("CleanupHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/maintenanceResult.html"), templateData, response))
 }
