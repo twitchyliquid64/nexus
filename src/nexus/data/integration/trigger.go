@@ -69,6 +69,11 @@ func (t *TriggerTable) doCheckV2Columns(ctx context.Context, db *sql.DB) error {
 	return tx.Commit()
 }
 
+// Forms is called by the form renderer to get any settings forms relevant to this table.
+func (t *TriggerTable) Forms() []*util.FormDescriptor {
+	return nil
+}
+
 // Trigger is the DAO representing a runnables triggers.
 type Trigger struct {
 	UID       int

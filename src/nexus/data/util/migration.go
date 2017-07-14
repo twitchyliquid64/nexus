@@ -1,4 +1,4 @@
-package integration
+package util
 
 import "database/sql"
 

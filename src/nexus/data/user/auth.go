@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"nexus/data/util"
 	"time"
 )
 
@@ -46,6 +47,11 @@ func (t *AuthTable) Setup(ctx context.Context, db *sql.DB) error {
 	if err = tx.Commit(); err != nil {
 		return err
 	}
+	return nil
+}
+
+// Forms is called by the form renderer to get any settings forms relevant to this table.
+func (t *AuthTable) Forms() []*util.FormDescriptor {
 	return nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
+	"nexus/data/util"
 	"reflect"
 
 	"github.com/cznic/ql"
@@ -35,6 +36,7 @@ var tables = []DatabaseTable{
 // DatabaseTable represents the manager object for a database table.
 type DatabaseTable interface {
 	Setup(ctx context.Context, db *sql.DB) error
+	Forms() []*util.FormDescriptor
 }
 
 // Init is called with database information to initialise a database session, creating any necessary tables.
@@ -64,4 +66,17 @@ func GetTable(tbl DatabaseTable) DatabaseTable {
 		}
 	}
 	return nil
+}
+
+// GetForms returns all the forms which are registered by database tables.
+func GetForms() []*util.FormDescriptor {
+	var forms []*util.FormDescriptor
+
+	for _, table := range tables {
+		tableForms := table.Forms()
+		if tableForms != nil {
+			forms = append(forms, tableForms...)
+		}
+	}
+	return forms
 }

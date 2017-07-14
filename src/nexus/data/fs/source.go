@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"database/sql"
+	"nexus/data/util"
 	"os"
 	"time"
 )
@@ -45,6 +46,16 @@ func (t *SourceTable) Setup(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 	return nil
+}
+
+// Forms is called by the form renderer to get any settings forms relevant to this table.
+func (t *SourceTable) Forms() []*util.FormDescriptor {
+	return []*util.FormDescriptor{
+		&util.FormDescriptor{
+			FormTitle: "Filesystem Sources",
+			ID:        "fsUserSources",
+		},
+	}
 }
 
 // Source represents a filesystem source for a user

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"nexus/data/util"
 	"time"
 )
 
@@ -39,6 +40,11 @@ func (t *SourceTable) Setup(ctx context.Context, db *sql.DB) error {
 	if err = tx.Commit(); err != nil {
 		return err
 	}
+	return nil
+}
+
+// Forms is called by the form renderer to get any settings forms relevant to this table.
+func (t *SourceTable) Forms() []*util.FormDescriptor {
 	return nil
 }
 
