@@ -115,6 +115,17 @@ var codeGlobals = [
       detail: 'Key value store, where you can get/set objects with a string key.',
     },
   },
+  {
+    name: 'fs',
+    value: 'fs',
+    meta: 'filesystem',
+    score: 110,
+    reference: {
+      heading: 'fs',
+      kind: 'global object',
+      detail: 'Contains methods to read and write to the virtual filesystem.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -187,7 +198,7 @@ var codeSubs = [
     reference: {
       heading: 'context.run_reason',
       kind: 'string',
-      detail: 'Cause of the execution. Typically "manual", "CRON" etc',
+      detail: 'Cause of the execution. Typically "manual", "CRON", "HTTP" etc',
     },
   },
   {
@@ -515,6 +526,18 @@ var codeSubs = [
       heading: 'kv.set(<key>,<obj>)',
       kind: 'method',
       detail: 'Saves an object in the KV store.',
+    },
+  },
+  {
+    prefix: 'fs.',
+    name: 'read()',
+    value: 'read()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.read(<path>)',
+      kind: 'method',
+      detail: 'Returns the content of a file by the specified path.',
     },
   },
 ]
