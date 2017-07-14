@@ -62,7 +62,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       $scope.path = f.Name;
     } else {
       console.log($scope.path.split('/'), f);
-      $scope.path = '/' + $scope.path.split('/')[1] + f.Name;
+      $scope.path = '/' + $scope.path.split('/')[1] + '/' + f.Name;
     }
     $scope.update();
   }
@@ -119,7 +119,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
     $http({
       method: 'POST',
       url: '/web/v1/fs/delete',
-      data: {path: '/' + $scope.path.split('/')[1] + file.Name},
+      data: {path: '/' + $scope.path.split('/')[1] + '/' + file.Name},
     }).then(function successCallback(response) {
       $scope.loading = false;
       if (response.data && response.data.success == false){
