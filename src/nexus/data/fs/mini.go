@@ -172,7 +172,7 @@ func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
       UPDATE
         fs_minifiles
       SET
-        access_level=$1, kind=$2, data=$3
+        access_level=$1, kind=$2, data=$3, modified_at=now()
       WHERE id() = $4;
     `, f.AccessLevel, f.Kind, f.CachedData, f.UID)
 		if errUpdate != nil {

@@ -44,6 +44,7 @@
     <script type="text/javascript" src="/static/js/integration/filterDirective.js"></script>
     <script type="text/javascript" src="/static/js/integration/documentationModal.js"></script>
     <script type="text/javascript" src="/static/js/fs/controller.js"></script>
+    <script type="text/javascript" src="/static/js/fs/fileEditor.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -117,9 +118,49 @@
         </a>
         <ul>
           <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#"><i class="material-icons">file_upload</i></a></li>
-          <li><a class="btn-floating blue tooltipped" data-position="left" data-delay="50" data-tooltip="New source" href="#"><i class="material-icons">library_add</i></a></li>
           <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="New folder" href="#" ng-click="newFolder()"><i class="material-icons">create_new_folder</i></a></li>
         </ul>
+      </div>
+    </div>
+  </div>
+
+  <div ng-show="page == 'files-editor'" style="margin: 0px 9px;">
+    <div ng-controller="FileEditorController">
+      <h3 style="display: inline-block; margin-bottom: 0px;">Editing</h3>
+      <label ng-bind="path" style="font-size:21px; margin-left: 15px;"></label>
+      <loader loading="loading" error="error" ></loader>
+      <div style="padding-left: 8px;color: #9e9e9e;">
+        <p>Last saved <span am-time-ago="lastSaved"></span></p>
+      </div>
+
+      <div class="row">
+        <div class="col s8">
+          <div id="fileEditor"></div>
+        </div>
+        <div class="col s4">
+          <div class="input-field">
+            <input id="fileName" type="text" ng-model="file.Name" disabled>
+            <label for="fileName">Name</label>
+          </div>
+          <div class="input-field">
+            <input id="fileLastModified" type="text" ng-model="lastSaved" disabled>
+            <label for="fileLastModified">Last Modified</label>
+          </div>
+          <select class="browser-default" ng-model="selectedMode" ng-change="modeChange()" style="margin-bottom: 10px;">
+            <option value="text">Text</option>
+            <option value="html">HTML</option>
+            <option value="javascript">Javascript</option>
+            <option value="json">JSON</option>
+
+          </select>
+
+          <button class="btn waves-effect waves-light" type="submit" ng-click="save()">
+            Save <i class="material-icons right">save</i>
+          </button>
+          <button class="btn waves-effect waves-light" type="submit" ng-click="back()">
+            Save and Return <i class="material-icons right">arrow_back</i>
+          </button>
+        </div>
       </div>
     </div>
   </div>

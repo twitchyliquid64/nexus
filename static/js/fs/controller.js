@@ -61,7 +61,11 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
   }
   $scope.nav = function(f){
     if (f.ItemKind == 2) {//file
-
+      $rootScope.$broadcast('files-editor', {
+        path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
+        file: f,
+      });
+      $scope.changePage('files-editor')
     } else if ($scope.path == '/'){
       $scope.path = f.Name;
     } else {
@@ -145,9 +149,14 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       ]
     });
   }
+  $rootScope.$on('files-navigate', function(event, args) {
+    $scope.path = args.path;
+    $scope.didJustNavigate = true;
+  });
 
   $rootScope.$on('page-change', function(event, args) {
-    if (args.page == 'files'){
+    if ($scope.didJustNavigate || args.page == 'files'){
+      $scope.didJustNavigate = false;
       $scope.update();
     } else {
       $scope.path = "/";

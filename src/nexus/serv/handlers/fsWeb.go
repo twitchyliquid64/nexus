@@ -21,7 +21,7 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 
 	h.DB = db
 	mux.HandleFunc("/web/v1/fs/list", h.ListHandler)
-	mux.HandleFunc("/web/v1/fs/save", h.AddHandler)
+	mux.HandleFunc("/web/v1/fs/save", h.SaveHandler)
 	mux.HandleFunc("/web/v1/fs/delete", h.DeleteHandler)
 	mux.HandleFunc("/web/v1/fs/newFolder", h.NewFolderHandler)
 	mux.HandleFunc("/web/v1/fs/download/", h.DownloadHandler)
@@ -82,8 +82,8 @@ func (h *FSHandler) ListHandler(response http.ResponseWriter, request *http.Requ
 	response.Write(b)
 }
 
-// AddHandler handles requests to add files
-func (h *FSHandler) AddHandler(response http.ResponseWriter, request *http.Request) {
+// SaveHandler handles requests to save files
+func (h *FSHandler) SaveHandler(response http.ResponseWriter, request *http.Request) {
 	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
@@ -91,6 +91,7 @@ func (h *FSHandler) AddHandler(response http.ResponseWriter, request *http.Reque
 
 	var details struct {
 		Path string `json:"path"`
+		Data string `json:"data"`
 	}
 	decoder := json.NewDecoder(request.Body)
 	err = decoder.Decode(&details)
@@ -99,7 +100,7 @@ func (h *FSHandler) AddHandler(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = fs.Save(request.Context(), details.Path, usr.UID, []byte(""))
+	err = fs.Save(request.Context(), details.Path, usr.UID, []byte(details.Data))
 	if err != nil {
 		h.error(response, request, "Add() failed", err, nil)
 		return
