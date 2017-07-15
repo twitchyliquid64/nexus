@@ -75,10 +75,10 @@ func (t *SourceTable) Forms() []*util.FormDescriptor {
 							Name:              "Mount-point name",
 							ID:                "prefix",
 							Kind:              "text",
-							ValidationPattern: "[A-Za-z_]{1,18}",
+							ValidationPattern: "[A-Za-z_\\s]{1,18}",
 						},
 						&util.Field{
-							Name: "Bucket Name",
+							Name: "Bucket Name & Region (bucketname:region)",
 							ID:   "val1",
 							Kind: "text",
 						},

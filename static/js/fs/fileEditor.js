@@ -73,6 +73,11 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
     $scope.loadData();
   });
 
+  $scope.noSaveBack = function(){
+    $rootScope.$broadcast('files-navigate', {path: $scope.path.substring(0,$scope.path.lastIndexOf("/"))});
+    $scope.changePage('files');
+  }
+
   $scope.back = function(){
     $scope.save().then(function(){
       $rootScope.$broadcast('files-navigate', {path: $scope.path.substring(0,$scope.path.lastIndexOf("/"))});

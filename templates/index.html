@@ -131,7 +131,7 @@
   <div ng-show="page == 'files-editor'" style="margin: 0px 9px;">
     <div ng-controller="FileEditorController">
       <h3 style="display: inline-block; margin-bottom: 0px;">Editing</h3>
-      <label ng-bind="path" style="font-size:21px; margin-left: 15px;"></label>
+      <label ng-bind="path" style="font-size:21px; margin-left: 15px;cursor: pointer;" ng-click="noSaveBack();"></label>
       <loader loading="loading" error="error" ></loader>
       <div style="padding-left: 8px;color: #9e9e9e;">
         <p>Last saved <span am-time-ago="lastSaved"></span></p>

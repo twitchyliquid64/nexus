@@ -14,6 +14,7 @@ import (
 
 type miniFS struct{}
 
+// Contents returns the contents of the given file from miniFS.
 func (_ *miniFS) Contents(ctx context.Context, p string, userID int, writer io.Writer) error {
 	f, err := fs.MiniFSGetFile(ctx, userID, p, db)
 	if err != nil {
@@ -28,6 +29,7 @@ func (_ *miniFS) Contents(ctx context.Context, p string, userID int, writer io.W
 	return err
 }
 
+// Save saves the given file + data to miniFS.
 func (_ *miniFS) Save(ctx context.Context, p string, userID int, data []byte) error {
 	err := saveMiniFSDirectory(ctx, p, userID)
 	if err != nil {
@@ -83,6 +85,7 @@ func saveMiniFSDirectory(ctx context.Context, p string, userID int) error {
 	return nil
 }
 
+// Delete deletes the given file from miniFS.
 func (_ *miniFS) Delete(ctx context.Context, p string, userID int) error {
 	f, err := fs.MiniFSGetFile(ctx, userID, p, db)
 	if err != nil {
