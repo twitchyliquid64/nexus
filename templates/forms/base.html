@@ -9,10 +9,35 @@
     <link rel="stylesheet" href="/static/css/animations.css">
     <link rel="stylesheet" href="/static/css/general.css">
 
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+    </style>
+
     <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+    <script type="text/javascript">
+      var app = angular.module('forms', ['ui.materialize', 'angularMoment']);
+
+      app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $rootScope) {
+          $scope.page = "home";
+          $scope.changePage = function(pageName){
+              $scope.page = pageName;
+              $rootScope.$broadcast('page-change',{page: pageName});
+          };
+      }]);
+    </script>
 </head>
-<body>
+<body ng-app="forms" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue darken-4" role="navigation">
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus - Settings</a>
@@ -24,6 +49,11 @@
       {!{.List}!}
     </div>
     <div class="col s9">
+      <div ng-show="page=='home'">
+        <p class="flow-text">Please select a settings page from the left.</p>
+      </div>
+
+      {!{.Forms}!}
     </div>
   </div>
 </body>

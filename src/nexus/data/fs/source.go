@@ -3,6 +3,8 @@ package fs
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"nexus/data/util"
 	"os"
 	"time"
@@ -52,10 +54,69 @@ func (t *SourceTable) Setup(ctx context.Context, db *sql.DB) error {
 func (t *SourceTable) Forms() []*util.FormDescriptor {
 	return []*util.FormDescriptor{
 		&util.FormDescriptor{
-			FormTitle: "Filesystem Sources",
-			ID:        "fsUserSources",
+			SettingsTitle: "Filesystem Sources",
+			ID:            "fsUserSources",
+			Desc:          "Sources are additional mount points available in your filesystem. For instance, a 'source' can be a S3 bucket or folder in the server's local filesystem.",
+			Forms: []*util.ActionDescriptor{
+				&util.ActionDescriptor{
+					Name:   "New Source",
+					ID:     "fs_source_add",
+					IcoStr: "create_new_folder",
+					Fields: []*util.Field{
+						&util.Field{
+							Name: "Source Type",
+							ID:   "kind",
+							Kind: "select",
+							SelectOptions: map[string]string{
+								fmt.Sprintf("%d", FSSourceS3): "S3 Bucket",
+							},
+						},
+						&util.Field{
+							Name:              "Mount-point name",
+							ID:                "prefix",
+							Kind:              "text",
+							ValidationPattern: "[A-Za-z_]{1,18}",
+						},
+						&util.Field{
+							Name: "Bucket Name",
+							ID:   "val1",
+							Kind: "text",
+						},
+						&util.Field{
+							Name: "Access Key",
+							ID:   "val2",
+							Kind: "text",
+						},
+						&util.Field{
+							Name: "Secret Key",
+							ID:   "val3",
+							Kind: "text",
+						},
+					},
+					OnSubmit: t.addSourceSubmitHandler,
+				},
+			},
 		},
 	}
+}
+
+// Called on the submission of the form 'New Source'
+func (t *SourceTable) addSourceSubmitHandler(ctx context.Context, vals map[string]string, userID int, db *sql.DB) error {
+	kind := FSSourceS3
+	//TODO: When we support more sources do this properly
+	if vals["kind"] != fmt.Sprintf("%d", FSSourceS3) {
+		return errors.New("Invalid source type")
+	}
+
+	_, err := CreateSource(ctx, &Source{
+		OwnerID: userID,
+		Prefix:  vals["prefix"],
+		Kind:    kind,
+		Value1:  vals["val1"],
+		Value2:  vals["val2"],
+		Value3:  vals["val3"],
+	}, db)
+	return err
 }
 
 // Source represents a filesystem source for a user
