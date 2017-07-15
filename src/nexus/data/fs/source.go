@@ -96,6 +96,24 @@ func (t *SourceTable) Forms() []*util.FormDescriptor {
 					OnSubmit: t.addSourceSubmitHandler,
 				},
 			},
+			Tables: []*util.TableDescriptor{
+				&util.TableDescriptor{
+					Name: "Existing Sources",
+					ID:   "fs_existing_sources",
+					Cols: []string{"#", "Prefix", "Type", "Val1"},
+					FetchContent: func(ctx context.Context, userID int, db *sql.DB) ([]interface{}, error) {
+						data, err := GetSourcesForUser(ctx, userID, db)
+						if err != nil {
+							return nil, err
+						}
+						out := make([]interface{}, len(data))
+						for i, s := range data {
+							out[i] = []interface{}{s.UID, s.Prefix, s.Kind, s.Value1}
+						}
+						return out, nil
+					},
+				},
+			},
 		},
 	}
 }

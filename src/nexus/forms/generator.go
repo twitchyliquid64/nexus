@@ -19,6 +19,7 @@ type source interface {
 	UniqueID() string
 	IsAdminOnly() bool
 	Actions() []interface{}
+	GetContentSections() []interface{}
 }
 
 type form interface {
@@ -36,6 +37,14 @@ type field interface {
 	ValidationRegex() string
 }
 
+type table interface {
+	Title() string
+	Description() string
+	UniqueID() string
+	ColNames() []string
+	OnLoadHandler() func(context.Context, int, *sql.DB) ([]interface{}, error)
+}
+
 func validate(s source) (int, error) {
 	for i, f := range s.Actions() {
 		if okForm, ok := f.(form); ok {
@@ -48,6 +57,11 @@ func validate(s source) (int, error) {
 			return i, errors.New("does not implement form interface")
 		}
 	}
+	for i, f := range s.GetContentSections() {
+		if _, ok := f.(table); !ok {
+			return i, errors.New("does not implement table interface")
+		}
+	}
 	return 0, nil
 }
 
@@ -57,7 +71,7 @@ func getForms(adminOnly bool) []source {
 	for _, form := range forms {
 		errorIndex, validationErr := validate(form)
 		if validationErr != nil {
-			log.Printf("[forms] Form %d from source %q failed validation: %s", errorIndex, form.UniqueID(), validationErr.Error())
+			log.Printf("[forms] Form/table %d from source %q failed validation: %s", errorIndex, form.UniqueID(), validationErr.Error())
 			continue
 		}
 		switch form.IsAdminOnly() {
@@ -85,19 +99,46 @@ func renderList(forms []source) (*bytes.Buffer, error) {
 	return &buff, render("templates/forms/list.html", &buff, forms)
 }
 
-func renderForms(forms []source) (*bytes.Buffer, error) {
+func renderForms(forms []source, contents map[string][]interface{}, errs map[string]error) (*bytes.Buffer, error) {
 	var buff bytes.Buffer
-	return &buff, render("templates/forms/form.html", &buff, forms)
+	return &buff, render("templates/forms/form.html", &buff, struct {
+		Sources     []source
+		TableData   map[string][]interface{}
+		TableErrors map[string]error
+	}{
+		Sources:     forms,
+		TableData:   contents,
+		TableErrors: errs,
+	})
+}
+
+func computeTableContents(ctx context.Context, forms []source, userID int, db *sql.DB) (map[string][]interface{}, map[string]error) {
+	contents := map[string][]interface{}{}
+	errs := map[string]error{}
+
+	for _, s := range forms {
+		for _, section := range s.GetContentSections() {
+			t := section.(table)
+			result, err := t.OnLoadHandler()(ctx, userID, db)
+			if err != nil {
+				errs[t.UniqueID()] = err
+			} else {
+				contents[t.UniqueID()] = result
+			}
+		}
+	}
+	return contents, errs
 }
 
 // Render is called to produce a form for a given user.
-func Render(ctx context.Context, adminOnly bool, userID int, w io.Writer) error {
+func Render(ctx context.Context, adminOnly bool, userID int, w io.Writer, db *sql.DB) error {
 	forms := getForms(adminOnly)
 	listBuffer, err := renderList(forms)
 	if err != nil {
 		return err
 	}
-	formsBuffer, err := renderForms(forms)
+	sectionData, sectionErrs := computeTableContents(ctx, forms, userID, db)
+	formsBuffer, err := renderForms(forms, sectionData, sectionErrs)
 	if err != nil {
 		return err
 	}

@@ -63,7 +63,7 @@ func (h *SettingsHandler) Render(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	err = forms.Render(request.Context(), false, u.UID, response)
+	err = forms.Render(request.Context(), false, u.UID, response, h.DB)
 	if err != nil {
 		log.Printf("forms.Render() Error: %s", err)
 		http.Error(response, "Internal server error", 500)

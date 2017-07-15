@@ -12,6 +12,7 @@ type FormDescriptor struct {
 	Desc          string
 	AdminOnly     bool
 	Forms         []*ActionDescriptor
+	Tables        []*TableDescriptor
 }
 
 // Title returns the title of the form.
@@ -41,6 +42,49 @@ func (f *FormDescriptor) Actions() []interface{} {
 		out[i] = f
 	}
 	return out
+}
+
+// GetContentSections returns a list of tables.
+func (f *FormDescriptor) GetContentSections() []interface{} {
+	out := make([]interface{}, len(f.Tables))
+	for i, f := range f.Tables {
+		out[i] = f
+	}
+	return out
+}
+
+// TableDescriptor represents a table surfaced in the settings.
+type TableDescriptor struct {
+	Name         string
+	ID           string
+	Desc         string
+	Cols         []string
+	FetchContent func(context.Context, int, *sql.DB) ([]interface{}, error)
+}
+
+// Title returns the title of the table.
+func (f *TableDescriptor) Title() string {
+	return f.Name
+}
+
+// UniqueID returns a URL-safe unique identifier for this table.
+func (f *TableDescriptor) UniqueID() string {
+	return f.ID
+}
+
+// Description returns text to be displayed at the top of the table.
+func (f *TableDescriptor) Description() string {
+	return f.Desc
+}
+
+// ColNames returns the column names of the table.
+func (f *TableDescriptor) ColNames() []string {
+	return f.Cols
+}
+
+// OnLoadHandler returns the content to populate the table.
+func (f *TableDescriptor) OnLoadHandler() func(context.Context, int, *sql.DB) ([]interface{}, error) {
+	return f.FetchContent
 }
 
 // ActionDescriptor represents a form which can be submitted.

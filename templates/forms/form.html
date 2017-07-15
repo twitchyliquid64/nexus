@@ -1,8 +1,41 @@
-{!{range .}!}
+{!{ $tData := .TableData   }!}
+{!{ $tErrs := .TableErrors }!}
+
+{!{ range .Sources }!}
 <div ng-show="page=='{!{ .UniqueID }!}'">
   <h3>{!{ .Title }!}</h3>
   {!{ if .Desc }!}
   <p>{!{ .Desc }!}</p>
+  {!{ end }!}
+
+  {!{ range .GetContentSections }!}
+  <div class="section" id="{!{ .UniqueID }!}" style="padding-bottom: 2rem;">
+    <h5>{!{ .Title }!}</h5>
+    {!{ $uid := .UniqueID }!}
+    {!{ if index $tErrs $uid | not }!}
+    <table class="bordered">
+      <thead>
+        <tr>
+          {!{ range .ColNames }!}<td>{!{ . }!}</td>{!{ end }!}
+          <td>Actions</td>
+        </tr>
+      </thead>
+      <tbody>
+        {!{ $data := index $tData $uid }!}
+        {!{ range $data }!}
+        <tr>
+          {!{ range . }!}
+            <td>{!{ . }!}</td>
+          {!{ end }!}
+          <td></td>
+        </tr>
+        {!{ end }!}
+      </tbody>
+    </table>
+    {!{ else }!}
+    <p class="red-text">Error fetching content: {!{ index $tErrs $uid }!}</p>
+    {!{ end }!}
+  </div>
   {!{ end }!}
 
 
