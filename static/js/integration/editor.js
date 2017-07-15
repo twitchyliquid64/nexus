@@ -287,6 +287,18 @@ var codeSubs = [
     },
   },
   {
+    prefix: 'web.',
+    name: 'values',
+    value: 'values',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'web.values(<obj>)',
+      kind: 'method',
+      detail: 'Returns a form-encoded string, which represents the key-value pairs in the provided object.',
+    },
+  },
+  {
     prefix: 'owner.',
     name: 'id',
     value: 'id',

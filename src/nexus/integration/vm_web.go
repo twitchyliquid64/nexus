@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
+	"net/url"
 	"strings"
 
 	"github.com/robertkrimen/otto"
@@ -24,6 +24,9 @@ func (b *webInitialiser) Apply(r *Run) error {
 	if err := b.bindPost(obj, r); err != nil {
 		return err
 	}
+	if err := b.bindValues(obj, r); err != nil {
+		return err
+	}
 
 	return r.VM.Set("web", obj)
 }
@@ -38,7 +41,8 @@ func applyRequestParams(obj otto.Value, request *http.Request, client *http.Clie
 				fallthrough
 			case "body":
 				d, _ := o.Get(key)
-				request.Header.Add("Content-Length", strconv.Itoa(len(d.String())))
+				//request.Header.Add("Content-Length", strconv.Itoa(len(d.String())))
+				request.ContentLength = int64(len(d.String()))
 				request.Body = ioutil.NopCloser(strings.NewReader(d.String()))
 			case "content_type":
 				fallthrough
@@ -156,6 +160,25 @@ func (b *webInitialiser) bindPost(obj *otto.Object, r *Run) error {
 			Cookies: resp.Cookies(),
 			Header:  resp.Header,
 		})
+		return result
+	})
+	return err
+}
+
+func (b *webInitialiser) bindValues(obj *otto.Object, r *Run) error {
+	err := obj.Set("values", func(call otto.FunctionCall) otto.Value {
+		out := url.Values{}
+
+		obj := call.Argument(0)
+		if obj.IsObject() {
+			o := obj.Object()
+			for _, key := range o.Keys() {
+				d, _ := o.Get(key)
+				out.Set(key, d.String())
+			}
+		}
+
+		result, _ := r.VM.ToValue(out.Encode())
 		return result
 	})
 	return err
