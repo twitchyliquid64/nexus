@@ -20,6 +20,9 @@ func (b *webInitialiser) Apply(r *Run) error {
 	if err := b.bindGet(obj, r); err != nil {
 		return err
 	}
+	if err := b.bindPost(obj, r); err != nil {
+		return err
+	}
 
 	return r.VM.Set("web", obj)
 }
