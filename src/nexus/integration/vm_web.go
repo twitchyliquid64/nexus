@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/robertkrimen/otto"
@@ -33,8 +34,11 @@ func applyRequestParams(obj otto.Value, request *http.Request, client *http.Clie
 		o := obj.Object()
 		for _, key := range o.Keys() {
 			switch key {
+			case "data":
+				fallthrough
 			case "body":
 				d, _ := o.Get(key)
+				request.Header.Add("Content-Length", strconv.Itoa(len(d.String())))
 				request.Body = ioutil.NopCloser(strings.NewReader(d.String()))
 			case "content_type":
 				fallthrough

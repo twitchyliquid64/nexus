@@ -282,7 +282,7 @@ var codeSubs = [
         "URL":"https://api.ipify.org/?format=json"}) + '</div>' + '<label>Permitted options fields:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml({
           content_type: 'string (eg: application/json)',
           headers: {key: 'value'},
-          data: 'string',
+          body: 'string',
         }) + '</div>',
     },
   },
