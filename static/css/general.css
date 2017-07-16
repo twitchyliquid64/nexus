@@ -3,6 +3,9 @@
   vertical-align: middle !important;
 }
 
+nav .brand-logo {
+  margin-left: 1rem;
+}
 
 .op-indicator {
   position: absolute;
