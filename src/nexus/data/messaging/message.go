@@ -27,13 +27,14 @@ func (t *MessageTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS messaging_messages (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     conversation_uid INT NOT NULL,
 
-    content STRING NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  unique_identifier STRING NOT NULL,
-		kind STRING NOT NULL,
-    identity STRING
+    content TEXT NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  unique_identifier varchar(192) NOT NULL,
+		kind varchar(32) NOT NULL,
+    identity varchar(64)
 	);
 
 	CREATE UNIQUE INDEX IF NOT EXISTS messaging_messages_uid ON messaging_messages(unique_identifier);
@@ -76,7 +77,7 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 	x, err := tx.Exec(`
 	INSERT INTO
 		messaging_messages (conversation_uid, content, unique_identifier, kind, identity)
-		VALUES ($1, $2, $3, $4, $5);
+		VALUES (?, ?, ?, ?, ?);
 	`, msg.ConversationID, msg.Data, msg.UniqueID, msg.Kind, msg.From)
 	if err != nil {
 		tx.Rollback()
@@ -93,8 +94,8 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 // GetMessagesForConversation returns a list of messages for a given conversation.
 func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([]*Message, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), kind, content, created_at, unique_identifier, identity FROM messaging_messages
-		WHERE conversation_uid = $1 ORDER BY created_at ASC;
+		SELECT rowid, kind, content, created_at, unique_identifier, identity FROM messaging_messages
+		WHERE conversation_uid = ? ORDER BY created_at ASC;
 	`, convoID)
 	if err != nil {
 		return nil, err

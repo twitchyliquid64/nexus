@@ -34,12 +34,13 @@ func (t *MiniFsTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS fs_minifiles (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_uid INT NOT NULL,
-	  modified_at TIME NOT NULL DEFAULT now(),
-    path STRING NOT NULL,
+	  modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    path varchar(512) NOT NULL,
     access_level INT NOT NULL DEFAULT 0,
     kind INT NOT NULL DEFAULT 0,
-    data BLOB NOT NULL,
+    data BLOB NOT NULL
 	);
 
   CREATE INDEX IF NOT EXISTS fs_minifiles_by_owner ON fs_minifiles(owner_uid);
@@ -77,7 +78,7 @@ type File struct {
 // GetReader returns a reader which can be used to get file information.
 func (f *File) GetReader(ctx context.Context, db *sql.DB) (io.Reader, error) {
 	res, err := db.QueryContext(ctx, `
-    SELECT data FROM fs_minifiles WHERE id() = $1;
+    SELECT data FROM fs_minifiles WHERE rowid = ?;
   `, f.UID)
 	if err != nil {
 		return nil, err
@@ -99,7 +100,7 @@ func (f *File) GetReader(ctx context.Context, db *sql.DB) (io.Reader, error) {
 // MiniFSGetFile by a user's UID and a file path.
 func MiniFSGetFile(ctx context.Context, ownerUID int, path string, db *sql.DB) (*File, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), owner_uid, modified_at, path, access_level, kind FROM fs_minifiles WHERE path = $1 AND owner_uid= $2;
+		SELECT rowid, owner_uid, modified_at, path, access_level, kind FROM fs_minifiles WHERE path = ? AND owner_uid= ?;
 	`, path, ownerUID)
 	if err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func MiniFSGetFile(ctx context.Context, ownerUID int, path string, db *sql.DB) (
 // MiniFSFileExists returns true if the given file exists.
 func MiniFSFileExists(ctx context.Context, tx *sql.Tx, path string, ownerUID int, db *sql.DB) (bool, int, error) {
 	res, err := tx.QueryContext(ctx, `
-    SELECT id() FROM fs_minifiles WHERE path = $1 AND owner_uid = $2;
+    SELECT rowid FROM fs_minifiles WHERE path = ? AND owner_uid = ?;
   `, path, ownerUID)
 	if err != nil {
 		return false, 0, err
@@ -141,7 +142,7 @@ func MiniFSDeleteFile(ctx context.Context, f *File, db *sql.DB) error {
 	r, err := tx.Exec(`
     DELETE FROM
       fs_minifiles
-    WHERE owner_uid = $1 AND path = $2;
+    WHERE owner_uid = ? AND path = ?;
   `, f.OwnerID, f.Path)
 	if affected, errAffected := r.RowsAffected(); affected == 0 || errAffected != nil {
 		if errAffected != nil {
@@ -178,8 +179,8 @@ func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
       UPDATE
         fs_minifiles
       SET
-        access_level=$1, kind=$2, data=$3, modified_at=now()
-      WHERE id() = $4;
+        access_level=?, kind=?, data=?, modified_at=CURRENT_TIMESTAMP
+      WHERE rowid = ?;
     `, f.AccessLevel, f.Kind, f.CachedData, f.UID)
 		if errUpdate != nil {
 			tx.Rollback()
@@ -193,7 +194,7 @@ func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
       INSERT INTO
         fs_minifiles (owner_uid, path, access_level, kind, data)
         VALUES (
-          $1, $2,	$3, $4, $5
+          ?, ?, ?, ?, ?
         );
     `, f.OwnerID, f.Path, f.AccessLevel, f.Kind, f.CachedData)
 	if err != nil {

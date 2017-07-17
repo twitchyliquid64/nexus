@@ -28,11 +28,12 @@ func (t *ConversationTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS messaging_conversation (
-	  name STRING NOT NULL,
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+	  name varchar(128) NOT NULL,
     source_uid INT NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  unique_identifier STRING NOT NULL,
-		kind STRING NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  unique_identifier varchar(192) NOT NULL,
+		kind varchar(32) NOT NULL
 	);
 
 	CREATE INDEX IF NOT EXISTS messaging_conversation_uid ON messaging_conversation(unique_identifier);
@@ -71,7 +72,7 @@ func AddConversation(ctx context.Context, c Conversation, db *sql.DB) (int, erro
 	x, err := tx.Exec(`
 	INSERT INTO
 		messaging_conversation (name, source_uid, unique_identifier, kind)
-		VALUES ($1, $2, $3, $4);
+		VALUES (?, ?, ?, ?);
 	`, c.Name, c.SourceUID, c.UniqueID, c.Kind)
 	if err != nil {
 		tx.Rollback()
@@ -88,7 +89,7 @@ func AddConversation(ctx context.Context, c Conversation, db *sql.DB) (int, erro
 // GetConversation returns a convo based on it's unique ID and messaging source ID.
 func GetConversation(ctx context.Context, uniqueID string, sourceUID int, db *sql.DB) (*Conversation, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation WHERE unique_identifier = $1 AND source_uid = $2;
+		SELECT rowid, name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation WHERE unique_identifier = ? AND source_uid = ?;
 	`, uniqueID, sourceUID)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func GetConversation(ctx context.Context, uniqueID string, sourceUID int, db *sq
 // GetConversationByCID returns a convo based on it's CID.
 func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversation, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation WHERE id() = $1;
+		SELECT rowid, name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation WHERE rowid = ?;
 	`, CID)
 	if err != nil {
 		return nil, err
@@ -124,8 +125,8 @@ func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversati
 // GetConversationsForUser returns a list of convos for a given user.
 func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Conversation, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
-		WHERE source_uid IN (SELECT id() FROM messaging_source WHERE owner_id = $1);
+		SELECT rowid, name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
+		WHERE source_uid IN (SELECT rowid FROM messaging_source WHERE owner_id = ?);
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -147,8 +148,8 @@ func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Co
 // GetConversationsForSource returns a list of convos for a given source.
 func GetConversationsForSource(ctx context.Context, sourceID int, db *sql.DB) ([]*Conversation, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
-		WHERE source_uid  = $1;
+		SELECT rowid, name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
+		WHERE source_uid  = ?;
 	`, sourceID)
 	if err != nil {
 		return nil, err

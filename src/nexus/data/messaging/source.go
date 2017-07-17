@@ -26,12 +26,13 @@ func (t *SourceTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS messaging_source (
-	  name STRING NOT NULL,
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+	  name varchar(128) NOT NULL,
 		owner_id int NOT NULL,
-    kind STRING NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  remote BOOL NOT NULL DEFAULT FALSE,
-    details_json STRING,
+    kind varchar(16) NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  remote BOOLEAN NOT NULL DEFAULT 0,
+    details_json TEXT
 	);
 	`)
 	if err != nil {
@@ -73,7 +74,7 @@ func AddSource(ctx context.Context, src Source, db *sql.DB) error {
 	_, err = tx.Exec(`
 	INSERT INTO
 		messaging_source (name, owner_id, kind, remote, details_json)
-		VALUES ($1, $2, $3, $4, $5);
+		VALUES (?, ?, ?, ?, ?);
 	`, src.Name, src.OwnerID, src.Kind, src.Remote, string(details))
 	if err != nil {
 		tx.Rollback()
@@ -85,7 +86,7 @@ func AddSource(ctx context.Context, src Source, db *sql.DB) error {
 // GetAllSourcesForUser is called to get all messaging sources for a given uid.
 func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE owner_id = $1;
+		SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE owner_id = ?;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, 
 
 // GetAllSources is called to get all messaging sources.
 func GetAllSources(ctx context.Context, db *sql.DB) ([]*Source, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_id, kind, remote, created_at, details_json FROM messaging_source;`)
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source;`)
 	if err != nil {
 		return nil, err
 	}

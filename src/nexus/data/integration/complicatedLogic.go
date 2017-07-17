@@ -13,7 +13,7 @@ func DoLogsCleanup(ctx context.Context, days int, db *sql.DB) (int64, error) {
 		return 0, err
 	}
 
-	l, err := tx.ExecContext(ctx, `DELETE FROM integration_log WHERE created_at < $1;`, time.Now().AddDate(0, 0, -days))
+	l, err := tx.ExecContext(ctx, `DELETE FROM integration_log WHERE created_at < ?;`, time.Now().AddDate(0, 0, -days))
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -90,7 +90,7 @@ func DoEditRunnable(ctx context.Context, r *Runnable, db *sql.DB) error {
 
 	for _, earlierExistingTrigger := range currentTriggers {
 		if !inTriggerSet(r.Triggers, earlierExistingTrigger.UID) {
-			_, err = tx.ExecContext(ctx, `DELETE FROM integration_trigger WHERE id()=$1;`, earlierExistingTrigger.UID)
+			_, err = tx.ExecContext(ctx, `DELETE FROM integration_trigger WHERE rowid=?;`, earlierExistingTrigger.UID)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -117,25 +117,25 @@ func DoDeleteRunnable(ctx context.Context, uid int, db *sql.DB) error {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM integration_trigger WHERE integration_parent=$1;`, uid)
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_trigger WHERE integration_parent=?;`, uid)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM integration_stddata WHERE integration_parent=$1;`, uid)
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_stddata WHERE integration_parent=?;`, uid)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM integration_log WHERE integration_parent=$1;`, uid)
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_log WHERE integration_parent=?;`, uid)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM integration_runnable WHERE id()=$1;`, uid)
+	_, err = tx.ExecContext(ctx, `DELETE FROM integration_runnable WHERE rowid=?;`, uid)
 	if err != nil {
 		tx.Rollback()
 		return err

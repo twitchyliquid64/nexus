@@ -18,10 +18,11 @@ func (t *StoreGrant) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS datastore_grant (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  user_uid int NOT NULL,
 	  ds_uid int NOT NULL,
-    read_only bool NOT NULL DEFAULT FALSE,
-	  created_at TIME NOT NULL DEFAULT now(),
+    read_only BOOLEAN NOT NULL DEFAULT 0,
+	  created_at TIMESTAMPSTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 	`)
 	if err != nil {
@@ -60,7 +61,7 @@ func MakeGrant(ctx context.Context, grant *Grant, db *sql.DB) (int, error) {
 		INSERT INTO
 			datastore_grant (user_uid, ds_uid, read_only)
 			VALUES (
-				$1, $2, $3
+				?, ?, ?
 			);`, grant.UsrUID, grant.DsUID, grant.ReadOnly)
 	if err != nil {
 		tx.Rollback()
@@ -87,7 +88,7 @@ func DeleteGrant(ctx context.Context, uid int, db *sql.DB) error {
 	_, err = tx.ExecContext(ctx, `
 		DELETE FROM
 			datastore_grant
-		WHERE id() = $1;`, uid)
+		WHERE rowid = ?;`, uid)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -97,8 +98,8 @@ func DeleteGrant(ctx context.Context, uid int, db *sql.DB) error {
 
 // CheckAccess determines if the user is allowed to perform the given action on the given datastore.
 func CheckAccess(ctx context.Context, usrUID, dsUID int, readOnly bool, db *sql.DB) (bool, error) {
-	res, err := db.QueryContext(ctx, `SELECT id() FROM datastore_grant WHERE
-    user_uid = $1 AND ds_uid = $2 AND (read_only = $3 OR read_only = FALSE);`, usrUID, dsUID, readOnly)
+	res, err := db.QueryContext(ctx, `SELECT rowid FROM datastore_grant WHERE
+    user_uid = ? AND ds_uid = ? AND (read_only = ? OR read_only = 0);`, usrUID, dsUID, readOnly)
 	if err != nil {
 		return false, err
 	}
@@ -114,11 +115,11 @@ func CheckAccess(ctx context.Context, usrUID, dsUID int, readOnly bool, db *sql.
 func ListByUser(ctx context.Context, userUID int, db *sql.DB) ([]*Grant, error) {
 	res, err := db.QueryContext(ctx, `
     SELECT
-      id(datastore_grant), datastore_grant.user_uid, datastore_grant.ds_uid, datastore_grant.read_only, datastore_grant.created_at, datastore_meta.name
+      datastore_grant.rowid, datastore_grant.user_uid, datastore_grant.ds_uid, datastore_grant.read_only, datastore_grant.created_at, datastore_meta.name
     FROM
 			datastore_grant, datastore_meta
 		WHERE
-			datastore_grant.user_uid=$1 AND id(datastore_meta)=datastore_grant.ds_uid;`, userUID)
+			datastore_grant.user_uid=? AND datastore_meta.rowid=datastore_grant.ds_uid;`, userUID)
 	if err != nil {
 		return nil, err
 	}

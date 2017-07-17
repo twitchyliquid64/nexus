@@ -30,15 +30,16 @@ func (t *AuthTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS user_auth (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  uid INT NOT NULL,
 	  kind INT NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     class INT NOT NULL,
 
-		val1 STRING,
-    val2 STRING,
-    val3 STRING,
+		val1 TEXT,
+    val2 TEXT,
+    val3 TEXT
 	);
 	`)
 	if err != nil {
@@ -69,7 +70,7 @@ type Auth struct {
 
 // GetAuthForUser returns a full list of auth methods for the given userID.
 func GetAuthForUser(ctx context.Context, UID int, db *sql.DB) ([]*Auth, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), uid, kind, created_at, class, val1, val2, val3 FROM user_auth WHERE uid=$1;`, UID)
+	res, err := db.QueryContext(ctx, `SELECT rowid, uid, kind, created_at, class, val1, val2, val3 FROM user_auth WHERE uid=?;`, UID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func GetAuthForUser(ctx context.Context, UID int, db *sql.DB) ([]*Auth, error) {
 // GetAuth returns the details of an auth
 func GetAuth(ctx context.Context, id int, db *sql.DB) (*Auth, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), uid, kind, created_at, class, val1, val2, val3 FROM user_auth WHERE id() = $1;
+		SELECT rowid, uid, kind, created_at, class, val1, val2, val3 FROM user_auth WHERE rowid = ?;
 	`, id)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func CreateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO
 			user_auth (uid, kind, class, val1, val2, val3)
-			VALUES ($1, $2, $3, $4, $5, $6);`, auth.UserID, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3)
+			VALUES (?, ?, ?, ?, ?, ?);`, auth.UserID, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3)
 	if err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func DeleteAuth(ctx context.Context, id int, db *sql.DB) error {
 	}
 	_, err = tx.ExecContext(ctx, `
 		DELETE FROM
-			user_auth WHERE id() = $1;`, id)
+			user_auth WHERE rowid = ?;`, id)
 	if err != nil {
 		return err
 	}
@@ -142,9 +143,8 @@ func UpdateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 	}
 	_, err = tx.ExecContext(ctx, `
 	UPDATE user_auth SET
-		kind=$2, class=$3, val1=$4, val2=$5, val3=$6
-
-	WHERE id() = $1`, auth.UID, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3)
+		kind=?, class=?, val1=?, val2=?, val3=?
+			WHERE rowid = ?`, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3, auth.UID)
 	if err != nil {
 		return err
 	}

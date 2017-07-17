@@ -35,7 +35,7 @@ func main() {
 	ctx := context.Background()
 
 	log.Printf("Opening db: %q", *dbFlag)
-	db, err := data.Init(ctx, "ql", *dbFlag)
+	db, err := data.Init(ctx, "sqlite3", *dbFlag)
 	if err != nil {
 		die(err.Error())
 	}
@@ -54,6 +54,7 @@ func main() {
 
 	err = integration.Initialise(ctx, db)
 	if err != nil {
+		log.Println("a")
 		die(err.Error())
 	}
 

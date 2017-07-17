@@ -19,10 +19,11 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS integration_runnable (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  owner_uid INT NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  name STRING NOT NULL,
-    content STRING DEFAULT "",
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  name varchar(128) NOT NULL,
+    content TEXT DEFAULT ""
 	);
 	`)
 	if err != nil {
@@ -54,7 +55,7 @@ type Runnable struct {
 // GetRunnable returns a runnable by its UID
 func GetRunnable(ctx context.Context, uid int, db *sql.DB) (*Runnable, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), owner_uid, created_at, name, content FROM integration_runnable WHERE id() = $1;
+		SELECT rowid, owner_uid, created_at, name, content FROM integration_runnable WHERE rowid = ?;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func GetRunnable(ctx context.Context, uid int, db *sql.DB) (*Runnable, error) {
 // GetAllForUser is called to get all runnables owned by a given user uid.
 func GetAllForUser(ctx context.Context, ownerUID int, db *sql.DB) ([]*Runnable, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), owner_uid, created_at, name, content FROM integration_runnable WHERE owner_uid = $1;
+		SELECT rowid, owner_uid, created_at, name, content FROM integration_runnable WHERE owner_uid = ?;
 	`, ownerUID)
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func makeRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) (int
 		INSERT INTO
 			integration_runnable (owner_uid, name, content)
 			VALUES (
-				$1, $2,	$3
+				?, ?, ?
 			);`, r.OwnerID, r.Name, r.Content)
 	if err != nil {
 		return 0, err
@@ -113,8 +114,8 @@ func makeRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) (int
 func editRunnable(ctx context.Context, tx *sql.Tx, r *Runnable, db *sql.DB) error {
 	_, err := tx.ExecContext(ctx, `
 		UPDATE integration_runnable
-			SET name=$2, content=$3
-			WHERE id() = $1;`, r.UID, r.Name, r.Content)
+			SET name=?, content=?
+			WHERE rowid = ?;`, r.Name, r.Content, r.UID)
 	return err
 }
 
@@ -126,9 +127,9 @@ func SaveCode(ctx context.Context, UID int, code string, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 		UPDATE integration_runnable
-			SET content=$2
-			WHERE id() = $1;
-	`, UID, code)
+			SET content=?
+			WHERE rowid = ?;
+	`, code, UID)
 	if err != nil {
 		tx.Rollback()
 		return err

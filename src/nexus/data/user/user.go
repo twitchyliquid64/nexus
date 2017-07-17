@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"nexus/data/datastore"
 	"nexus/data/util"
 	"strconv"
@@ -26,16 +27,17 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS users (
-	  username STRING NOT NULL,
-	  display_name STRING,
-	  created_at TIME NOT NULL DEFAULT now(),
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+	  username varchar(128) NOT NULL,
+	  display_name varchar(256),
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	  passhash_if_no_auth_methods BLOB,
 
-		can_admin_accounts BOOL NOT NULL DEFAULT FALSE,
-		can_admin_data BOOL NOT NULL DEFAULT FALSE,
-		can_admin_integrations BOOL NOT NULL DEFAULT FALSE,
+		can_admin_accounts BOOLEAN NOT NULL DEFAULT 0,
+		can_admin_data BOOLEAN NOT NULL DEFAULT 0,
+		can_admin_integrations BOOLEAN NOT NULL DEFAULT 0,
 
-		is_robot_account BOOL NOT NULL DEFAULT FALSE,
+		is_robot_account BOOLEAN NOT NULL DEFAULT 0
 	);
 	`)
 	if err != nil {
@@ -76,13 +78,14 @@ func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Update %+v", usr)
 	_, err = tx.ExecContext(ctx, `
 	UPDATE users SET
-		username=$2, display_name=$3,
-		can_admin_accounts=$4, can_admin_data=$5, can_admin_integrations=$6, is_robot_account=$7
-
-	WHERE id() = $1`, usr.UID, usr.Username, usr.DisplayName, usr.AdminPerms.Accounts, usr.AdminPerms.Data, usr.AdminPerms.Integrations, usr.IsRobot)
+		username=?, display_name=?,
+		can_admin_accounts=?, can_admin_data=?, can_admin_integrations=?, is_robot_account=? WHERE rowid = ?;`,
+		usr.Username, usr.DisplayName, usr.AdminPerms.Accounts, usr.AdminPerms.Data, usr.AdminPerms.Integrations, usr.IsRobot, usr.UID)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	return tx.Commit()
@@ -91,7 +94,7 @@ func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
 // GetByUID looks up the details of an account based on an accounts' UID.
 func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE id() = $1;
+		SELECT username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE rowid = ?;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -109,7 +112,7 @@ func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 // Get returns the details of a user
 func Get(ctx context.Context, username string, db *sql.DB) (*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE username = $1;
+		SELECT rowid, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE username = ?;
 	`, username)
 	if err != nil {
 		return nil, err
@@ -126,7 +129,7 @@ func Get(ctx context.Context, username string, db *sql.DB) (*DAO, error) {
 
 // GetAll returns a full list of users in the system.
 func GetAll(ctx context.Context, db *sql.DB) ([]*DAO, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users;`)
+	res, err := db.QueryContext(ctx, `SELECT rowid, username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users;`)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +149,7 @@ func GetAll(ctx context.Context, db *sql.DB) ([]*DAO, error) {
 // CheckBasicAuth returns true if the given password matches the stored hash of the user.
 func CheckBasicAuth(ctx context.Context, username, password string, db *sql.DB) (bool, string, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), passhash_if_no_auth_methods FROM users WHERE username = $1;
+		SELECT rowid, passhash_if_no_auth_methods FROM users WHERE username = ?;
 	`, username)
 	if err != nil {
 		return false, "", err
@@ -176,7 +179,8 @@ func SetAuth(ctx context.Context, uid int, passwd string, accAdmin, dataAdmin, i
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, "UPDATE users SET passhash_if_no_auth_methods=$1, can_admin_accounts=$3, can_admin_data=$4, can_admin_integrations=$5 WHERE id() = $2", hash, uid, accAdmin, dataAdmin, integrationAdmin)
+	_, err = tx.ExecContext(ctx, "UPDATE users SET passhash_if_no_auth_methods=?, can_admin_accounts=?, can_admin_data=?, can_admin_integrations=? WHERE rowid = ?;",
+		hash, accAdmin, dataAdmin, integrationAdmin, uid)
 	if err != nil {
 		return err
 	}
@@ -191,7 +195,7 @@ func Delete(ctx context.Context, uid int, db *sql.DB) error {
 	}
 	_, err = tx.ExecContext(ctx, `
 		DELETE FROM users
-			WHERE id() = $1;`, uid)
+			WHERE rowid = ?;`, uid)
 	if err != nil {
 		return err
 	}
@@ -208,9 +212,9 @@ func Create(ctx context.Context, usr *DAO, db *sql.DB) error {
 		INSERT INTO
 			users (username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account)
 			VALUES (
-				$1, $2,
-				now(),
-				$3, $4, $5, $6
+				?, ?,
+				CURRENT_TIMESTAMP,
+				?, ?, ?, ?
 			);`, usr.Username, usr.DisplayName, usr.AdminPerms.Accounts, usr.AdminPerms.Data, usr.AdminPerms.Integrations, usr.IsRobot)
 	if err != nil {
 		return err
@@ -228,9 +232,9 @@ func CreateBasic(ctx context.Context, username, displayName string, db *sql.DB) 
 	INSERT INTO
 		users (username, display_name, created_at)
 		VALUES (
-			$1,
-			$2,
-			now()
+			?,
+			?,
+			CURRENT_TIMESTAMP
 		);
 	`, username, displayName)
 	if err != nil {

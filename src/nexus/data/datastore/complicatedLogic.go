@@ -36,7 +36,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	}
 	queryStr += ") VALUES ("
 	for i := range colIDs {
-		queryStr += "$" + strconv.Itoa(i+1)
+		queryStr += "?"
 		if i < len(colIDs)-1 {
 			queryStr += ", "
 		}
@@ -144,7 +144,7 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 				out[i] = strconv.Itoa(int(v.Unix()))
 			default:
 				log.Printf("DoStreamingQuery(): Type %+v not handled!", reflect.TypeOf(val))
-				out[i] = "?"
+				out[i] = "?T?"
 			}
 		}
 		w.Write(out)
@@ -189,21 +189,21 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_grant WHERE ds_uid=$1;`, ds.UID)
+	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_grant WHERE ds_uid=?;`, ds.UID)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for _, col := range cols {
-		_, err = tx.ExecContext(ctx, `DELETE FROM datastore_col_meta WHERE id()=$1;`, col.UID)
+		_, err = tx.ExecContext(ctx, `DELETE FROM datastore_col_meta WHERE rowid=?;`, col.UID)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_meta WHERE id()=$1;`, ds.UID)
+	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_meta WHERE rowid=?;`, ds.UID)
 	if err != nil {
 		tx.Rollback()
 		return err

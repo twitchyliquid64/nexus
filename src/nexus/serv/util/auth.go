@@ -29,6 +29,7 @@ func CheckAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, Au
 	if err != nil {
 		return false, AuthDetails{}, err
 	}
+	log.Printf("%+v", usr)
 	authMethods, err := user.GetAuthForUser(ctx, usr.UID, db)
 	if err != nil {
 		return false, AuthDetails{}, err

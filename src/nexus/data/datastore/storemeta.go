@@ -27,10 +27,11 @@ func (t *MetaTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS datastore_meta (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  owner_uid int NOT NULL,
-	  name STRING NOT NULL,
-		store_kind STRING NOT NULL DEFAULT "DB",
-	  created_at TIME NOT NULL DEFAULT now(),
+	  name varchar(128) NOT NULL,
+		store_kind varchar(16) NOT NULL DEFAULT "DB",
+	  created_at TIMESTAMPSTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 	`)
 	if err != nil {
@@ -63,7 +64,7 @@ func makeDatastore(ctx context.Context, tx *sql.Tx, ds *Datastore, db *sql.DB) (
 		INSERT INTO
 			datastore_meta (owner_uid, name, store_kind)
 			VALUES (
-				$1, $2, $3
+				?, ?, ?
 			);`, ds.OwnerID, ds.Name, string(ds.Kind))
 	if err != nil {
 		return 0, err
@@ -77,7 +78,7 @@ func makeDatastore(ctx context.Context, tx *sql.Tx, ds *Datastore, db *sql.DB) (
 
 // GetDatastore gets a datastore by ID.
 func GetDatastore(ctx context.Context, uid int, db *sql.DB) (*Datastore, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_uid, store_kind, created_at FROM datastore_meta WHERE id()=$1;`, uid)
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_uid, store_kind, created_at FROM datastore_meta WHERE rowid=?;`, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +96,11 @@ func GetDatastore(ctx context.Context, uid int, db *sql.DB) (*Datastore, error) 
 
 // GetDatastores gets all datastores owned by that user. If showAll is true, then all datastores are returned.
 func GetDatastores(ctx context.Context, showAll bool, userID int, db *sql.DB) ([]*Datastore, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), name, owner_uid, store_kind, created_at
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_uid, store_kind, created_at
 	FROM datastore_meta
 	WHERE
-		owner_uid=$1 OR $2
-		OR id() IN (SELECT ds_uid FROM datastore_grant WHERE user_uid=$1);`, userID, showAll)
+		owner_uid=? OR ?
+		OR rowid IN (SELECT ds_uid FROM datastore_grant WHERE user_uid=?);`, userID, showAll, userID)
 	if err != nil {
 		return nil, err
 	}

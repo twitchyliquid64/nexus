@@ -14,6 +14,7 @@
 /src/golang.org/x/tools/cmd/*
 
 /dev.db
+/ql_old.db
 /.c63149d8a7f0acb73d1781c54e119901572790e3
 /.43335b018c524d967858b3f3f05825f1f13e5e92
 

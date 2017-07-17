@@ -31,11 +31,12 @@ func (t *ColumnMetaTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS datastore_col_meta (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  datastore INT NOT NULL,
-	  name STRING NOT NULL,
+	  name varchar(128) NOT NULL,
     datatype INT NOT NULL,
     ordering INT NOT NULL DEFAULT 0,
-	  created_at TIME NOT NULL DEFAULT now(),
+	  created_at TIMESTAMPSTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 
   CREATE INDEX IF NOT EXISTS datastore_col_meta_index_datastore ON datastore_col_meta(datastore);
@@ -69,14 +70,14 @@ func makeColumn(ctx context.Context, tx *sql.Tx, datastoreID int, col *Column, d
 		INSERT INTO
 			datastore_col_meta (datastore, name, datatype, ordering)
 			VALUES (
-				$1, $2,	$3, $4
+				?, ?, ?, ?
 			);`, datastoreID, col.Name, int(col.Datatype), col.Ordering)
 	return err
 }
 
 // GetColumns gets all the columns for a datastore.
 func GetColumns(ctx context.Context, datastoreID int, db *sql.DB) ([]*Column, error) {
-	res, err := db.QueryContext(ctx, `SELECT id(), name, datatype, ordering, created_at FROM datastore_col_meta WHERE datastore=$1 ORDER BY ordering ASC;`, datastoreID)
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, datatype, ordering, created_at FROM datastore_col_meta WHERE datastore=? ORDER BY ordering ASC;`, datastoreID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +102,13 @@ func ColDatatype(dt Datatype) string {
 	case UINT:
 		return "uint"
 	case STR:
-		return "string"
+		return "text"
 	case FLOAT:
 		return "float"
 	case BLOB:
 		return "blob"
 	case TIME:
-		return "time"
+		return "timestamp"
 	}
-	return "?"
+	return "?UNK?"
 }

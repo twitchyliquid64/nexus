@@ -22,10 +22,11 @@ func (t *StdDataTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS integration_stddata (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     integration_parent INT NOT NULL,
-	  modified_at TIME NOT NULL DEFAULT now(),
-    key STRING NOT NULL,
-    value STRING NOT NULL,
+	  modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    key varchar(128) NOT NULL,
+    value varchar(32) NOT NULL
 	);
 
   CREATE INDEX IF NOT EXISTS integration_stddata_by_parent_id ON integration_stddata(integration_parent);
@@ -55,7 +56,7 @@ type StdDataRow struct {
 // GetStdData returns a value for a given key
 func GetStdData(ctx context.Context, runUID int, key string, db *sql.DB) (*StdDataRow, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, modified_at, key, value FROM integration_stddata WHERE integration_parent = $1 AND key = $2;
+		SELECT rowid, integration_parent, modified_at, key, value FROM integration_stddata WHERE integration_parent = ? AND key = ?;
 	`, runUID, key)
 	if err != nil {
 		return nil, err
@@ -87,14 +88,14 @@ func WriteStdData(ctx context.Context, runUID int, key, value string, db *sql.DB
       INSERT INTO
         integration_stddata (integration_parent, key, value)
         VALUES (
-          $1, $2,	$3
+          ?, ?, ?
         );
     `, runUID, key, value)
 	} else {
 		_, err = tx.Exec(`
       UPDATE
-        integration_stddata SET value = $1, modified_at = now()
-      WHERE id() = $2;
+        integration_stddata SET value = ?, modified_at = CURRENT_TIMESTAMP
+      WHERE rowid = ?;
     `, value, o.UID)
 	}
 

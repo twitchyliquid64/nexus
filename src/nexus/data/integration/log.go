@@ -44,13 +44,14 @@ func (t *LogTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS integration_log (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     integration_parent INT NOT NULL,
-	  run_id STRING NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-    kind STRING NOT NULL,
+	  run_id varchar(64) NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    kind varchar(32) NOT NULL,
     level INT NOT NULL,
     datatype INT,
-    value STRING,
+    value TEXT
 	);
 
   CREATE INDEX IF NOT EXISTS integration_log_by_parent_id ON integration_log(integration_parent);
@@ -85,7 +86,7 @@ type Log struct {
 // GetRecentRunsForRunnable returns the unique runIDs for a given runnable.
 func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]string, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = $1 AND created_at > $2 LIMIT 50;
+		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? LIMIT 50;
 	`, runnableUID, newerThan)
 	if err != nil {
 		return nil, err
@@ -107,7 +108,7 @@ func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan ti
 func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
 
 	query := `
-	SELECT id(), integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = $1 AND created_at > $2
+	SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = ? AND created_at > ?
 	`
 	if !info {
 		query += " AND level != " + strconv.Itoa(LevelInfo)
@@ -122,7 +123,7 @@ func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Tim
 		query += " AND datatype != " + strconv.Itoa(DatatypeEndInfo)
 	}
 
-	res, err := db.QueryContext(ctx, query+" ORDER BY created_at ASC LIMIT $3 OFFSET $4;", runnableUID, newerThan, limit, offset)
+	res, err := db.QueryContext(ctx, query+" ORDER BY created_at ASC LIMIT ? OFFSET ?;", runnableUID, newerThan, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -142,8 +143,8 @@ func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Tim
 // GetLogsFilteredByRunnable filters to a specific run.
 func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan time.Time, runID string, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
 	query := `
-		SELECT id(), integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log
-		WHERE run_id = $1 AND created_at > $2 AND integration_parent = $3
+		SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log
+		WHERE run_id = ? AND created_at > ? AND integration_parent = ?
 	`
 	if !info {
 		query += " AND level != " + strconv.Itoa(LevelInfo)
@@ -158,7 +159,7 @@ func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan t
 		query += " AND datatype != " + strconv.Itoa(DatatypeEndInfo)
 	}
 
-	res, err := db.QueryContext(ctx, query+" ORDER BY created_at ASC LIMIT $4 OFFSET $5;", runID, newerThan, runnableUID, limit, offset)
+	res, err := db.QueryContext(ctx, query+" ORDER BY created_at ASC LIMIT ? OFFSET ?;", runID, newerThan, runnableUID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func WriteLog(ctx context.Context, log *Log, db *sql.DB) error {
     INSERT INTO
 			integration_log (integration_parent, run_id, kind, level, datatype, value)
 			VALUES (
-				$1, $2,	$3, $4, $5, $6
+				?, ?, ?, ?, ?, ?
 			);
 	`, log.ParentUID, log.RunID, log.Kind, log.Level, log.Datatype, log.Value)
 	if err != nil {

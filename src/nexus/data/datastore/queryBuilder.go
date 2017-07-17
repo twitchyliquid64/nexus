@@ -76,7 +76,7 @@ func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error)
 			if col == nil {
 				return "", nil, errors.New("Invalid columnID in query")
 			}
-			queryString += columnName(col.Name) + " " + conditional(filter.Conditional) + " $" + strconv.Itoa(i+1)
+			queryString += columnName(col.Name) + " " + conditional(filter.Conditional) + " ?"
 			if col.Datatype == INT || col.Datatype == UINT {
 				v, _ := strconv.Atoi(filter.Val)
 				queryParameters = append(queryParameters, v)
@@ -101,7 +101,7 @@ func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error)
 }
 
 func buildSelectQuery(cols []*Column, query Query) (string, error) {
-	out := "SELECT id(), "
+	out := "SELECT rowid, "
 	for i, col := range cols {
 		out += columnName(col.Name)
 		if i < len(cols)-1 {

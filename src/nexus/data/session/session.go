@@ -36,13 +36,14 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS sessions (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 	  uid int NOT NULL,
-	  sid STRING NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  revoked BOOL NOT NULL DEFAULT FALSE,
-    can_access_web BOOL NOT NULL DEFAULT TRUE,
-    can_access_sys_api BOOL NOT NULL DEFAULT FALSE,
-    authed_via STRING authed_via IN ("PASS", "2FASC", "2FAHW", "ROBOCREATED", "ADMIN"),
+	  sid varchar(64) NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  revoked BOOLEAN NOT NULL DEFAULT 0,
+    can_access_web BOOLEAN NOT NULL DEFAULT 1,
+    can_access_sys_api BOOLEAN NOT NULL DEFAULT 0,
+    authed_via varchar(64)
 	);
 
   CREATE INDEX IF NOT EXISTS sessions_sid ON sessions(sid);
@@ -77,7 +78,7 @@ type DAO struct {
 // GetAllForUser is called to get all sessions for a given uid.
 func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked FROM sessions WHERE uid = $1;
+		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked FROM sessions WHERE uid = ?;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -99,7 +100,7 @@ func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
 func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = $1 AND revoked = FALSE;
+		SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = ? AND revoked = 0;
 	`, sid)
 	if err != nil {
 		return nil, err
@@ -128,7 +129,7 @@ func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia Aut
 	_, err = tx.Exec(`
 	INSERT INTO
 		sessions (uid, sid, can_access_web, can_access_sys_api, authed_via)
-		VALUES ($1, $2, $3, $4, $5);
+		VALUES (?, ?, ?, ?, ?);
 	`, uid, sid, allowWeb, allowAPI, string(authedVia))
 	if err != nil {
 		tx.Rollback()
@@ -145,7 +146,7 @@ func Revoke(ctx context.Context, sid string, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	UPDATE
-		sessions SET revoked = TRUE WHERE sid = $1;
+		sessions SET revoked = 1 WHERE sid = ?;
 	`, sid)
 	if err != nil {
 		tx.Rollback()
@@ -161,7 +162,7 @@ func RevokeByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
 		return 0, err
 	}
 
-	l, err := tx.ExecContext(ctx, `UPDATE sessions SET revoked = TRUE WHERE created_at < $1 AND revoked = FALSE;`, time.Now().AddDate(0, 0, -days))
+	l, err := tx.ExecContext(ctx, `UPDATE sessions SET revoked = 1 WHERE created_at < ? AND revoked = 0;`, time.Now().AddDate(0, 0, -days))
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -183,7 +184,7 @@ func DeleteRevokedByAge(ctx context.Context, days int, db *sql.DB) (int64, error
 		return 0, err
 	}
 
-	l, err := tx.ExecContext(ctx, `DELETE FROM sessions WHERE created_at < $1 AND revoked = TRUE;`, time.Now().AddDate(0, 0, -days))
+	l, err := tx.ExecContext(ctx, `DELETE FROM sessions WHERE created_at < ? AND revoked = 1;`, time.Now().AddDate(0, 0, -days))
 	if err != nil {
 		tx.Rollback()
 		return 0, err

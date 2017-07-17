@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"log"
 	"nexus/data/datastore"
 	"nexus/data/fs"
 	"nexus/data/integration"
@@ -12,7 +13,8 @@ import (
 	"nexus/data/util"
 	"reflect"
 
-	"github.com/cznic/ql"
+	// load sqlite library
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var tables = []DatabaseTable{
@@ -41,7 +43,6 @@ type DatabaseTable interface {
 
 // Init is called with database information to initialise a database session, creating any necessary tables.
 func Init(ctx context.Context, databaseKind, connString string) (*sql.DB, error) {
-	ql.RegisterDriver()
 	db, err := sql.Open(databaseKind, connString)
 	if err != nil {
 		return nil, err
@@ -50,6 +51,7 @@ func Init(ctx context.Context, databaseKind, connString string) (*sql.DB, error)
 	for _, table := range tables {
 		err := table.Setup(ctx, db)
 		if err != nil {
+			log.Printf("Problem initialising: %s", reflect.TypeOf(table))
 			db.Close()
 			return nil, err
 		}

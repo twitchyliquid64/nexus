@@ -170,10 +170,11 @@ func (_ *miniFS) List(ctx context.Context, path string, userID int) ([]ListResul
 	var output []ListResultItem
 	iterator := bufio.NewScanner(listing)
 	for iterator.Scan() {
-		if iterator.Text() == "" {
+		line := strings.Trim(iterator.Text(), "\x00")
+		if line == "" {
 			continue
 		}
-		fileInfo, err := fs.MiniFSGetFile(ctx, userID, iterator.Text(), db)
+		fileInfo, err := fs.MiniFSGetFile(ctx, userID, line, db)
 		if err != nil {
 			return nil, err
 		}

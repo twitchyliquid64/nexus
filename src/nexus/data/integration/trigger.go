@@ -19,11 +19,15 @@ func (t *TriggerTable) Setup(ctx context.Context, db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS integration_trigger (
+		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     integration_parent INT NOT NULL,
 	  owner_uid INT NOT NULL,
-	  created_at TIME NOT NULL DEFAULT now(),
-	  name STRING NOT NULL,
-    kind STRING NOT NULL,
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	  name varchar(128) NOT NULL,
+    kind varchar(32) NOT NULL,
+
+		val1 varchar(2048),
+		val2 varchar(2048)
 	);
 
   CREATE INDEX IF NOT EXISTS integration_trigger_by_parent_id ON integration_trigger(integration_parent);
@@ -32,40 +36,6 @@ func (t *TriggerTable) Setup(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-	return t.doCheckV2Columns(ctx, db)
-}
-
-// check new columns exist, nd do migration if necessary
-func (t *TriggerTable) doCheckV2Columns(ctx context.Context, db *sql.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-
-	valExists, err := util.ColumnExists(tx, "val1", "integration_trigger")
-	if err != nil {
-		return err
-	}
-	if !valExists {
-		_, err2 := tx.Exec("ALTER TABLE integration_trigger ADD val1 STRING NOT NULL;")
-		if err2 != nil {
-			return err2
-		}
-	}
-
-	valExists2, err := util.ColumnExists(tx, "val2", "integration_trigger")
-	if err != nil {
-		return err
-	}
-	if !valExists2 {
-		_, err2 := tx.Exec("ALTER TABLE integration_trigger ADD val2 STRING NOT NULL;")
-		if err2 != nil {
-			return err2
-		}
-	}
 	return tx.Commit()
 }
 
@@ -90,7 +60,7 @@ type Trigger struct {
 // GetTriggerByUID returns a specific Trigger DAO.
 func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE id() = $1;
+		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE rowid = ?;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -108,7 +78,7 @@ func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error)
 // GetTriggersForRunnable is called to get all triggers for a runnable.
 func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([]*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE integration_parent = $1;
+		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE integration_parent = ?;
 	`, runnableUID)
 	if err != nil {
 		return nil, err
@@ -129,7 +99,7 @@ func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([
 // GetAllTriggers is called to get all triggers.
 func GetAllTriggers(ctx context.Context, db *sql.DB) ([]*Trigger, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT id(), integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger;
+		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger;
 	`)
 	if err != nil {
 		return nil, err
@@ -152,7 +122,7 @@ func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, 
 		INSERT INTO
 			integration_trigger (integration_parent, owner_uid, name, kind, val1, val2)
 			VALUES (
-				$1, $2,	$3, $4, $5, $6
+				?, ?, ?, ?, ?, ?
 			);`, t.ParentUID, t.OwnerUID, t.Name, t.Kind, t.Val1, t.Val2)
 	if err != nil {
 		return 0, err
@@ -167,7 +137,7 @@ func makeTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) (int, 
 func editTrigger(ctx context.Context, tx *sql.Tx, t *Trigger, db *sql.DB) error {
 	_, err := tx.ExecContext(ctx, `
 		UPDATE integration_trigger
-			SET name=$2, kind=$3, val1=$4, val2=$5
-			WHERE id() = $1;`, t.UID, t.Name, t.Kind, t.Val1, t.Val2)
+			SET name=?, kind=?, val1=?, val2=?
+			WHERE rowid = ?;`, t.Name, t.Kind, t.Val1, t.Val2, t.UID)
 	return err
 }
