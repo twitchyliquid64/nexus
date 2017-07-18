@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
+	"nexus/data"
 	"os"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/cznic/ql"
+	// load sqlite library
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var tablesToMigrate = []string{
@@ -116,9 +120,38 @@ func dumpTable(table string, db *ql.DB, w io.Writer) error {
 	return nil
 }
 
+func doCreateBlankDB(path string) {
+	if _, err := os.Stat(path); err == nil {
+		err := os.Remove(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed delete for old sqlite database: %s\n", err)
+			os.Exit(6)
+		}
+	}
+
+	db, err := data.Init(context.Background(), "sqlite3", path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed init for sqlite database: %s\n", err)
+		os.Exit(4)
+	}
+	err = db.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed close for sqlite database: %s\n", err)
+		os.Exit(5)
+	}
+	os.Exit(1)
+}
+
 func main() {
 	ql.RegisterDriver()
+	var newNamePath string
+	flag.StringVar(&newNamePath, "new_db", "", "Optional path to new db to initialise. Will not dump ql db if specified.")
 	flag.Parse()
+
+	if newNamePath != "" {
+		doCreateBlankDB(newNamePath)
+	}
+
 	if flag.Arg(0) == "" {
 		fmt.Fprintf(os.Stderr, "Error: Must supply a ql database file to read from.\n")
 		os.Exit(1)
@@ -126,7 +159,7 @@ func main() {
 
 	qlDb, err := ql.OpenFile(flag.Arg(0), &ql.Options{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Err opening database: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Err opening ql database: %s\n", err)
 		os.Exit(2)
 	}
 
