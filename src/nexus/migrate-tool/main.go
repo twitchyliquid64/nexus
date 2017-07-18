@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"flag"
@@ -11,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"database/sql"
 
 	"github.com/cznic/ql"
 	// load sqlite library
@@ -116,11 +119,14 @@ func dumpTable(table string, db *ql.DB, w io.Writer) error {
 		}
 	}
 
-	w.Write([]byte(";\n\n"))
+	if _, err := w.Write([]byte(";")); err != nil {
+		return err
+	}
+	w.Write([]byte("\n\n"))
 	return nil
 }
 
-func doCreateBlankDB(path string) {
+func doCreateBlankDB(path string) (*sql.DB, error) {
 	if _, err := os.Stat(path); err == nil {
 		err := os.Remove(path)
 		if err != nil {
@@ -129,27 +135,55 @@ func doCreateBlankDB(path string) {
 		}
 	}
 
-	db, err := data.Init(context.Background(), "sqlite3", path)
+	return data.Init(context.Background(), "sqlite3", path)
+}
+
+type dbBatchExecutor struct {
+	db   *sql.DB
+	buff *bytes.Buffer
+}
+
+func (e *dbBatchExecutor) Write(p []byte) (int, error) {
+	n, err := e.buff.Write(p)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed init for sqlite database: %s\n", err)
-		os.Exit(4)
+		return n, err
 	}
-	err = db.Close()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed close for sqlite database: %s\n", err)
-		os.Exit(5)
+	if strings.HasSuffix(string(p), ";") {
+		r, err := e.db.Exec(string(e.buff.String()))
+		if err != nil {
+			return 0, err
+		}
+		a, _ := r.LastInsertId()
+		n, _ := r.RowsAffected()
+		fmt.Printf("[%d,%d]: %q\n", n, a, e.buff.String())
+		e.buff.Reset()
 	}
-	os.Exit(1)
+	return len(p), nil
+}
+
+func wrapDbToWriter(db *sql.DB) io.Writer {
+	b := bytes.NewBuffer(make([]byte, 0, 1024*8))
+	return &dbBatchExecutor{
+		db:   db,
+		buff: b,
+	}
 }
 
 func main() {
 	ql.RegisterDriver()
 	var newNamePath string
-	flag.StringVar(&newNamePath, "new_db", "", "Optional path to new db to initialise. Will not dump ql db if specified.")
+	flag.StringVar(&newNamePath, "new_db", "", "Optional path to new db to initialise. Will dump directly if specified.")
 	flag.Parse()
 
+	writer := io.Writer(os.Stdout)
 	if newNamePath != "" {
-		doCreateBlankDB(newNamePath)
+		db, err := doCreateBlankDB(newNamePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error initializing sqlite DB: %v\n", err)
+			os.Exit(6)
+		}
+		defer db.Close()
+		writer = wrapDbToWriter(db)
 	}
 
 	if flag.Arg(0) == "" {
@@ -164,7 +198,7 @@ func main() {
 	}
 
 	for _, table := range tablesToMigrate {
-		err := dumpTable(table, qlDb, os.Stdout)
+		err := dumpTable(table, qlDb, writer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed dumping %q: %s\n", table, err)
 			os.Exit(3)
