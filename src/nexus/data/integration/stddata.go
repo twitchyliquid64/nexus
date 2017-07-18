@@ -25,11 +25,11 @@ func (t *StdDataTable) Setup(ctx context.Context, db *sql.DB) error {
 		rowid INTEGER PRIMARY KEY AUTOINCREMENT,
     integration_parent INT NOT NULL,
 	  modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    key varchar(128) NOT NULL,
-    value varchar(32) NOT NULL
+    key varchar(1024) NOT NULL,
+    value TEXT NOT NULL
 	);
 
-  CREATE INDEX IF NOT EXISTS integration_stddata_by_parent_id ON integration_stddata(integration_parent);
+  CREATE INDEX IF NOT EXISTS integration_stddata_combined ON integration_stddata(integration_parent, key);
 	`)
 	if err != nil {
 		return err

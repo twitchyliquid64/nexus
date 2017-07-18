@@ -41,6 +41,7 @@ func (t *AuthTable) Setup(ctx context.Context, db *sql.DB) error {
     val2 TEXT,
     val3 TEXT
 	);
+	CREATE INDEX IF NOT EXISTS user_auth_uid ON user_auth(uid);
 	`)
 	if err != nil {
 		return err

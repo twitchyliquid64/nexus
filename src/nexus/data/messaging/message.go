@@ -39,7 +39,7 @@ func (t *MessageTable) Setup(ctx context.Context, db *sql.DB) error {
 
 	CREATE UNIQUE INDEX IF NOT EXISTS messaging_messages_uid ON messaging_messages(unique_identifier);
   CREATE INDEX IF NOT EXISTS messaging_messages_conversation ON messaging_messages(conversation_uid);
-  CREATE INDEX IF NOT EXISTS messaging_messages_time ON messaging_messages(created_at);
+  CREATE INDEX IF NOT EXISTS messaging_messages_combined ON messaging_messages(conversation_uid, created_at);
 	`)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([]*Message, error) {
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, kind, content, created_at, unique_identifier, identity FROM messaging_messages
-		WHERE conversation_uid = ? ORDER BY created_at ASC;
+		WHERE conversation_uid = ? ORDER BY created_at ASC LIMIT 300;
 	`, convoID)
 	if err != nil {
 		return nil, err

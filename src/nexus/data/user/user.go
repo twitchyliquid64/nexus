@@ -39,6 +39,8 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 
 		is_robot_account BOOLEAN NOT NULL DEFAULT 0
 	);
+
+	CREATE UNIQUE INDEX IF NOT EXISTS user_users_username ON users(username);
 	`)
 	if err != nil {
 		return err

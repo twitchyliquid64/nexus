@@ -43,8 +43,7 @@ func (t *MiniFsTable) Setup(ctx context.Context, db *sql.DB) error {
     data BLOB NOT NULL
 	);
 
-  CREATE INDEX IF NOT EXISTS fs_minifiles_by_owner ON fs_minifiles(owner_uid);
-  CREATE INDEX IF NOT EXISTS fs_minifiles_by_path ON fs_minifiles(path);
+  CREATE INDEX IF NOT EXISTS fs_minifiles_combined ON fs_minifiles(path, owner_uid);
 	`)
 	if err != nil {
 		return err

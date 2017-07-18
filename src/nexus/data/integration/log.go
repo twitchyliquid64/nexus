@@ -54,8 +54,7 @@ func (t *LogTable) Setup(ctx context.Context, db *sql.DB) error {
     value TEXT
 	);
 
-  CREATE INDEX IF NOT EXISTS integration_log_by_parent_id ON integration_log(integration_parent);
-  CREATE INDEX IF NOT EXISTS integration_log_by_run_id ON integration_log(run_id);
+  CREATE INDEX IF NOT EXISTS integration_log_combined ON integration_log(integration_parent, run_id, created_at);
 	`)
 	if err != nil {
 		return err
@@ -86,7 +85,7 @@ type Log struct {
 // GetRecentRunsForRunnable returns the unique runIDs for a given runnable.
 func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]string, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? LIMIT 50;
+		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? ORDER BY created_at DESC LIMIT 50;
 	`, runnableUID, newerThan)
 	if err != nil {
 		return nil, err
