@@ -36,7 +36,7 @@ func (t *ColumnMetaTable) Setup(ctx context.Context, db *sql.DB) error {
 	  name varchar(128) NOT NULL,
     datatype INT NOT NULL,
     ordering INT NOT NULL DEFAULT 0,
-	  created_at TIMESTAMPSTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 
   CREATE INDEX IF NOT EXISTS datastore_col_meta_index_datastore ON datastore_col_meta(datastore);

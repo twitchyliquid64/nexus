@@ -31,7 +31,7 @@ func (t *MetaTable) Setup(ctx context.Context, db *sql.DB) error {
 	  owner_uid int NOT NULL,
 	  name varchar(128) NOT NULL,
 		store_kind varchar(16) NOT NULL DEFAULT "DB",
-	  created_at TIMESTAMPSTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 	`)
 	if err != nil {
@@ -99,8 +99,7 @@ func GetDatastores(ctx context.Context, showAll bool, userID int, db *sql.DB) ([
 	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_uid, store_kind, created_at
 	FROM datastore_meta
 	WHERE
-		owner_uid=? OR ?
-		OR rowid IN (SELECT ds_uid FROM datastore_grant WHERE user_uid=?);`, userID, showAll, userID)
+		owner_uid=? OR ?;`, userID, showAll, userID) //TODO: Fix grants
 	if err != nil {
 		return nil, err
 	}

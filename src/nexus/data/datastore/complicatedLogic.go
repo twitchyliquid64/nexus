@@ -238,11 +238,15 @@ func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		}
 	}
 
-	createQuery := "CREATE TABLE ds_" + strconv.Itoa(storeUID) + " (\n"
-	for _, col := range ds.Cols {
-		createQuery += columnName(col.Name) + " " + ColDatatype(col.Datatype) + " NOT NULL,\n"
+	createQuery := "CREATE TABLE ds_" + strconv.Itoa(storeUID) + " ("
+	for i, col := range ds.Cols {
+		createQuery += columnName(col.Name) + " " + ColDatatype(col.Datatype) + " NOT NULL"
+		if i < (len(ds.Cols) - 1) {
+			createQuery += ", "
+		}
 	}
 	createQuery += ");\n"
+	log.Println("[Datastore] Create query:", createQuery)
 
 	_, err = tx.Exec(createQuery)
 	if err != nil {
