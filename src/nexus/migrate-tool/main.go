@@ -48,10 +48,36 @@ func tableInfo(table string, db *ql.DB) (*ql.TableInfo, error) {
 	return nil, fmt.Errorf("no such table %q", table)
 }
 
+func getNumRows(table string, db *ql.DB) (int, error) {
+	res, _, err := db.Run(ql.NewRWCtx(), "SELECT count(*) FROM "+table+";")
+	if err != nil {
+		return 0, err
+	}
+	var amount = 0
+	for _, r := range res {
+		err := r.Do(false, func(data []interface{}) (bool, error) {
+			amount = int(data[0].(int64))
+			return false, nil
+		})
+		if err != nil {
+			return 0, err
+		}
+	}
+	return amount, nil
+}
+
 func dumpTable(table string, db *ql.DB, w io.Writer) error {
 	tableInfo, err := tableInfo(table, db)
 	if err != nil {
 		return err
+	}
+
+	n, err := getNumRows(table, db)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return nil
 	}
 
 	queryStr := "id(), "
