@@ -63,7 +63,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
       url: '/web/v1/messenger/messages?cid=' + convo.UID
     }).then(function successCallback(response) {
       $scope.loading = false;
-      $scope.currentConvoMessages = response.data;
+      $scope.currentConvoMessages = response.data.reverse();
       $scope.$$postDigest(function(){
         var objDiv = document.getElementById("messages-container");
         objDiv.scrollTop = objDiv.scrollHeight;
