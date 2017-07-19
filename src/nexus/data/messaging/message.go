@@ -95,7 +95,7 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([]*Message, error) {
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, kind, content, created_at, unique_identifier, identity FROM messaging_messages
-		WHERE conversation_uid = ? ORDER BY created_at DESC LIMIT 300;
+		WHERE conversation_uid = ? ORDER BY created_at DESC LIMIT 100;
 	`, convoID)
 	if err != nil {
 		return nil, err

@@ -33,6 +33,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     $scope.selected = convo.UID;
     $scope.currentConvoTitle = convo.Name;
     $scope.currentConvoMessages = [];
+    $scope.lastMsgTime = null;
     $scope.loadCurrentConvo(convo);
   }
 
@@ -55,6 +56,13 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     }
   }
 
+  $scope.doScroll = function(){
+    $scope.$$postDigest(function(){
+      var objDiv = document.getElementById("messages-container");
+      objDiv.scrollTop = objDiv.scrollHeight;
+    });
+  }
+
   $scope.loadCurrentConvo = function(convo){
     $scope.loading = true;
     $scope.error = undefined;
@@ -63,11 +71,14 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
       url: '/web/v1/messenger/messages?cid=' + convo.UID
     }).then(function successCallback(response) {
       $scope.loading = false;
-      $scope.currentConvoMessages = response.data.reverse();
-      $scope.$$postDigest(function(){
-        var objDiv = document.getElementById("messages-container");
-        objDiv.scrollTop = objDiv.scrollHeight;
-      });
+      if(response.data && response.data.length && $scope.lastMsgTime){
+        if (response.data[0].CreatedAt == $scope.lastMsgTime)
+          return;
+      }
+      $scope.lastMsgTime = response.data ? response.data[0].CreatedAt : null;
+      $scope.currentConvoMessages = response.data ? response.data.reverse() : [];
+      console.log('updating model');
+      $scope.doScroll();
     }, function errorCallback(response) {
       $scope.loading = false;
       $scope.error = response;
@@ -89,6 +100,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
     } else {
       $scope.baseData = [];
       $scope.currentConvoMessages = [];
+      $scope.lastMsgTime = null;
     }
   });
 
