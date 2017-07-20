@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"nexus/data/util"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -46,7 +49,104 @@ func (t *SourceTable) Setup(ctx context.Context, db *sql.DB) error {
 
 // Forms is called by the form renderer to get any settings forms relevant to this table.
 func (t *SourceTable) Forms() []*util.FormDescriptor {
-	return nil
+	return []*util.FormDescriptor{
+		&util.FormDescriptor{
+			SettingsTitle: "Messenger Sources",
+			ID:            "messengerUserSources",
+			Desc:          "Sources are integrations with remote IM sources such as slack or IRC.",
+			Forms: []*util.ActionDescriptor{
+				&util.ActionDescriptor{
+					Name:   "New Source",
+					ID:     "messenger_source_add",
+					IcoStr: "message",
+					Fields: []*util.Field{
+						&util.Field{
+							Name: "Source Type",
+							ID:   "kind",
+							Kind: "select",
+							SelectOptions: map[string]string{
+								Slack: "Slack",
+								IRC:   "IRC",
+							},
+						},
+						&util.Field{
+							Name: "Name",
+							ID:   "name",
+							Kind: "text",
+						},
+						&util.Field{
+							Name: "Details struct (JSON)",
+							ID:   "details_json",
+							Kind: "text",
+						},
+					},
+					OnSubmit: t.addSourceSubmitHandler,
+				},
+			},
+			Tables: []*util.TableDescriptor{
+				&util.TableDescriptor{
+					Name: "Existing Sources",
+					ID:   "messenger_existing_sources",
+					Cols: []string{"#", "Name", "Type"},
+					Actions: []*util.TableAction{
+						&util.TableAction{
+							Action:       "Delete",
+							MaterialIcon: "delete",
+							ID:           "messenger_existing_sources_delete",
+							Handler:      t.deleteSourceActionHandler,
+						},
+					},
+					FetchContent: func(ctx context.Context, userID int, db *sql.DB) ([]interface{}, error) {
+						data, err := GetAllSourcesForUser(ctx, userID, db)
+						if err != nil {
+							return nil, err
+						}
+						out := make([]interface{}, len(data))
+						for i, s := range data {
+							out[i] = []interface{}{s.UID, s.Name, s.Kind}
+						}
+						return out, nil
+					},
+				},
+			},
+		},
+	}
+}
+
+func (t *SourceTable) deleteSourceActionHandler(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+	uid, err := strconv.Atoi(rowID)
+	if err != nil {
+		return nil
+	}
+	src, _, err := GetSourceByUID(context.Background(), uid, db)
+	if err != nil {
+		return nil
+	}
+	if src.OwnerID != userID {
+		return errors.New("You do not have permission to modify that source")
+	}
+	return DeleteSource(context.Background(), src.UID, db)
+}
+
+// Called on the submission of the form 'New Source'
+func (t *SourceTable) addSourceSubmitHandler(ctx context.Context, vals map[string]string, userID int, db *sql.DB) error {
+	if vals["kind"] != Slack && vals["kind"] != IRC {
+		return errors.New("Invalid source type")
+	}
+
+	var d map[string]string
+	err := json.Unmarshal([]byte(vals["details_json"]), &d)
+	if err != nil {
+		return err
+	}
+
+	err = AddSource(ctx, Source{
+		OwnerID: userID,
+		Name:    vals["name"],
+		Kind:    vals["kind"],
+		Details: d,
+	}, db)
+	return err
 }
 
 // Source is a DAO for messaging_source database rows.
@@ -58,6 +158,21 @@ type Source struct {
 	Remote    bool
 	CreatedAt time.Time
 	Details   map[string]string
+}
+
+// DeleteSource removes a source.
+func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		DELETE FROM
+			messaging_source WHERE rowid = ?;`, id)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // AddSource creates a new messaging source.
@@ -135,4 +250,23 @@ func GetAllSources(ctx context.Context, db *sql.DB) ([]*Source, error) {
 		output = append(output, &o)
 	}
 	return output, nil
+}
+
+// GetSourceByUID returns a source with the given UID.
+func GetSourceByUID(ctx context.Context, uid int, db *sql.DB) (*Source, string, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE rowid = ?;
+	`, uid)
+	if err != nil {
+		return nil, "", err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, "", os.ErrNotExist
+	}
+
+	var o Source
+	var detailsJSONStr string
+	return &o, detailsJSONStr, res.Scan(&o.UID, &o.Name, &o.OwnerID, &o.Kind, &o.Remote, &o.CreatedAt, &detailsJSONStr)
 }

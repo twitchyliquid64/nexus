@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"nexus/data/util"
+	"strconv"
 	"time"
 )
 
@@ -60,7 +61,74 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 
 // Forms is called by the form renderer to get any settings forms relevant to this table.
 func (t *Table) Forms() []*util.FormDescriptor {
-	return nil
+	return []*util.FormDescriptor{
+		&util.FormDescriptor{
+			SettingsTitle: "Sessions",
+			ID:            "userSessions",
+			Desc:          "List of sessions and related settings for this user.",
+			Tables: []*util.TableDescriptor{
+				&util.TableDescriptor{
+					Name: "All Sessions",
+					Desc: "All sessions we have on file.",
+					ID:   "sessions_list",
+					Cols: []string{"#", "Created", "revoked?", "auth"},
+					FetchContent: func(ctx context.Context, uid int, db *sql.DB) ([]interface{}, error) {
+						data, err := GetAllForUser(ctx, uid, db)
+						if err != nil {
+							return nil, err
+						}
+						out := make([]interface{}, len(data))
+						for i, s := range data {
+							out[i] = []interface{}{s.SessionUID, s.Created.Format(time.Stamp), s.Revoked, s.AuthedVia}
+						}
+						return out, nil
+					},
+					Actions: []*util.TableAction{
+						&util.TableAction{
+							ID:           "sessions_list_revoke",
+							Action:       "Revoke",
+							MaterialIcon: "block",
+							Handler: func(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+								uid, err := strconv.Atoi(rowID)
+								if err != nil {
+									return nil
+								}
+								ctx := context.Background()
+								s, err := GetByUID(ctx, uid, db)
+								if err != nil {
+									return nil
+								}
+								if s.UID != userID {
+									return errors.New("Session is not owned by requesting user")
+								}
+								return Revoke(ctx, s.SID, db)
+							},
+						},
+						&util.TableAction{
+							ID:           "sessions_list_delete",
+							Action:       "Delete",
+							MaterialIcon: "delete",
+							Handler: func(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+								uid, err := strconv.Atoi(rowID)
+								if err != nil {
+									return nil
+								}
+								ctx := context.Background()
+								s, err := GetByUID(ctx, uid, db)
+								if err != nil {
+									return nil
+								}
+								if s.UID != userID {
+									return errors.New("Session is not owned by requesting user")
+								}
+								return Delete(ctx, s.SID, db)
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 // DAO represents a stored session.
@@ -78,7 +146,10 @@ type DAO struct {
 // GetAllForUser is called to get all sessions for a given uid.
 func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked FROM sessions WHERE uid = ?;
+		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked
+		FROM sessions
+		WHERE uid = ?
+		ORDER BY created_at DESC;
 	`, uid)
 	if err != nil {
 		return nil, err
@@ -95,6 +166,25 @@ func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 		output = append(output, &o)
 	}
 	return output, nil
+}
+
+// GetByUID is called to get the details of a session by UID.
+func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via, sid
+		FROM sessions
+		WHERE rowid = ?;
+	`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, ErrInvalidSession
+	}
+	var o DAO
+	return &o, res.Scan(&o.SessionUID, &o.UID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia, &o.SID)
 }
 
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
@@ -197,6 +287,22 @@ func DeleteRevokedByAge(ctx context.Context, days int, db *sql.DB) (int64, error
 	}
 
 	return num, tx.Commit()
+}
+
+// Delete deletes a session with a particular SID
+func Delete(ctx context.Context, sid string, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `DELETE FROM sessions WHERE sid=?;`, sid)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // GenerateRandomBytes returns securely generated random bytes.

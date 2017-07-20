@@ -43,13 +43,14 @@ func (h *SettingsHandler) HandleTableAction(response http.ResponseWriter, reques
 	tableUID := spl[len(spl)-2]
 	actionUID := spl[len(spl)-1]
 
-	err = forms.HandleTableAction(request.FormValue("rowid"), tableUID, actionUID, u.UID, h.DB)
+	var sourceID string
+	sourceID, err = forms.HandleTableAction(request.FormValue("rowid"), tableUID, actionUID, u.UID, h.DB)
 	if err != nil {
 		log.Printf("forms.HandleAction() Error: %s", err)
 		http.Error(response, "Internal server error", 500)
 		return
 	}
-	http.Redirect(response, request, "/settings/show", 302)
+	http.Redirect(response, request, "/settings/show?sourceid="+sourceID, 302)
 }
 
 // HandleSubmission handles HTTP requests to submit forms.

@@ -28,13 +28,19 @@
     <script type="text/javascript">
       var app = angular.module('forms', ['ui.materialize', 'angularMoment']);
 
-      app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $rootScope) {
+      app.controller('BodyController', ["$scope", "$rootScope", "$location", function ($scope, $rootScope, $location) {
           $scope.page = "home";
           $scope.changePage = function(pageName){
               $scope.page = pageName;
               $rootScope.$broadcast('page-change',{page: pageName});
           };
-      }]);
+
+          $rootScope.$on('$locationChangeSuccess', function(event, args) {
+            if ($location.absUrl().split('?sourceid=').length > 1){
+              $scope.changePage($location.absUrl().split('?sourceid=')[1]);
+            }
+          });
+        }]);
     </script>
 </head>
 <body ng-app="forms" ng-controller="BodyController" ng-cloak>
