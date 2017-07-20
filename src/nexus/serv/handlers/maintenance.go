@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"nexus/data"
 	"nexus/data/integration"
 	"nexus/data/session"
 	"nexus/serv/util"
@@ -59,6 +60,9 @@ type cleanupData struct {
 	NumSessionsDeleted      int64
 	SessionDeleteErr        error
 	SessionDeleteTime       time.Duration
+
+	VacuumErr  error
+	VacuumTime time.Duration
 }
 
 // CleanupHandler handles a HTTP request to /admin/cleanup.
@@ -94,6 +98,10 @@ func (h *MaintenanceHandler) CleanupHandler(response http.ResponseWriter, reques
 	templateData.MaxSessionRetentionDays = maxSessionRetentionDays
 	templateData.NumSessionsDeleted, templateData.SessionDeleteErr = session.DeleteRevokedByAge(request.Context(), maxSessionRetentionDays, h.DB)
 	templateData.SessionDeleteTime = time.Now().Sub(sessionDeleteStart)
+
+	vacuumStart := time.Now()
+	templateData.VacuumErr = data.Vacuum(h.DB)
+	templateData.VacuumTime = time.Now().Sub(vacuumStart)
 
 	util.LogIfErr("CleanupHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/maintenanceResult.html"), templateData, response))
 }

@@ -67,6 +67,17 @@
             {!{end}!}
           </td>
         </tr>
+
+        <tr>
+          <td>Vacuum</td>
+          <td>
+            {!{if .VacuumErr}!}
+              <p class="red-text"><b>Error!: </b> {!{.VacuumErr}!}</p>
+            {!{else}!}
+              <p><b>Operation took: </b> {!{.VacuumTime}!}</p>
+            {!{end}!}
+          </td>
+        </tr>
       </tbody>
     </table>
 

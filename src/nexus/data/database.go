@@ -82,3 +82,9 @@ func GetForms() []*util.FormDescriptor {
 	}
 	return forms
 }
+
+// Vacuum is called to compress the database.
+func Vacuum(db *sql.DB) error {
+	_, err := db.Exec("VACUUM;")
+	return err
+}
