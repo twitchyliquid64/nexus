@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"nexus/data/util"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -102,6 +103,14 @@ func (t *SourceTable) Forms() []*util.FormDescriptor {
 					Name: "Existing Sources",
 					ID:   "fs_existing_sources",
 					Cols: []string{"#", "Prefix", "Type", "Val1"},
+					Actions: []*util.TableAction{
+						&util.TableAction{
+							Action:       "Delete",
+							MaterialIcon: "delete",
+							ID:           "fs_existing_sources_delete",
+							Handler:      t.deleteSourceActionHandler,
+						},
+					},
 					FetchContent: func(ctx context.Context, userID int, db *sql.DB) ([]interface{}, error) {
 						data, err := GetSourcesForUser(ctx, userID, db)
 						if err != nil {
@@ -117,6 +126,21 @@ func (t *SourceTable) Forms() []*util.FormDescriptor {
 			},
 		},
 	}
+}
+
+func (t *SourceTable) deleteSourceActionHandler(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+	uid, err := strconv.Atoi(rowID)
+	if err != nil {
+		return nil
+	}
+	src, err := GetSourceByUID(context.Background(), uid, db)
+	if err != nil {
+		return nil
+	}
+	if src.OwnerID != userID {
+		return errors.New("You do not have permission to modify that source")
+	}
+	return DeleteSource(context.Background(), src.UID, db)
 }
 
 // Called on the submission of the form 'New Source'
@@ -148,6 +172,39 @@ type Source struct {
 	CreatedAt time.Time
 
 	Value1, Value2, Value3 string
+}
+
+// DeleteSource removes a source.
+func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		DELETE FROM
+			fs_sources WHERE rowid = ?;`, id)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// GetSourceByUID returns a source with the given UID.
+func GetSourceByUID(ctx context.Context, uid int, db *sql.DB) (*Source, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT rowid, owner_uid, created_at, prefix, kind, value1, value2, value3 FROM fs_sources WHERE rowid = ?;
+	`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, os.ErrNotExist
+	}
+
+	var o Source
+	return &o, res.Scan(&o.UID, &o.OwnerID, &o.CreatedAt, &o.Prefix, &o.Kind, &o.Value1, &o.Value2, &o.Value3)
 }
 
 // GetSource returns a source with the given prefix and owner.

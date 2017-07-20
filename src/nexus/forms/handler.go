@@ -33,3 +33,24 @@ func HandleSubmission(req *http.Request, formID string, userID int, db *sql.DB) 
 	}
 	return nil
 }
+
+// HandleTableAction handles button presses in the tables.
+func HandleTableAction(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+	for _, source := range getForms(false) {
+		for _, cs := range source.GetContentSections() {
+			if f, isTable := cs.(table); isTable && f.UniqueID() == formID {
+				log.Printf("[forms] User %d pressed button on %q", userID, f.Title())
+
+				for _, tableAction := range f.GetActions() {
+					if a, isAction := tableAction.(action); isAction && a.UniqueID() == actionUID {
+						if a.OnSubmitHandler() == nil {
+							return fmt.Errorf("Nil handler for table handler %q (%s)", f.Title(), formID)
+						}
+						return a.OnSubmitHandler()(rowID, formID, actionUID, userID, db)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}

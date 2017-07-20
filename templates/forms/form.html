@@ -1,5 +1,6 @@
 {!{ $tData := .TableData   }!}
 {!{ $tErrs := .TableErrors }!}
+{!{ $tActions := .TableActions }!}
 
 {!{ range .Sources }!}
 <div ng-show="page=='{!{ .UniqueID }!}'">
@@ -22,12 +23,19 @@
       </thead>
       <tbody>
         {!{ $data := index $tData $uid }!}
+        {!{ $actions := index $tActions $uid }!}
         {!{ range $data }!}
+        {!{ $firstVal := index . 0 }!}
         <tr>
           {!{ range . }!}
             <td>{!{ . }!}</td>
           {!{ end }!}
-          <td></td>
+          <td>
+            {!{ range $actions }!}
+            <a class="btn-floating tooltipped" data-position="left" data-delay="50" data-tooltip="{!{.Caption}!}"
+               href="/settings/table/do/{!{ $uid }!}/{!{ .UniqueID }!}?rowid={!{ $firstVal }!}"><i class="material-icons">{!{.Icon}!}</i></a>
+            {!{ end }!}
+          </td>
         </tr>
         {!{ end }!}
       </tbody>

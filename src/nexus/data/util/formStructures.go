@@ -59,6 +59,7 @@ type TableDescriptor struct {
 	ID           string
 	Desc         string
 	Cols         []string
+	Actions      []*TableAction
 	FetchContent func(context.Context, int, *sql.DB) ([]interface{}, error)
 }
 
@@ -85,6 +86,15 @@ func (f *TableDescriptor) ColNames() []string {
 // OnLoadHandler returns the content to populate the table.
 func (f *TableDescriptor) OnLoadHandler() func(context.Context, int, *sql.DB) ([]interface{}, error) {
 	return f.FetchContent
+}
+
+// GetActions returns a list of actions available for each row.
+func (f *TableDescriptor) GetActions() []interface{} {
+	out := make([]interface{}, len(f.Actions))
+	for i, f := range f.Actions {
+		out[i] = f
+	}
+	return out
 }
 
 // ActionDescriptor represents a form which can be submitted.
@@ -160,4 +170,30 @@ func (f *Field) ValidationRegex() string {
 // Options returns the set of options for a select field.
 func (f *Field) Options() map[string]string {
 	return f.SelectOptions
+}
+
+// TableAction represents some action that can be taken against a row in a table.
+type TableAction struct {
+	Action, MaterialIcon, ID string
+	Handler                  func(rowID, formID, actionUID string, userID int, db *sql.DB) error
+}
+
+// Caption returns the tooltip for an action button.
+func (a *TableAction) Caption() string {
+	return a.Action
+}
+
+// Icon returns the material-icon string for the action button.
+func (a *TableAction) Icon() string {
+	return a.MaterialIcon
+}
+
+// UniqueID returns a unique string for this action.
+func (a *TableAction) UniqueID() string {
+	return a.ID
+}
+
+// OnSubmitHandler is called when the action is triggered.
+func (a *TableAction) OnSubmitHandler() func(rowID, formID, actionUID string, userID int, db *sql.DB) error {
+	return a.Handler
 }

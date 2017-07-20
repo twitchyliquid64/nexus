@@ -42,7 +42,15 @@ type table interface {
 	Description() string
 	UniqueID() string
 	ColNames() []string
+	GetActions() []interface{}
 	OnLoadHandler() func(context.Context, int, *sql.DB) ([]interface{}, error)
+}
+
+type action interface {
+	Caption() string
+	Icon() string
+	UniqueID() string
+	OnSubmitHandler() func(rowID, formID, actionUID string, userID int, db *sql.DB) error
 }
 
 func validate(s source) (int, error) {
@@ -58,7 +66,13 @@ func validate(s source) (int, error) {
 		}
 	}
 	for i, f := range s.GetContentSections() {
-		if _, ok := f.(table); !ok {
+		if t, ok := f.(table); ok {
+			for x, a := range t.GetActions() {
+				if _, actionOk := a.(action); !actionOk {
+					return i, fmt.Errorf("action at index %d does not implement action interface", x)
+				}
+			}
+		} else {
 			return i, errors.New("does not implement table interface")
 		}
 	}
@@ -99,22 +113,25 @@ func renderList(forms []source) (*bytes.Buffer, error) {
 	return &buff, render("templates/forms/list.html", &buff, forms)
 }
 
-func renderForms(forms []source, contents map[string][]interface{}, errs map[string]error) (*bytes.Buffer, error) {
+func renderForms(forms []source, contents map[string][]interface{}, errs map[string]error, actions map[string][]interface{}) (*bytes.Buffer, error) {
 	var buff bytes.Buffer
 	return &buff, render("templates/forms/form.html", &buff, struct {
-		Sources     []source
-		TableData   map[string][]interface{}
-		TableErrors map[string]error
+		Sources      []source
+		TableData    map[string][]interface{}
+		TableErrors  map[string]error
+		TableActions map[string][]interface{}
 	}{
-		Sources:     forms,
-		TableData:   contents,
-		TableErrors: errs,
+		Sources:      forms,
+		TableData:    contents,
+		TableErrors:  errs,
+		TableActions: actions,
 	})
 }
 
-func computeTableContents(ctx context.Context, forms []source, userID int, db *sql.DB) (map[string][]interface{}, map[string]error) {
+func computeTableContents(ctx context.Context, forms []source, userID int, db *sql.DB) (map[string][]interface{}, map[string]error, map[string][]interface{}) {
 	contents := map[string][]interface{}{}
 	errs := map[string]error{}
+	actions := map[string][]interface{}{}
 
 	for _, s := range forms {
 		for _, section := range s.GetContentSections() {
@@ -124,10 +141,11 @@ func computeTableContents(ctx context.Context, forms []source, userID int, db *s
 				errs[t.UniqueID()] = err
 			} else {
 				contents[t.UniqueID()] = result
+				actions[t.UniqueID()] = t.GetActions()
 			}
 		}
 	}
-	return contents, errs
+	return contents, errs, actions
 }
 
 // Render is called to produce a form for a given user.
@@ -137,8 +155,8 @@ func Render(ctx context.Context, adminOnly bool, userID int, w io.Writer, db *sq
 	if err != nil {
 		return err
 	}
-	sectionData, sectionErrs := computeTableContents(ctx, forms, userID, db)
-	formsBuffer, err := renderForms(forms, sectionData, sectionErrs)
+	sectionData, sectionErrs, sectionActions := computeTableContents(ctx, forms, userID, db)
+	formsBuffer, err := renderForms(forms, sectionData, sectionErrs, sectionActions)
 	if err != nil {
 		return err
 	}
