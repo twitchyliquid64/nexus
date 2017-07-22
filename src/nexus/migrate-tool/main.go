@@ -161,7 +161,7 @@ func doCreateBlankDB(path string) (*sql.DB, error) {
 		}
 	}
 
-	return data.Init(context.Background(), "sqlite3", path)
+	return data.Init(context.Background(), path)
 }
 
 type dbBatchExecutor struct {

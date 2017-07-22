@@ -82,7 +82,7 @@ func main() {
 	ctx := context.Background()
 
 	fmt.Printf("Attempting open of db: %q: ", *dbFlag)
-	db, err := data.Init(ctx, "sqlite3", *dbFlag)
+	db, err := data.Init(ctx, *dbFlag)
 	if err != nil {
 		die(fmt.Sprintf("ERROR!\nError: %s", err.Error()))
 	}

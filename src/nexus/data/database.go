@@ -13,8 +13,7 @@ import (
 	"nexus/data/util"
 	"reflect"
 
-	// load sqlite library
-	_ "github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 var tables = []DatabaseTable{
@@ -35,6 +34,9 @@ var tables = []DatabaseTable{
 	&fs.SourceTable{},
 }
 
+var sqlite3conn = []*sqlite3.SQLiteConn{}
+var sqlite3backupconn = []*sqlite3.SQLiteConn{}
+
 // DatabaseTable represents the manager object for a database table.
 type DatabaseTable interface {
 	Setup(ctx context.Context, db *sql.DB) error
@@ -42,8 +44,23 @@ type DatabaseTable interface {
 }
 
 // Init is called with database information to initialise a database session, creating any necessary tables.
-func Init(ctx context.Context, databaseKind, connString string) (*sql.DB, error) {
-	db, err := sql.Open(databaseKind, connString)
+func Init(ctx context.Context, connString string) (*sql.DB, error) {
+	sql.Register("sqlite3_conn_hook_main",
+		&sqlite3.SQLiteDriver{
+			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				sqlite3conn = append(sqlite3conn, conn)
+				return nil
+			},
+		})
+	sql.Register("sqlite3_conn_hook_backup",
+		&sqlite3.SQLiteDriver{
+			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				sqlite3backupconn = append(sqlite3backupconn, conn)
+				return nil
+			},
+		})
+
+	db, err := sql.Open("sqlite3_conn_hook_main", connString)
 	if err != nil {
 		return nil, err
 	}

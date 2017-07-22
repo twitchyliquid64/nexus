@@ -28,6 +28,7 @@ var dbFlag = flag.String("db", "dev.db", "path to the database file")
 var listenerFlag = flag.String("listener", "localhost:8080", "Address to listen on")
 var tlsCacheFileFlag = flag.String("key-cache", "", "Path to store SSL secrets")
 var allowedDomains = flag.String("domains", "", "Comma-separated list of domains which are allowed to work")
+var backupDuration = flag.Duration("backup-duration", 0, "(optional) Time between full backup runs")
 var letsEncryptManager letsencrypt.Manager
 
 func main() {
@@ -35,11 +36,15 @@ func main() {
 	ctx := context.Background()
 
 	log.Printf("Opening db: %q", *dbFlag)
-	db, err := data.Init(ctx, "sqlite3", *dbFlag)
+	db, err := data.Init(ctx, *dbFlag)
 	if err != nil {
 		die(err.Error())
 	}
 	defer db.Close()
+
+	if *backupDuration > 0 {
+		data.StartBackups(*backupDuration)
+	}
 
 	err = messaging.Init(ctx, db)
 	if err != nil {
