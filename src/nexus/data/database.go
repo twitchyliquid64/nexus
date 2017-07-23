@@ -105,3 +105,38 @@ func Vacuum(db *sql.DB) error {
 	_, err := db.Exec("VACUUM;")
 	return err
 }
+
+type TableStat struct {
+	Count int
+}
+
+// GetTableStats is called to return statistics about each table.
+func GetTableStats(ctx context.Context, db *sql.DB) (map[string]TableStat, error) {
+	tables, err := db.QueryContext(ctx, "SELECT name FROM sqlite_master WHERE type='table';")
+	if err != nil {
+		return nil, err
+	}
+
+	var tableNames []string
+	for tables.Next() {
+		var name string
+		err2 := tables.Scan(&name)
+		if err2 != nil {
+			return nil, err2
+		}
+		tableNames = append(tableNames, name)
+	}
+	countsByTable := map[string]TableStat{}
+
+	for _, tableName := range tableNames {
+		row := db.QueryRowContext(ctx, "SELECT COUNT() FROM "+tableName+";")
+		var num int
+		err2 := row.Scan(&num)
+		if err2 != nil {
+			return nil, err2
+		}
+		countsByTable[tableName] = TableStat{num}
+	}
+
+	return countsByTable, nil
+}

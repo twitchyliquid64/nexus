@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"nexus/data/util"
+	"nexus/metrics"
 	"strconv"
 	"time"
 )
@@ -189,6 +190,8 @@ func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
 func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
+	defer metrics.GetSessionSIDDbTime.Time(time.Now())
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = ? AND revoked = 0;
 	`, sid)

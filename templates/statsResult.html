@@ -1,0 +1,71 @@
+<html>
+<head>
+    <title>Nexus</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+</head>
+<body>
+  <nav class="light-blue darken-2" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus - System Stats</a>
+    </div>
+  </nav>
+
+  <div class="container row">
+    <div class="section">
+      <h4>Metrics</h4>
+      {!{ range $category, $metrics := .Metrics }!}
+      <h5>{!{ $category }!}</h5>
+      <table class="bordered section">
+        <thead>
+          <tr>
+              <th>Name</th>
+              <th>Value</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {!{ range $metrics }!}
+          <tr>
+            <td>{!{ .Metric }!}</td>
+            <td>{!{ .Compute }!}</td>
+          </tr>
+          {!{ end }!}
+        </tbody>
+      </table>
+      {!{ end }!}
+    </div>
+
+    <div class="section">
+      <h4>Table count</h4>
+      <table class="bordered section">
+        <thead>
+          <tr>
+              <th>Table</th>
+              <th>Total rows</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {!{ range $table, $number := .TableStats }!}
+          <tr>
+            <td>{!{ $table }!}</td>
+            <td>{!{ .Count }!}</td>
+          </tr>
+          {!{ end }!}
+        </tbody>
+      </table>
+    </div>
+
+    <a href="/" class="btn"><i class="material-icons left">home</i> Return to Nexus</a>
+  </div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"nexus/data/util"
+	"nexus/metrics"
 	"os"
 	"strconv"
 	"time"
@@ -227,6 +228,8 @@ func GetSource(ctx context.Context, ownerUID int, prefix string, db *sql.DB) (*S
 
 // GetSourcesForUser returns sources for a given user.
 func GetSourcesForUser(ctx context.Context, ownerUID int, db *sql.DB) ([]*Source, error) {
+	defer metrics.GetSourcesUIDDbTime.Time(time.Now())
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, owner_uid, created_at, prefix, kind, value1, value2, value3 FROM fs_sources WHERE owner_uid = ?;
 	`, ownerUID)

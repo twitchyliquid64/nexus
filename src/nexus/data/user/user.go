@@ -7,6 +7,7 @@ import (
 	"log"
 	"nexus/data/datastore"
 	"nexus/data/util"
+	"nexus/metrics"
 	"strconv"
 	"time"
 
@@ -95,6 +96,8 @@ func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
 
 // GetByUID looks up the details of an account based on an accounts' UID.
 func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
+	defer metrics.GetUserUIDDbTime.Time(time.Now())
+
 	res, err := db.QueryContext(ctx, `
 		SELECT username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE rowid = ?;
 	`, uid)

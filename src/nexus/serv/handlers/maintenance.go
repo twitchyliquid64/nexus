@@ -8,6 +8,7 @@ import (
 	"nexus/data"
 	"nexus/data/integration"
 	"nexus/data/session"
+	"nexus/metrics"
 	"nexus/serv/util"
 	"os"
 	"path"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	maxLogsRetentionDays    = 6
+	maxLogsRetentionDays    = 21
 	maxSessionLengthDays    = 14
 	maxSessionRetentionDays = 28
 )
@@ -42,7 +43,39 @@ func (h *MaintenanceHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	h.DB = db
 
 	mux.HandleFunc("/admin/cleanup", h.CleanupHandler)
+	mux.HandleFunc("/admin/stats", h.StatsHandler)
 	return nil
+}
+
+type statsData struct {
+	Metrics interface{}
+
+	TableStats    map[string]data.TableStat
+	TableCountErr error
+}
+
+// StatsHandler handles a HTTP request to /admin/stats
+func (h *MaintenanceHandler) StatsHandler(response http.ResponseWriter, request *http.Request) {
+	_, u, err := util.AuthInfo(request, h.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	if !u.AdminPerms.Accounts {
+		http.Error(response, "Not authorized", 403)
+		return
+	}
+
+	var templateData statsData
+	templateData.TableStats, templateData.TableCountErr = data.GetTableStats(request.Context(), h.DB)
+	templateData.Metrics = metrics.GetByCategory()
+
+	util.LogIfErr("StatsHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/statsResult.html"), templateData, response))
 }
 
 type cleanupData struct {
