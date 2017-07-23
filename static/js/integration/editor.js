@@ -552,6 +552,79 @@ var codeSubs = [
       detail: 'Returns the content of a file by the specified path.',
     },
   },
+  {
+    prefix: 'fs.',
+    name: 'list()',
+    value: 'list()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.list(<path>)',
+      kind: 'method',
+      detail: 'Returns an array of files/directories in the specified path.',
+      more: '<h4>file list object</h4><br><label>Example objects:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml([
+       {
+          Name: "test.txt",
+          ItemKind: 2,
+          Modified: "2017-07-14T20:17:20+10:00",
+          SourceDetail: 0
+       },
+       {
+          Name: "test.html",
+          ItemKind: 2,
+          Modified: "2017-07-14T20:40:16+10:00",
+          SourceDetail: 0
+       }]) + '</div>',
+    },
+  },
+  {
+    prefix: 'fs.',
+    name: 'isFile()',
+    value: 'isFile()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.isFile(<int|obj>)',
+      kind: 'method',
+      detail: 'Returns true/false if the ItemKind represents a file. Expects either an integer or an object returned from fs.list().',
+    },
+  },
+  {
+    prefix: 'fs.',
+    name: 'isDir()',
+    value: 'isDir()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.isDir(<int|obj>)',
+      kind: 'method',
+      detail: 'Returns true/false if the ItemKind represents a directory. Expects either an integer or an object returned from fs.list().',
+    },
+  },
+  {
+    prefix: 'fs.',
+    name: 'delete()',
+    value: 'delete()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.delete(<path>)',
+      kind: 'method',
+      detail: 'Deletes a file. Returns null if successful, error otherwise.',
+    },
+  },
+  {
+    prefix: 'fs.',
+    name: 'write()',
+    value: 'write()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'fs.write(<path>, <data>)',
+      kind: 'method',
+      detail: 'Writes the contents of a file, creating it if it doesnt exist. Containing folder must exist.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
