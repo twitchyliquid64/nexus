@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"nexus/data/util"
+	"nexus/metrics"
 	"os"
 	"strconv"
 	"time"
@@ -200,6 +201,7 @@ func AddSource(ctx context.Context, src Source, db *sql.DB) error {
 
 // GetAllSourcesForUser is called to get all messaging sources for a given uid.
 func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, error) {
+	defer metrics.GetMessagingSourcesUIDDbTime.Time(time.Now())
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE owner_id = ?;
 	`, uid)

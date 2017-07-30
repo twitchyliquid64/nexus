@@ -43,7 +43,30 @@ var GetUserUIDDbTime = &average5Metric{Name: "getUserUID", Category: "db"}
 var GetSessionSIDDbTime = &average5Metric{Name: "getSessionSID", Category: "db"}
 
 // GetSourcesUIDDbTime represents the average time to query the database for all a users sources.
-var GetSourcesUIDDbTime = &average5Metric{Name: "getSourcesForUser", Category: "db"}
+var GetSourcesUIDDbTime = &average5Metric{Name: "getFSSourcesForUser", Category: "db"}
+
+// GetConvosUIDDbTime represents the average time to query the database for all a users conversations.
+var GetConvosUIDDbTime = &average5Metric{Name: "getConverstionsForUser", Category: "db"}
+
+// GetMessagingSourcesUIDDbTime represents the average time to query the database for all a users messaging sources.
+var GetMessagingSourcesUIDDbTime = &average5Metric{Name: "getMessagingSourcesForUser", Category: "db"}
+
+// GetMessagesCIDDbTime represents the average time to query the database for all a conversations messages.
+var GetMessagesCIDDbTime = &average5Metric{Name: "getMessagesForConversation", Category: "db"}
+
+// InsertMessageDbTime represents the average time to insert a message into the database.
+var InsertMessageDbTime = &average5Metric{Name: "insertMessage", Category: "db"}
+
+
+// InsertLogDbTime represents the average time to insert a log row for an integration.
+var InsertLogDbTime = &average5Metric{Name: "insertLog", Category: "db"}
+
+// GetLogsByRunnableDbTime represents the average time to query the database for a runnables log entries.
+var GetLogsByRunnableDbTime = &average5Metric{Name: "getLogsForRunnable", Category: "db"}
+
+// GetFilteredLogsByRunnableDbTime represents the average time to filter query the database for a runnables log entries.
+var GetFilteredLogsByRunnableDbTime = &average5Metric{Name: "getLogsForRunID", Category: "db"}
+
 
 type metric interface {
 	Compute() string
@@ -57,6 +80,12 @@ func GetByCategory() map[string][]metric {
 			GetSessionSIDDbTime,
 			GetUserUIDDbTime,
 			GetSourcesUIDDbTime,
+			GetConvosUIDDbTime,
+			GetMessagingSourcesUIDDbTime,
+			InsertMessageDbTime,
+			InsertLogDbTime,
+			GetLogsByRunnableDbTime,
+			GetFilteredLogsByRunnableDbTime,
 		},
 	}
 }

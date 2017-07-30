@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"nexus/data/util"
+	"nexus/metrics"
 	"time"
 )
 
@@ -124,6 +125,7 @@ func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversati
 
 // GetConversationsForUser returns a list of convos for a given user.
 func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Conversation, error) {
+	defer metrics.GetConvosUIDDbTime.Time(time.Now())
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, source_uid, created_at, unique_identifier, kind FROM messaging_conversation
 		WHERE source_uid IN (SELECT rowid FROM messaging_source WHERE owner_id = ?);

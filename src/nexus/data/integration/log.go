@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"nexus/data/util"
+	"nexus/metrics"
 	"strconv"
 	"time"
 )
@@ -105,7 +106,7 @@ func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan ti
 
 // GetLogsForRunnable is called to get all logs for a runnable.
 func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
-
+	defer metrics.GetLogsByRunnableDbTime.Time(time.Now())
 	query := `
 	SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = ? AND created_at > ?
 	`
@@ -141,6 +142,7 @@ func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Tim
 
 // GetLogsFilteredByRunnable filters to a specific run.
 func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan time.Time, runID string, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
+	defer metrics.GetFilteredLogsByRunnableDbTime.Time(time.Now())
 	query := `
 		SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log
 		WHERE run_id = ? AND created_at > ? AND integration_parent = ?
@@ -177,6 +179,7 @@ func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan t
 
 // WriteLog commits a log entry.
 func WriteLog(ctx context.Context, log *Log, db *sql.DB) error {
+	defer metrics.InsertLogDbTime.Time(time.Now())
 	tx, err := db.Begin()
 	if err != nil {
 		return err
