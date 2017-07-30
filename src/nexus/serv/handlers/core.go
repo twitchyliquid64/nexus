@@ -114,8 +114,12 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 				http.Error(response, "Access Denied", 403)
 				return
 			}
+			sKind := session.AuthPass
+			if authDetails.OTPUsed && authDetails.PassUsed {
+				sKind = session.Auth2SC
+			}
 
-			sid, err := session.Create(ctx, usr.UID, true, true, session.AuthPass, h.DB)
+			sid, err := session.Create(ctx, usr.UID, true, true, sKind, h.DB)
 			if util.InternalHandlerError("session.Create()", response, request, err) {
 				return
 			}
