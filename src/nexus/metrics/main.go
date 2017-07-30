@@ -82,6 +82,7 @@ func GetByCategory() map[string][]metric {
 			GetSourcesUIDDbTime,
 			GetConvosUIDDbTime,
 			GetMessagingSourcesUIDDbTime,
+			GetMessagesCIDDbTime,
 			InsertMessageDbTime,
 			InsertLogDbTime,
 			GetLogsByRunnableDbTime,
