@@ -48,7 +48,8 @@ func (h *MaintenanceHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 }
 
 type statsData struct {
-	Metrics interface{}
+	BackupInfo map[string]interface{}
+	Metrics    interface{}
 
 	TableStats    map[string]data.TableStat
 	TableCountErr error
@@ -74,6 +75,7 @@ func (h *MaintenanceHandler) StatsHandler(response http.ResponseWriter, request 
 	var templateData statsData
 	templateData.TableStats, templateData.TableCountErr = data.GetTableStats(request.Context(), h.DB)
 	templateData.Metrics = metrics.GetByCategory()
+	templateData.BackupInfo = data.GetBackupStatistics()
 
 	util.LogIfErr("StatsHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/statsResult.html"), templateData, response))
 }

@@ -45,6 +45,37 @@
     </div>
 
     <div class="section">
+      <h4>Backups</h4>
+      <table class="bordered section">
+        <thead>
+          <tr>
+              <th>Name</th>
+              <th>Value</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Backup interval</td>
+            <td>{!{ index .BackupInfo `Backup interval` }!}</td>
+          </tr>
+          <tr>
+            <td>Dump in progress</td>
+            <td>{!{ index .BackupInfo `Dump in progress` }!}</td>
+          </tr>
+          <tr>
+            <td>Upload in progress</td>
+            <td>{!{ index .BackupInfo `Upload in progress` }!}</td>
+          </tr>
+          <tr>
+            <td>Last backup time</td>
+            <td>{!{ index .BackupInfo `Last backup` }!}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
       <h4>Table count</h4>
       <table class="bordered section">
         <thead>

@@ -19,10 +19,25 @@ var (
 	dbDumpInProgress     = false
 	dbDumpPagesRemaining = 0
 	dbDumpPagesTotal     = 0
+	dbUploadInProgress   = false
+
+	dbConfiguredBackupInterval time.Duration
+	dbLastBackup               time.Time
 )
+
+// GetBackupStatistics returns information to be displayed in the stats page.
+func GetBackupStatistics() map[string]interface{} {
+	return map[string]interface{}{
+		"Dump in progress":   dbDumpInProgress,
+		"Upload in progress": dbUploadInProgress,
+		"Backup interval":    dbConfiguredBackupInterval,
+		"Last backup":        dbLastBackup,
+	}
+}
 
 // StartBackups is called to initialise periodic backups
 func StartBackups(backupInterval time.Duration) {
+	dbConfiguredBackupInterval = backupInterval
 	go backupRoutine(backupInterval)
 }
 
@@ -44,6 +59,9 @@ func getS3Handle() (*s3gof3r.S3, error) {
 }
 
 func backupUpload(fPath string) error {
+	dbUploadInProgress = true
+	defer func() { dbUploadInProgress = false }()
+
 	uploadConfig := &s3gof3r.Config{
 		Concurrency: 2,
 		PartSize:    6 * 1024 * 1024,
@@ -97,6 +115,7 @@ func backupRoutine(backupInterval time.Duration) {
 				log.Printf("[backup] Backup update to %q failed: %v", backupFile, err)
 			}
 			log.Printf("[backup] Backup upload finished")
+			dbLastBackup = time.Now()
 
 			if backupFile != "" {
 				err = os.Remove(backupFile)
