@@ -48,6 +48,7 @@ func (s *s3) Contents(ctx context.Context, p string, userID int, writer io.Write
 	if err != nil {
 		return err
 	}
+	defer s3Reader.Close()
 	_, err = io.Copy(writer, s3Reader)
 	return err
 }
@@ -107,4 +108,14 @@ func (s *s3) List(ctx context.Context, p string, userID int) ([]ListResultItem, 
 
 func (s *s3) NewFolder(ctx context.Context, p string, userID int) error {
 	return errors.New("not implemented")
+}
+
+func (s *s3) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
+	s3Writer, err := s.getStreamingCredentials().Bucket(s.BucketName).PutWriter(p, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer s3Writer.Close()
+	_, err = io.Copy(s3Writer, data)
+	return err
 }

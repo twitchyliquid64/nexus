@@ -45,6 +45,7 @@
     <script type="text/javascript" src="/static/js/integration/documentationModal.js"></script>
     <script type="text/javascript" src="/static/js/fs/controller.js"></script>
     <script type="text/javascript" src="/static/js/fs/fileEditor.js"></script>
+    <script type="text/javascript" src="/static/js/fs/uploadModal.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -121,11 +122,13 @@
           <i class="large material-icons">add</i>
         </a>
         <ul>
-          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#"><i class="material-icons">file_upload</i></a></li>
+          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#" ng-click="upload()"><i class="material-icons">file_upload</i></a></li>
           <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="New folder" href="#" ng-click="newFolder()"><i class="material-icons">create_new_folder</i></a></li>
         </ul>
       </div>
     </div>
+
+    <upload-modal></upload-modal>
   </div>
 
   <div ng-show="page == 'files-editor'" style="margin: 0px 9px;">

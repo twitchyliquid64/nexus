@@ -98,6 +98,12 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
     }
   }
 
+  $scope.upload = function(){
+    $rootScope.$broadcast('upload-modal', {
+      path: $scope.path,
+    });
+  }
+
   $scope.newFolder = function(){
     var newName = prompt("New folder name:");
     if (newName){

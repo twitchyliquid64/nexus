@@ -166,5 +166,6 @@ func doBackup(srcDBConn *gosqlite3.SQLiteConn) (string, error) {
 		}
 	}
 
+	dbDumpInProgress = false
 	return fName, stepErr
 }

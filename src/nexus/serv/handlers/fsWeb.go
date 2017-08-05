@@ -25,6 +25,7 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 	mux.HandleFunc("/web/v1/fs/delete", h.DeleteHandler)
 	mux.HandleFunc("/web/v1/fs/newFolder", h.NewFolderHandler)
 	mux.HandleFunc("/web/v1/fs/download/", h.DownloadHandler)
+	mux.HandleFunc("/web/v1/fs/upload", h.UploadHandler)
 	return nil
 }
 
@@ -43,6 +44,29 @@ func (h *FSHandler) error(response http.ResponseWriter, request *http.Request, r
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(200)
 	response.Write(b)
+}
+
+// UploadHandler handles requests to upload a single file
+func (h *FSHandler) UploadHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	request.ParseMultipartForm(1024 * 1024)
+	file, handler, err := request.FormFile("upload")
+	if err != nil {
+		h.error(response, request, "Upload read failed", err, nil)
+		return
+	}
+	defer file.Close()
+
+	//log.Printf("Got upload to base %s with filename %s for %s", request.FormValue("path"), handler.Filename, usr.DisplayName)
+	err = fs.Upload(request.Context(), request.FormValue("path") + "/" + handler.Filename, usr.UID, file)
+	if err != nil {
+		h.error(response, request, "Upload failed", err, nil)
+		return
+	}
 }
 
 // ListHandler handles requests to list directories

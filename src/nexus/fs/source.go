@@ -15,6 +15,7 @@ type source interface {
 	Delete(ctx context.Context, p string, userID int) error
 	NewFolder(ctx context.Context, p string, userID int) error
 	Contents(ctx context.Context, p string, userID int, writer io.Writer) error
+	Upload(ctx context.Context, p string, userID int, data io.Reader) error
 }
 
 func expandSource(s *fs.Source) (source, error) {
