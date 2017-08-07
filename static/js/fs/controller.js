@@ -47,13 +47,15 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       case 1://root
         return 'dns';
       case 2://file
-        if (file.Name.endsWith(".png") || file.Name.endsWith(".jpg")){
+        if (file.Name.endsWith(".png") || file.Name.endsWith(".jpg") || file.Name.endsWith(".gif")){
           return "image";
         }
         if (file.Name.endsWith(".mp3") || file.Name.endsWith(".ogg")){
           return "music_note";
         }
-        if (file.Name.endsWith(".js") || file.Name.endsWith(".html") || file.Name.endsWith(".json") || file.Name.endsWith(".py")){
+        if (file.Name.endsWith(".js") || file.Name.endsWith(".html")
+            || file.Name.endsWith(".json") || file.Name.endsWith(".py")
+            || file.Name.endsWith(".txt") || file.Name.endsWith(".go")){
           return "code";
         }
         return 'insert_drive_file';
