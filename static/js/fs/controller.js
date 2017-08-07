@@ -43,17 +43,19 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
     return spl[spl.length-1];
   }
   $scope.icon = function(file){
-    if (file.Name.endsWith(".png") || file.Name.endsWith(".jpg")){
-      return "image";
-    }
-    if (file.Name.endsWith(".mp3") || file.Name.endsWith(".ogg")){
-      return "music_note";
-    }
-
     switch (file.ItemKind){
       case 1://root
         return 'dns';
       case 2://file
+        if (file.Name.endsWith(".png") || file.Name.endsWith(".jpg")){
+          return "image";
+        }
+        if (file.Name.endsWith(".mp3") || file.Name.endsWith(".ogg")){
+          return "music_note";
+        }
+        if (file.Name.endsWith(".js") || file.Name.endsWith(".html") || file.Name.endsWith(".json") || file.Name.endsWith(".py")){
+          return "code";
+        }
         return 'insert_drive_file';
       case 3://folder
         return 'folder';
