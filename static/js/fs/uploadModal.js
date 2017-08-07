@@ -38,7 +38,7 @@
         //restrict E means its can only be used as an element.
         restrict: 'E',
         templateUrl: function(elem, attr){
-          return "/static/views/fs/uploadModal.html?cachebust=2"
+          return "/static/views/fs/uploadModal.html?cachebust=3"
         },
         link: function($scope, elem, attrs) {
           // scope = either parent scope or its own child scope if scope set.
@@ -52,44 +52,42 @@
           $rootScope.$on('upload-modal', function(event, args) {
             $scope.open = true;
             $scope.file = null;
+            $scope.percent = 0;
             $scope.path = args.path;
           });
 
           function doUpload() {
-            $scope.uploading = true;
-            var upl = $http({
-              method: 'POST',
-              url: '/web/v1/fs/upload',
-              headers: {
-                'Content-Type': undefined
-              },
-              data: {
-                upload: $scope.file,
-                path: $scope.path,
-              },
-              transformRequest: function(data, headersGetter) {
-                var formData = new FormData();
-                angular.forEach(data, function(value, key) {
-                  formData.append(key, value);
-                });
+            var formData = new FormData();
+            formData.append('upload', $scope.file);
+            formData.append('path', $scope.path);
+            var xhr = new XMLHttpRequest();
 
-                return formData;
+            xhr.upload.addEventListener('loadstart', function(evt){
+              $scope.uploading = true;
+              $scope.error = null;
+            }, false);
+            xhr.upload.addEventListener('progress', function(evt){
+              $scope.$apply(function(){
+                $scope.percent = evt.loaded/evt.total*100;                
+              });
+            }, false);
+            //xhr.upload.addEventListener('load', onloadHandler, false);
+            xhr.addEventListener('readystatechange', function(evt){
+              if (evt.target.readyState == 4) {
+                $scope.uploading = false;
+                if (evt.target.status == '200'){
+                  $scope.open = false;
+                  $rootScope.$broadcast('page-change', {page: 'files'});
+                } else {
+                  $scope.error = evt.target;
+                }
               }
-            });
-            upl.then(function(response){
-              console.log("upload result:", response);
-              $scope.uploading = false;
-              if (response.data && response.data.success == false){
-                $scope.error = response.data;
-                return
-              }
-              $rootScope.$broadcast('page-change', {page: 'files'});
-              $scope.open = false;
-            }, function(e){
-              $scope.uploading = false;
-              $scope.error = e;
-            })
+            }, false);
+
+            xhr.open('POST', '/web/v1/fs/upload', true);
+            xhr.send(formData);
           }
+
           $scope.upload = function(){
             if (!$scope.file)return;
             doUpload();

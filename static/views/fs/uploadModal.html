@@ -4,7 +4,9 @@
 <div id="uploadDialogModal" class="modal" style="max-height: 85%;">
   <div class="modal-content">
     <h4>Upload file</h4>
-    <loader loading="uploading" error="error" ></loader>
+    <div class="progress" ng-if="uploading">
+        <div class="determinate" ng-style="{ 'width': percent + '%' }"></div>
+    </div>
     <p>Uploading <i ng-if="file">{{file.name}}</i> to <i>{{path}}</i></p>
     <p ng-if="file">The file <span ng-if="file.type">of type <i>{{file.type}}</i></span> is <b ng-class="{'red-text': file.size>5000000}">{{file.size | bytes}}</b> in size.</p>
 
@@ -22,7 +24,7 @@
 
   <div class="modal-footer">
     <div ng-if="uploading" style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
-      <span>Upload in progress ... please wait.</span>
+      <span>Upload in progress ... please wait ({{percent | number:0}}%)</span>
     </div>
     <a href="#!" ng-class="{teal: file, 'white-text': file, disabled: (!file||uploading)}" class="modal-action waves-effect waves-green btn-flat" ng-click="upload()"><span>Upload</span></a>
     <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="close()"><span>Cancel</span></a>
