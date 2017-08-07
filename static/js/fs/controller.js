@@ -76,7 +76,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
   $scope.nav = function(f){
     if (f.ItemKind == 2) {//file
       if (f.Name.endsWith(".png") || f.Name.endsWith(".jpg") || f.Name.endsWith(".mp3")
-          || file.Name.endsWith(".gif")){
+          || f.Name.endsWith(".gif")){
         $rootScope.$broadcast('files-preview', {
           path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
           file: f,
