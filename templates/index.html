@@ -108,7 +108,7 @@
         <tbody>
           <tr ng-repeat="file in files">
             <td style="width: 4ch;" ng-click="nav(file)" style="cursor: pointer;"><i class="material-icons left">{{icon(file)}}</i></td>
-            <td ng-click="nav(file)" style="cursor: pointer;">{{name(file)}}</td>
+            <td ng-click="nav(file)" style="cursor: pointer; max-width: 350px;">{{name(file)}}</td>
             <td ng-click="nav(file)" style="cursor: pointer;">{{date(file)}}</td>
             <td>
               <a class="btn-floating" href="#" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>

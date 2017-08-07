@@ -11,7 +11,7 @@ app.controller('FilePreviewController', ["$scope", "$rootScope", "$http", functi
     if (args.file.Name.endsWith(".png") || args.file.Name.endsWith(".jpg")){
       $scope.imgsrc = '/web/v1/fs/download' + encodeURIComponent($scope.path);
     }
-    if (args.file.Name.endsWith(".mp3") || args.file.Name.endsWith(".mp4")){
+    if (args.file.Name.endsWith(".mp3")){
       $scope.mpgsrc = '/web/v1/fs/download' + encodeURIComponent($scope.path);
     }
   });
