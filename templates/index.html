@@ -46,6 +46,7 @@
     <script type="text/javascript" src="/static/js/fs/controller.js"></script>
     <script type="text/javascript" src="/static/js/fs/fileEditor.js"></script>
     <script type="text/javascript" src="/static/js/fs/uploadModal.js"></script>
+    <script type="text/javascript" src="/static/js/fs/filePreview.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/ace/mode-javascript.js" charset="utf-8"></script>
@@ -129,6 +130,24 @@
     </div>
 
     <upload-modal></upload-modal>
+  </div>
+
+  <div ng-show="page == 'files-preview'" class="container">
+    <div ng-controller="FilePreviewController">
+      <h3 style="display: inline-block; margin-bottom: 0px;">Preview</h3>
+      <label ng-bind="path" style="font-size:21px; margin-left: 15px;cursor: pointer;" ng-click="back();"></label>
+      <loader loading="loading" error="error" ></loader>
+      <div style="padding-left: 8px;color: #9e9e9e;">
+        <p>Last modified <span am-time-ago="file.Modified"></span></p>
+      </div>
+
+      <div class="row">
+        <img ng-if="imgsrc" class="responsive-img" ng-src="{{imgsrc}}" />
+        <audio ng-if="mpgsrc" controls="controls" preload="none">
+          <source type="audio/mpeg" src="{{mpgsrc}}"/>
+        </audio>
+      </div>
+    </div>
   </div>
 
   <div ng-show="page == 'files-editor'" style="margin: 0px 9px;">

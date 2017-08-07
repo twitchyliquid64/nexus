@@ -1,3 +1,6 @@
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
 
 app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
   $scope.loading = false;
@@ -40,6 +43,13 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
     return spl[spl.length-1];
   }
   $scope.icon = function(file){
+    if (file.Name.endsWith(".png") || file.Name.endsWith(".jpg")){
+      return "image";
+    }
+    if (file.Name.endsWith(".mp3") || file.Name.endsWith(".ogg")){
+      return "music_note";
+    }
+
     switch (file.ItemKind){
       case 1://root
         return 'dns';
@@ -61,11 +71,19 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
   }
   $scope.nav = function(f){
     if (f.ItemKind == 2) {//file
-      $rootScope.$broadcast('files-editor', {
-        path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
-        file: f,
-      });
-      $scope.changePage('files-editor')
+      if (f.Name.endsWith(".png") || f.Name.endsWith(".jpg") || f.Name.endsWith(".mp3")){
+        $rootScope.$broadcast('files-preview', {
+          path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
+          file: f,
+        });
+        $scope.changePage('files-preview')
+      } else {
+        $rootScope.$broadcast('files-editor', {
+          path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
+          file: f,
+        });
+        $scope.changePage('files-editor')
+      }
     } else if ($scope.path == '/'){
       $scope.path = f.Name;
     } else {
