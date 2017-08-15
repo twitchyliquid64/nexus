@@ -41,24 +41,31 @@ func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db
 			return 0, fmt.Errorf("cannot find column named %q", fieldName)
 		}
 		t := reflect.TypeOf(fieldValue)
-		if t != nil && t.Kind() == reflect.Float64 && col.Datatype != FLOAT {
-			if col.Datatype == INT {
+		if t != nil && t.Kind() == reflect.Float64 && col.Datatype != FLOAT { // float -> time,int
+			if col.Datatype == TIME {
+				fmt.Println(fieldValue)
+				fieldValue = time.Unix(int64(fieldValue.(float64) / 1000), int64(fieldValue.(float64)))
+			} else if col.Datatype == INT {
 				fieldValue = int64(fieldValue.(float64))
 			} else {
 				return 0, fmt.Errorf("Bad datatype for non-float column %q, got %s", col.Name, t.Kind().String())
 			}
 		}
-		if t != nil && t.Kind() == reflect.Int64 && col.Datatype != INT {
-			if col.Datatype == FLOAT {
+		if t != nil && t.Kind() == reflect.Int64 && col.Datatype != INT { // int -> time,float
+			if col.Datatype == TIME {
+				fieldValue = time.Unix(fieldValue.(int64) / 1000, fieldValue.(int64))
+			} else if col.Datatype == FLOAT {
 				fieldValue = float64(fieldValue.(int64))
 			} else {
 				return 0, fmt.Errorf("Bad datatype for non-int column %q, got %s", col.Name, t.Kind().String())
 			}
 		}
-		if t != nil && t.Kind() == reflect.String && col.Datatype != STR {
+		if t != nil && t.Kind() == reflect.String && col.Datatype != STR { // string -> blob
+			if col.Datatype == BLOB {
+				fieldValue = []byte(fieldValue.(string))
+			}
 			return 0, fmt.Errorf("Bad datatype for non-string column %q, got %s", col.Name, t.Kind().String())
 		}
-		// TODO: Handle the TIME and BLOB types.
 
 		queryStr += columnName(col.Name)
 		parameters = append(parameters, fieldValue)

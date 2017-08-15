@@ -511,6 +511,25 @@
           <div id="codeEditor"></div>
         </div>
         <div class="col s4">
+          <div ng-show="datastoreSuggestions">
+            <ul class="collection with-header">
+              <li class="collection-header" ng-show="datastoreSuggestions.filter"><h5>Columns</h5></li>
+              <li class="collection-header" ng-show="!datastoreSuggestions.filter"><h5>Datastores</h5></li>
+              <li class="collection-item" ng-show="datastoreSuggestions.loading">
+                <div class="progress"><div class="indeterminate"></div></div>
+              </li>
+              <li class="collection-item" ng-if="!datastoreSuggestions.filter" ng-repeat="datastore in datastoreSuggestions.datastores">
+                {{datastore.Name}}
+                <label>{{datastore.Kind}}</label>
+                <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
+              </li>
+              <li class="collection-item" ng-if="datastoreSuggestions.filter" ng-repeat="col in datastoreSuggestions.cols">
+                aa
+                <label>welp</label>
+                <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
+              </li>
+            </ul>
+          </div>
           <div ng-show="codeSuggestions.length">
             <h5>Suggestions</h5>
             <div class="card light-blue darken-2" ng-repeat="suggestion in codeSuggestions">

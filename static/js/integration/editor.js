@@ -126,6 +126,17 @@ var codeGlobals = [
       detail: 'Contains methods to read and write to the virtual filesystem.',
     },
   },
+  {
+    name: 'datastore',
+    value: 'datastore',
+    meta: 'databases',
+    score: 110,
+    reference: {
+      heading: 'datastore',
+      kind: 'global object',
+      detail: 'Contains methods to insert, delete, and query from datastores you have access to.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -625,6 +636,18 @@ var codeSubs = [
       detail: 'Writes the contents of a file, creating it if it doesnt exist. Containing folder must exist.',
     },
   },
+  {
+    prefix: 'datastore.',
+    name: 'insert()',
+    value: 'insert()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'datastore.insert(<name>, <fields>)',
+      kind: 'method',
+      detail: 'Inserts a row into a datastore. All columns must be specified. Fields should be an object where the key is the name of the column, and the value to be inserted for that row.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
@@ -650,6 +673,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
   $scope.editorObj = null;
   $scope.langTools = null;
   $scope.codeSuggestions = [];
+  $scope.datastoreSuggestions = null;
   $scope.runnable = null;
   $scope.lastSaved = null;
   $scope.loading = false;
@@ -668,6 +692,41 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
       $scope.codeSuggestions = codeGlobals;
       $scope.$digest();
       return callback(null, codeGlobals);
+    }
+
+    // show information about datastores
+    if (fullLine.match('.*datastore\\.(insert|query).*')){
+      $scope.datastoreSuggestions = {loading: true};
+      var datastoreExtract = fullLine.match('.*datastore\\.insert\\("(.*)".*');
+      if (datastoreExtract) { //show information on only the specified datastore
+        $http({
+          method: 'GET',
+          url: '/web/v1/data/list'
+        }).then(function successCallback(response) {
+          $scope.datastoreSuggestions = {loading: false, datastores: response.data, filter: datastoreExtract[1]};
+          for (var i = 0; i < response.data.length; i++) {
+            if (response.data[i].Name == datastoreExtract[1]){
+              $scope.datastoreSuggestions.cols = response.data[i];
+            }
+          }
+          console.log($scope.datastoreSuggestions);
+        }, function errorCallback(response) {
+          $scope.datastoreSuggestions = {loading: false};
+          console.log(response);
+        });
+      } else { //show information on all accessible datastores
+        $http({
+          method: 'GET',
+          url: '/web/v1/data/list'
+        }).then(function successCallback(response) {
+          $scope.datastoreSuggestions = {loading: false, datastores: response.data};
+        }, function errorCallback(response) {
+          $scope.datastoreSuggestions = {loading: false};
+          console.log(response);
+        });
+      }
+    } else {
+      $scope.datastoreSuggestions = null;
     }
 
     if (lastWord.indexOf('.') === -1) { //no dots
