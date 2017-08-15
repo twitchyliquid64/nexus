@@ -10,13 +10,14 @@ import (
 
 type datastoreInitialiser struct{}
 
-func (b *datastoreInitialiser) Apply(r *Run) error {
-	obj, errMake := makeObject(r.VM)
-	if errMake != nil {
-		return errMake
-	}
+type functionBinder func(*otto.Object, *Run)error
 
-	if err := obj.Set("insert", func(call otto.FunctionCall) otto.Value {
+var binders = []functionBinder{
+  bindInsert,
+}
+
+func bindInsert(obj *otto.Object, r *Run) error {
+  return obj.Set("insert", func(call otto.FunctionCall) otto.Value {
     ctx := context.Background()
     datastoreName := call.Argument(0).String()
     storedDS, err := datastore.GetDatastoreByName(ctx, datastoreName, db)
@@ -61,9 +62,20 @@ func (b *datastoreInitialiser) Apply(r *Run) error {
     resultObj.Set("rowID", rowID)
     resultObj.Set("success", true)
 		return resultObj.Value()
-	}); err != nil {
-		return err
+	})
+}
+
+func (b *datastoreInitialiser) Apply(r *Run) error {
+	obj, errMake := makeObject(r.VM)
+	if errMake != nil {
+		return errMake
 	}
+
+  for _, binder := range binders {
+    if err := binder(obj, r); err != nil {
+      return err
+    }
+  }
 
 	return r.VM.Set("datastore", obj)
 }
