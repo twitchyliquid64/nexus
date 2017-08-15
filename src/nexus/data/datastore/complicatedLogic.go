@@ -13,6 +13,87 @@ import (
 	"time"
 )
 
+func findColumnInfo(cols []*Column, name string) *Column {
+	for _, col := range cols {
+		if col.Name == name {
+			return col
+		}
+	}
+	return nil
+}
+
+// InsertRow inserts a row into the named database. Invoked by integrations.
+// TODO: Add documentation to integration editor
+func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db *sql.DB) (int64, error) {
+	cols, err := GetColumns(ctx, dsID, db)
+	if err != nil {
+		return 0, err
+	}
+
+	// construct the query & parameters
+	queryStr := "INSERT INTO ds_" + strconv.Itoa(dsID) + " ("
+	var parameters []interface{}
+
+	accumulator := 0
+	for fieldName, fieldValue := range rowData {
+		col := findColumnInfo(cols, fieldName)
+		if col == nil {
+			return 0, fmt.Errorf("cannot find column named %q", fieldName)
+		}
+		t := reflect.TypeOf(fieldValue)
+		if t != nil && t.Kind() == reflect.Float64 && col.Datatype != FLOAT {
+			if col.Datatype == INT {
+				fieldValue = int64(fieldValue.(float64))
+			} else {
+				return 0, fmt.Errorf("Bad datatype for non-float column %q, got %s", col.Name, t.Kind().String())
+			}
+		}
+		if t != nil && t.Kind() == reflect.Int64 && col.Datatype != INT {
+			if col.Datatype == FLOAT {
+				fieldValue = float64(fieldValue.(int64))
+			} else {
+				return 0, fmt.Errorf("Bad datatype for non-int column %q, got %s", col.Name, t.Kind().String())
+			}
+		}
+		if t != nil && t.Kind() == reflect.String && col.Datatype != STR {
+			return 0, fmt.Errorf("Bad datatype for non-string column %q, got %s", col.Name, t.Kind().String())
+		}
+		// TODO: Handle the TIME and BLOB types.
+
+		queryStr += columnName(col.Name)
+		parameters = append(parameters, fieldValue)
+
+		if accumulator < (len(rowData) - 1) {
+			queryStr += ", "
+		}
+		accumulator++
+	}
+	queryStr += ") VALUES ("
+	for i := range parameters {
+		queryStr += "?"
+		if i < (len(rowData) - 1) {
+			queryStr += ", "
+		}
+	}
+	queryStr += ")"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	r, err := tx.Exec(queryStr + ";", parameters...)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	rowID, err := r.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	return rowID, tx.Commit()
+}
+
 // DoStreamingInsert takes input as a CSV and inserts it to a database.
 // TODO: Refactor
 func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []int, db *sql.DB) error {
@@ -63,7 +144,7 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 			return err
 		}
 
-		log.Println(row)
+		log.Println(row) //TODO: Remove
 		for i := range inContainers {
 			if insertCols[i].Datatype == INT || insertCols[i].Datatype == UINT {
 				v, _ := strconv.Atoi(row[i])

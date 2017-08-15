@@ -94,6 +94,24 @@ func GetDatastore(ctx context.Context, uid int, db *sql.DB) (*Datastore, error) 
 	return &out, nil
 }
 
+// GetDatastoreByName gets a datastore by name.
+func GetDatastoreByName(ctx context.Context, name string, db *sql.DB) (*Datastore, error) {
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_uid, store_kind, created_at FROM datastore_meta WHERE name=?;`, name)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, errors.New("Datastore not found")
+	}
+	var out Datastore
+	if err := res.Scan(&out.UID, &out.Name, &out.OwnerID, &out.Kind, &out.CreatedAt); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // GetDatastores gets all datastores owned by that user. If showAll is true, then all datastores are returned.
 func GetDatastores(ctx context.Context, showAll bool, userID int, db *sql.DB) ([]*Datastore, error) {
 	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_uid, store_kind, created_at

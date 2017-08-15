@@ -24,6 +24,7 @@ var initialisers = []builtin{
 	&emailInitialiser{},
 	&kvInitialiser{},
 	&fsInitialiser{},
+	&datastoreInitialiser{},
 }
 
 // Run contains the state of a running runnable.
