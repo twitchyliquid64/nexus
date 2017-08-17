@@ -690,6 +690,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
 
     if (fullLine == ""){ //nothing typed - show globals
       $scope.codeSuggestions = codeGlobals;
+      $scope.datastoreSuggestions = null;
       $scope.$digest();
       return callback(null, codeGlobals);
     }
@@ -706,10 +707,9 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
           $scope.datastoreSuggestions = {loading: false, datastores: response.data, filter: datastoreExtract[1]};
           for (var i = 0; i < response.data.length; i++) {
             if (response.data[i].Name == datastoreExtract[1]){
-              $scope.datastoreSuggestions.cols = response.data[i];
+              $scope.datastoreSuggestions.cols = response.data[i].Cols;
             }
           }
-          console.log($scope.datastoreSuggestions);
         }, function errorCallback(response) {
           $scope.datastoreSuggestions = {loading: false};
           console.log(response);
@@ -772,6 +772,19 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
 
   $scope.moreReference = function(moreObj) {
     $rootScope.$broadcast('documentation-modal', {docs: moreObj});
+  }
+
+  $scope.datastoreDatatypeToString = function(datatype){
+    switch (datatype){
+      case 0:
+        return "int";
+      case 3:
+        return "string";
+      case 4:
+        return "blob";
+      case 5:
+        return "time";
+    }
   }
 
 

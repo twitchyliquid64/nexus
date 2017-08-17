@@ -525,8 +525,8 @@
                 <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
               </li>
               <li class="collection-item" ng-if="datastoreSuggestions.filter" ng-repeat="col in datastoreSuggestions.cols">
-                aa
-                <label>welp</label>
+                {{col.Name}}
+                <label>{{datastoreDatatypeToString(col.Datatype)}}</label>
                 <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
               </li>
             </ul>
