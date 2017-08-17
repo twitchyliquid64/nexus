@@ -20,6 +20,7 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
       $scope.baseData = response.data;
       for (var i = 0; i < $scope.baseData.Conversations.length; i++) {
         $scope.baseData.Conversations[i].convo_name = $scope.calcConvoName($scope.baseData.Conversations[i]);
+        $scope.baseData.Conversations[i].activityColor = $scope.calcActivityColor($scope.baseData.Conversations[i].NumRecentMessages);
       }
       console.log($scope.baseData);
       $scope.openConvo($scope.baseData.Conversations[0]);
@@ -27,6 +28,23 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
       $scope.loading = false;
       $scope.error = response;
     });
+  }
+
+  $scope.calcActivityColor = function(percent){
+    var color1 = 'F78400';
+    var color2 = '220700';
+    var ratio = percent > 11 ? 1 : percent / 11;
+    var hex = function(x) {
+        x = x.toString(16);
+        return (x.length == 1) ? '0' + x : x;
+    };
+
+    var r = Math.ceil(parseInt(color1.substring(0,2), 16) * ratio + parseInt(color2.substring(0,2), 16) * (1-ratio));
+    var g = Math.ceil(parseInt(color1.substring(2,4), 16) * ratio + parseInt(color2.substring(2,4), 16) * (1-ratio));
+    var b = Math.ceil(parseInt(color1.substring(4,6), 16) * ratio + parseInt(color2.substring(4,6), 16) * (1-ratio));
+
+    console.log(ratio, r, g, b);
+    return '#' + hex(r) + hex(g) + hex(b);
   }
 
   $scope.openConvo = function(convo){

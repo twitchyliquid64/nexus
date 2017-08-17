@@ -6,6 +6,7 @@ import (
 	"errors"
 	"nexus/data/util"
 	"nexus/metrics"
+	"sort"
 	"time"
 )
 
@@ -62,7 +63,18 @@ type Conversation struct {
 	SourceUID int
 	UniqueID  string
 	CreatedAt time.Time
+
+	//only populated in GetConversationsForUser
+	NumRecentMessages int
+	LatestMsgAt time.Time
 }
+
+
+type ByRecentMsg []*Conversation
+
+func (a ByRecentMsg) Len() int           { return len(a) }
+func (a ByRecentMsg) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByRecentMsg) Less(i, j int) bool { return a[i].LatestMsgAt.After(a[j].LatestMsgAt) }
 
 // AddConversation creates a new conversation.
 func AddConversation(ctx context.Context, c Conversation, db *sql.DB) (int, error) {
@@ -141,9 +153,14 @@ func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Co
 		if err := res.Scan(&o.UID, &o.Name, &o.SourceUID, &o.CreatedAt, &o.UniqueID, &o.Kind); err != nil {
 			return nil, err
 		}
+		o.LatestMsgAt, o.NumRecentMessages, err = getMessageStatsForConversation(ctx, o.UID, db)
+		if err != nil {
+			return nil, err
+		}
 		output = append(output, &o)
 	}
 
+	sort.Sort(ByRecentMsg(output))
 	return output, nil
 }
 

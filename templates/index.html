@@ -423,6 +423,7 @@
             <a class="collection-item avatar" ng-repeat="convo in baseData.Conversations | filter:searchText" ng-class="{active: selected==convo.UID}" ng-click="openConvo(convo)" href="#" style="min-height: 70px; color: #000000;">
               <i class="material-icons circle blue" ng-if="convo.Kind=='chan'">chat</i>
               <i class="material-icons circle blue" ng-if="convo.Kind=='dm'">mail_outline</i>
+              <i class="op-indicator" ng-style="{'background-color': convo.activityColor}"></i>
               <span class="title">{{convo.Name}}</span>
               <p>{{convo.convo_name}}</p>
             </a>

@@ -117,3 +117,35 @@ func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([
 
 	return output, nil
 }
+
+// getMessageStatsForConversation returns recent summary information about a conversation.
+// The number of messages in the last 15 hours, and the time of the latest message is returned.
+func getMessageStatsForConversation(ctx context.Context, convoID int, db *sql.DB) (time.Time, int, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT * FROM
+		(SELECT count(created_at)
+			FROM messaging_messages
+			WHERE
+				conversation_uid = ? AND
+				created_at >= datetime('now', '-15 hours'))
+			as num_last_12,
+		(SELECT created_at
+			FROM messaging_messages
+			WHERE
+				conversation_uid = ?
+			ORDER BY created_at DESC LIMIT 1)
+		 	as latest_stamp;
+
+	`, convoID, convoID)
+	if err != nil {
+		return time.Time{}, 0, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return time.Time{}, 0, nil
+	}
+	var numberRecentMsgs int
+	var lastMessageRecieved time.Time
+	return lastMessageRecieved, numberRecentMsgs, res.Scan(&numberRecentMsgs, &lastMessageRecieved)
+}
