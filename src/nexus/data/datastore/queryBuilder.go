@@ -123,8 +123,8 @@ func makeFullQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	}
 	if query.Limit > 0 {
 		finalQuery += " LIMIT " + strconv.Itoa(query.Limit)
+		finalQuery += " OFFSET " + strconv.Itoa(query.Offset)
 	}
-	finalQuery += " OFFSET " + strconv.Itoa(query.Offset)
 
 	log.Println("StreamingQuery: ", finalQuery, queryParameters)
 	return finalQuery, queryParameters, err

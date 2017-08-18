@@ -23,7 +23,6 @@ func findColumnInfo(cols []*Column, name string) *Column {
 }
 
 // InsertRow inserts a row into the named database. Invoked by integrations.
-// TODO: Add documentation to integration editor
 func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db *sql.DB) (int64, error) {
 	cols, err := GetColumns(ctx, dsID, db)
 	if err != nil {
@@ -178,6 +177,46 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 		}
 	}
 	return tx.Commit()
+}
+
+
+// DoQuery takes a query object and returns a slice of results.
+func DoQuery(ctx context.Context, query Query, db *sql.DB) ([]map[string]interface{}, error) {
+	cols, err := GetColumns(ctx, query.UID, db)
+	if err != nil {
+		return nil, err
+	}
+
+	queryString, queryParameters, err := makeFullQuery(cols, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// setup query
+	res, err := db.QueryContext(ctx, queryString, queryParameters...)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	// mainloop query
+	var out []map[string]interface{}
+	for res.Next() {
+		pointers := buildResultsetScanContainers(cols)
+		if err := res.Scan(pointers...); err != nil {
+			return nil, err
+		}
+		row := map[string]interface{}{}
+		for i, v := range pointers {
+			if i == 0 {
+				row["rowid"] = v
+			} else {
+				row[cols[i-1].Name] = v
+			}
+		}
+		out = append(out, row)
+	}
+	return out, nil
 }
 
 // DoStreamingQuery writes the result of a query in CSV form.
