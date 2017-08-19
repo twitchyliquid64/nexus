@@ -31,8 +31,8 @@ app.controller('MessengerController', ["$scope", "$rootScope", "$http", "$interv
   }
 
   $scope.calcActivityColor = function(percent){
-    var color1 = 'F78400';
-    var color2 = '220700';
+    var color1 = 'FF5200';
+    var color2 = '220200';
     var ratio = percent > 11 ? 1 : percent / 11;
     var hex = function(x) {
         x = x.toString(16);
