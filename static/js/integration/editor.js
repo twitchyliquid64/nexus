@@ -638,7 +638,7 @@ var codeSubs = [
   },
   {
     prefix: 'datastore.',
-    name: 'insert()',
+    name: 'insert',
     value: 'insert()',
     meta: 'method',
     score: 110,
@@ -646,6 +646,34 @@ var codeSubs = [
       heading: 'datastore.insert(<name>, <fields>)',
       kind: 'method',
       detail: 'Inserts a row into a datastore. All columns must be specified. Fields should be an object where the key is the name of the column, and the value to be inserted for that row.',
+    },
+  },
+  {
+    prefix: 'datastore.',
+    name: 'query',
+    value: 'query()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'datastore.query()',
+      kind: 'method',
+      detail: 'Runs a query against the named datastore, returning results or an error. datastore.query(<datastore> [, <filters> [, <limit>, <offset>]])',
+      more: '<h4>datastore.query()</h4><br><label>Querying the \'Test\' datastore:</label><div style=\'white-space: pre-wrap;\'>' +
+      'datastore.query("Test", ' + jsonPrettyPrint.toHtml([
+        {value: "kek", column: "text", condition: "!="}
+      ]) + ');</div><br><label>Example response:</label><div style=\'white-space: pre-wrap;\'>' + jsonPrettyPrint.toHtml(
+        {
+           results: [
+              {
+                 num: 1503121824,
+                 rowid: 1,
+                 text: "m8",
+                 time: "2017-08-19T16:15:27.121824074+01:00"
+              },
+           ],
+           success: true,
+        }
+      ) + ');</div><br><br><p>Note the success attribute will always be true if the lookup succeeded. The rowid is a unique identifier for that row, and is always populated.</p>',
     },
   },
 ]
@@ -698,7 +726,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     // show information about datastores
     if (fullLine.match('.*datastore\\.(insert|query).*')){
       $scope.datastoreSuggestions = {loading: true};
-      var datastoreExtract = fullLine.match('.*datastore\\.insert\\("(.*)".*');
+      var datastoreExtract = fullLine.match('.*datastore\\.(insert|query)\\("(.*)".*');
       if (datastoreExtract) { //show information on only the specified datastore
         $http({
           method: 'GET',
@@ -706,7 +734,7 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
         }).then(function successCallback(response) {
           $scope.datastoreSuggestions = {loading: false, datastores: response.data, filter: datastoreExtract[1]};
           for (var i = 0; i < response.data.length; i++) {
-            if (response.data[i].Name == datastoreExtract[1]){
+            if (response.data[i].Name == datastoreExtract[2]){
               $scope.datastoreSuggestions.cols = response.data[i].Cols;
             }
           }

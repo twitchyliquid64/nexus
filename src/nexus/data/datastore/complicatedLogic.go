@@ -39,35 +39,13 @@ func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db
 		if col == nil {
 			return 0, fmt.Errorf("cannot find column named %q", fieldName)
 		}
-		t := reflect.TypeOf(fieldValue)
-		if t != nil && t.Kind() == reflect.Float64 && col.Datatype != FLOAT { // float -> time,int
-			if col.Datatype == TIME {
-				fmt.Println(fieldValue)
-				fieldValue = time.Unix(int64(fieldValue.(float64) / 1000), int64(fieldValue.(float64)))
-			} else if col.Datatype == INT {
-				fieldValue = int64(fieldValue.(float64))
-			} else {
-				return 0, fmt.Errorf("Bad datatype for non-float column %q, got %s", col.Name, t.Kind().String())
-			}
-		}
-		if t != nil && t.Kind() == reflect.Int64 && col.Datatype != INT { // int -> time,float
-			if col.Datatype == TIME {
-				fieldValue = time.Unix(fieldValue.(int64) / 1000, fieldValue.(int64))
-			} else if col.Datatype == FLOAT {
-				fieldValue = float64(fieldValue.(int64))
-			} else {
-				return 0, fmt.Errorf("Bad datatype for non-int column %q, got %s", col.Name, t.Kind().String())
-			}
-		}
-		if t != nil && t.Kind() == reflect.String && col.Datatype != STR { // string -> blob
-			if col.Datatype == BLOB {
-				fieldValue = []byte(fieldValue.(string))
-			}
-			return 0, fmt.Errorf("Bad datatype for non-string column %q, got %s", col.Name, t.Kind().String())
+		v, errCoerce := coerceValueForColDatatype(col.Datatype, fieldValue)
+		if errCoerce != nil {
+			return 0, errCoerce
 		}
 
 		queryStr += columnName(col.Name)
-		parameters = append(parameters, fieldValue)
+		parameters = append(parameters, v)
 
 		if accumulator < (len(rowData) - 1) {
 			queryStr += ", "
@@ -87,7 +65,7 @@ func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db
 	if err != nil {
 		return 0, err
 	}
-	r, err := tx.Exec(queryStr + ";", parameters...)
+	r, err := tx.Exec(queryStr+";", parameters...)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -136,10 +114,9 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 		return err
 	}
 
+	// iterate through the source rows
 	r := csv.NewReader(data)
 	inContainers := make([]interface{}, len(colIDs))
-
-	// iterate through the source rows
 	for {
 		row, err := r.Read()
 		if err == io.EOF {
@@ -150,24 +127,13 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 			return err
 		}
 
-		log.Println(row) //TODO: Remove
 		for i := range inContainers {
-			if insertCols[i].Datatype == INT || insertCols[i].Datatype == UINT {
-				v, _ := strconv.Atoi(row[i])
-				inContainers[i] = v
-			} else if insertCols[i].Datatype == BLOB {
-				inContainers[i] = []byte(row[i])
-			} else if insertCols[i].Datatype == TIME {
-				v, e := strconv.Atoi(row[i])
-				if e == nil {
-					inContainers[i] = time.Unix(int64(v), 0)
-				} else {
-					inContainers[i], _ = time.Parse(time.RFC1123, row[i])
-				}
-
-			} else {
-				inContainers[i] = row[i]
+			v, errCoerce := coerceValueForColDatatype(insertCols[i].Datatype, row[i])
+			if errCoerce != nil {
+				tx.Rollback()
+				return errCoerce
 			}
+			inContainers[i] = v
 		}
 
 		_, err = tx.Exec(queryStr, inContainers...)
@@ -178,7 +144,6 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	}
 	return tx.Commit()
 }
-
 
 // DoQuery takes a query object and returns a slice of results.
 func DoQuery(ctx context.Context, query Query, db *sql.DB) ([]map[string]interface{}, error) {
@@ -298,7 +263,9 @@ func buildResultsetScanContainers(cols []*Column) (pointers []interface{}) {
 			var out time.Time
 			pointers[i] = &out
 		} else {
-			panic("Havent implemented type " + ColDatatype(cols[i-1].Datatype))
+			log.Printf("BAD!!!!: Havent implemented type " + ColDatatype(cols[i-1].Datatype))
+			var out string
+			pointers[i] = &out
 		}
 	}
 	return

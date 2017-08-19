@@ -2,9 +2,11 @@ package datastore
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Query encapsulates all the information needed to perform a query on a datastore.
@@ -18,7 +20,7 @@ type Query struct {
 // Filter represents a constraint in a query.
 type Filter struct {
 	Type        string
-	Val         string
+	Val         interface{}
 	Col         string
 	Conditional string
 }
@@ -64,7 +66,87 @@ func conditional(in string) string {
 	return "BAD_CONDITIONAL!!!"
 }
 
-// TODO: Handle TIME type
+func coerceValueForColDatatype(datatype Datatype, val interface{}) (interface{}, error) {
+	switch datatype {
+	case TIME:
+		switch v := val.(type) {
+		case time.Time:
+			return v, nil
+		case int:
+			return time.Unix(int64(v/1000), int64(v)), nil
+		case int64:
+			return time.Unix(int64(v/1000), int64(v)), nil
+		case uint64:
+			return time.Unix(int64(v/1000), int64(v)), nil
+		case float32:
+			return time.Unix(int64(v/1000), int64(v)), nil
+		case float64:
+			return time.Unix(int64(v/1000), int64(v)), nil
+		case string:
+			s, strErr := strconv.Atoi(v)
+			if strErr != nil {
+				return nil, fmt.Errorf("could not convert string for time column: %s", strErr.Error())
+			}
+			return time.Unix(int64(s/1000), int64(s)), nil
+		}
+	case INT, UINT:
+		switch v := val.(type) {
+		case time.Time:
+			return v.Unix(), nil
+		case int, int16, int32, int64, uint, uint16, uint32, uint64:
+			return v, nil
+		case float32:
+			return int64(v), nil
+		case float64:
+			return int64(v), nil
+		case string:
+			s, strErr := strconv.Atoi(v)
+			if strErr != nil {
+				return nil, fmt.Errorf("could not convert string for integer column: %s", strErr.Error())
+			}
+			return s, nil
+		}
+	case STR:
+		switch v := val.(type) {
+		case time.Time:
+			return v.String(), nil
+		case int, int16, int32, int64, uint, uint16, uint32, uint64, float32, float64:
+			return fmt.Sprint(v), nil
+		case string:
+			return v, nil
+		}
+	case BLOB:
+		switch v := val.(type) {
+		case time.Time:
+			return v.String(), nil
+		case int, int16, int32, int64, uint, uint16, uint32, uint64, float32, float64:
+			return fmt.Sprint(v), nil
+		case string:
+			return []byte(v), nil
+		case []byte:
+			return v, nil
+		}
+	case FLOAT:
+		switch v := val.(type) {
+		case time.Time:
+			return nil, errors.New("cannot co-erce float to time.Time")
+		case int:
+			return float64(v), nil
+		case int64:
+			return float64(v), nil
+		case float32:
+			return float64(v), nil
+		case float64:
+			return v, nil
+		case string:
+			return v, nil
+		case []byte:
+			return string(v), nil
+		}
+	}
+	return nil, errors.New("unrecognised column datatype")
+}
+
 func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error) {
 	queryString := ""
 	var queryParameters []interface{}
@@ -76,20 +158,13 @@ func buildWhereQuery(cols []*Column, query Query) (string, []interface{}, error)
 			if col == nil {
 				return "", nil, errors.New("Invalid columnID in query")
 			}
+
 			queryString += columnName(col.Name) + " " + conditional(filter.Conditional) + " ?"
-			if col.Datatype == INT || col.Datatype == UINT {
-				v, _ := strconv.Atoi(filter.Val)
-				queryParameters = append(queryParameters, v)
-			} else if col.Datatype == STR {
-				queryParameters = append(queryParameters, filter.Val)
-			} else if col.Datatype == BLOB {
-				queryParameters = append(queryParameters, []byte(filter.Val))
-			} else if col.Datatype == FLOAT {
-				v, _ := strconv.ParseFloat(filter.Val, 64)
-				queryParameters = append(queryParameters, v)
-			} else {
-				queryParameters = append(queryParameters, filter.Val)
+			val, err := coerceValueForColDatatype(col.Datatype, filter.Val)
+			if err != nil {
+				return "", nil, err
 			}
+			queryParameters = append(queryParameters, val)
 
 			if i < len(query.Filters)-1 {
 				queryString += " AND "

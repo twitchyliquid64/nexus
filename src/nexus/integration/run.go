@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"nexus/data/integration"
@@ -88,6 +89,17 @@ func (r *Run) start() {
 	log.Printf("[run][%s] %q starting", r.ID, r.Base.Name)
 	logControlInfo(r.Ctx, r.ID, "Run starting. Cause: "+r.StartContext.TriggerKind, r.Base.UID, db)
 	logControlData(r.Ctx, r.ID, "cause="+r.StartContext.TriggerKind, r.Base.UID, integration.DatatypeStartInfo, db) //TODO: Sanitize triggerKind string
+
+	defer func() {
+		if pan := recover(); pan != nil {
+			logSystemError(r.Ctx, r.ID, errors.New("Internal Panic! :: "+fmt.Sprint(pan)), r.Base.UID, db)
+			log.Printf("[run][%s] Panic'ed!!!! %v", r.ID, pan)
+
+			mapLock.Lock()
+			delete(runs, r.ID)
+			mapLock.Unlock()
+		}
+	}()
 	v, runErr := r.VM.Run(r.Base.Content)
 
 	if runErr != nil {
