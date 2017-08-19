@@ -156,7 +156,23 @@ func resetAuthCommand(ctx context.Context, db *sql.DB) error {
 	dataAdmin := booleanPrompt("Allowed to manage data?")
 	integrationAdmin := booleanPrompt("Allowed to manage integrations?")
 
-	return user.SetAuth(ctx, usr.UID, pw, accAdmin, dataAdmin, integrationAdmin, db)
+	err = user.SetAuth(ctx, usr.UID, pw, accAdmin, dataAdmin, integrationAdmin, db)
+	if err != nil {
+		return err
+	}
+
+	auths, err := user.GetAuthForUser(ctx, usr.UID, db)
+	if err != nil {
+		return err
+	}
+	for _, auth := range auths {
+		err = user.DeleteAuth(ctx, auth.UID, db)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func createSession(ctx context.Context, db *sql.DB) error {
