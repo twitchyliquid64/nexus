@@ -120,7 +120,7 @@ func bindQuery(obj *otto.Object, r *Run) error {
 
 			// construct Query object
 			for i, condition := range conditions {
-				_, vOk := condition["value"].(string)
+				_, vOk := condition["value"]
 				if _, cOk := condition["column"].(string); !cOk || !vOk {
 					return r.VM.MakeCustomError("datastore", fmt.Sprintf("bad conditional at index %d: missing or bad type for 'column' or 'value' keys", i))
 				}
