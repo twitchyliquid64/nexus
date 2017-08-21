@@ -41,5 +41,3 @@ More complicated, automatically fetching a LetsEncrypt certificate and running o
 
  - Websockets to get logs in realtime from the run-explorer view without refreshing.
  - Ability to initiate DMs in the messenger.
- - Ability to sort conversations by last-recieved-message in the messenger.
- - Ability to insert/fetch/query API for datastores from integrations.

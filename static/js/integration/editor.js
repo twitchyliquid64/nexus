@@ -662,6 +662,18 @@ var codeSubs = [
   },
   {
     prefix: 'datastore.',
+    name: 'editRow',
+    value: 'editRow()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'datastore.editRow()',
+      kind: 'method',
+      detail: 'datastore.editRow(<name>, <rowID>, <fields>). Edits a row based on its rowID. Fields should be an object where the key is the name of the column, and the value to be edited for that row. You don\'t need to specify every column.',
+    },
+  },
+  {
+    prefix: 'datastore.',
     name: 'query',
     value: 'query()',
     meta: 'method',

@@ -145,6 +145,51 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	return tx.Commit()
 }
 
+// EditRow edits a row with the corresponding rowID.
+func EditRow(ctx context.Context, dsID, rowID int, rowData map[string]interface{}, db *sql.DB) error {
+	cols, err := GetColumns(ctx, dsID, db)
+	if err != nil {
+		return err
+	}
+
+	// construct the query & parameters
+	queryStr := "UPDATE ds_" + strconv.Itoa(dsID) + " SET "
+	var parameters []interface{}
+
+	accumulator := 0
+	for fieldName, fieldValue := range rowData {
+		col := findColumnInfo(cols, fieldName)
+		if col == nil {
+			return fmt.Errorf("cannot find column named %q", fieldName)
+		}
+		v, errCoerce := coerceValueForColDatatype(col.Datatype, fieldValue)
+		if errCoerce != nil {
+			return errCoerce
+		}
+
+		queryStr += columnName(col.Name) + "=?"
+		parameters = append(parameters, v)
+
+		if accumulator < (len(rowData) - 1) {
+			queryStr += ", "
+		}
+		accumulator++
+	}
+	queryStr += " WHERE rowid = ?"
+	parameters = append(parameters, rowID)
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(queryStr+";", parameters...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 // DoQuery takes a query object and returns a slice of results.
 func DoQuery(ctx context.Context, query Query, db *sql.DB) ([]map[string]interface{}, error) {
 	cols, err := GetColumns(ctx, query.UID, db)
