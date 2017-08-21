@@ -359,6 +359,18 @@ var codeSubs = [
   },
   {
     prefix: 'request.',
+    name: 'body',
+    value: 'body',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'request.body',
+      kind: 'string',
+      detail: 'Content of the web request.',
+    },
+  },
+  {
+    prefix: 'request.',
     name: 'user_agent',
     value: 'user_agent',
     meta: 'string',

@@ -1,8 +1,10 @@
 package triggers
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"nexus/data/integration"
@@ -82,6 +84,10 @@ func (t *WebTriggers) makeRequestVMObj(trig *integration.Trigger, r *http.Reques
 	requestObj.Set("method", r.Method)
 	requestObj.Set("host", r.Host)
 	requestObj.Set("uri", r.RequestURI)
+
+	var body bytes.Buffer
+	io.Copy(&body, r.Body)
+	requestObj.Set("body", body.String())
 
 	// methods
 	requestObj.Set("done", func(call otto.FunctionCall) otto.Value {
