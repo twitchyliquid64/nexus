@@ -66,6 +66,8 @@
             switch (k){
               case 0:
                 return "INT";
+              case 2:
+                return "FLOAT";
               case 3:
                 return "STR";
               case 4:

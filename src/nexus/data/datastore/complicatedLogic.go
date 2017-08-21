@@ -234,6 +234,8 @@ func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *
 				out[i] = string(*val.(*[]byte))
 			case *time.Time:
 				out[i] = strconv.Itoa(int(v.Unix()))
+			case *float64:
+				out[i] = fmt.Sprint(*val.(*float64))
 			default:
 				log.Printf("DoStreamingQuery(): Type %+v not handled!", reflect.TypeOf(val))
 				out[i] = "?T?"
@@ -261,6 +263,9 @@ func buildResultsetScanContainers(cols []*Column) (pointers []interface{}) {
 			pointers[i] = &out
 		} else if cols[i-1].Datatype == TIME {
 			var out time.Time
+			pointers[i] = &out
+		} else if cols[i-1].Datatype == FLOAT {
+			var out float64
 			pointers[i] = &out
 		} else {
 			log.Printf("BAD!!!!: Havent implemented type " + ColDatatype(cols[i-1].Datatype))

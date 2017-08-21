@@ -15,6 +15,8 @@ app.controller('DataInserterController', ["$scope", "$rootScope", "$http", funct
     switch (k){
       case 0:
         return "INT";
+      case 2:
+        return "FLOAT";
       case 3:
         return "STR";
       case 4:
