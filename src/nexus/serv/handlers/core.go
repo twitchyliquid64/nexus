@@ -10,6 +10,7 @@ import (
 	"nexus/serv/util"
 	"os"
 	"path"
+	"time"
 )
 
 // CoreHandler handles feature-critical HTTP endpoints such as authentication
@@ -123,7 +124,8 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			if util.InternalHandlerError("session.Create()", response, request, err) {
 				return
 			}
-			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid})
+			shouldSecureOnly := request.TLS != nil
+			http.SetCookie(response, &http.Cookie{Name: "sid", Value: sid, Expires: time.Now().AddDate(0, 0, maxSessionLengthDays), Secure: shouldSecureOnly})
 			http.Redirect(response, request, "/", 303)
 		} else {
 			if authDetails.OTPWanted {
