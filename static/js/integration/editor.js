@@ -818,6 +818,8 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     switch (datatype){
       case 0:
         return "int";
+      case 2:
+        return "float";
       case 3:
         return "string";
       case 4:
