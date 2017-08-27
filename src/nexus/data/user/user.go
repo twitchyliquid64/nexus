@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"nexus/data/datastore"
 	"nexus/data/util"
 	"nexus/metrics"
@@ -72,7 +71,9 @@ type DAO struct {
 		Integrations bool
 	}
 
-	Grants []*datastore.Grant
+	// Not populated by Get* methods on a user
+	Grants     []*datastore.Grant
+	Attributes []*Attr
 }
 
 // Update takes the DAO and updates the attributes of the given user. Keyed by UID.
@@ -81,7 +82,6 @@ func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Update %+v", usr)
 	_, err = tx.ExecContext(ctx, `
 	UPDATE users SET
 		username=?, display_name=?,

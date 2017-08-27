@@ -38,6 +38,7 @@
             $scope.account = {
               AdminPerms: {Accounts: false, Data: false, Integrations: false},
               IsRobot:false,
+              Attributes: [],
             };
             $scope.cb = args.cb;
           });
@@ -67,12 +68,50 @@
             }
           }
 
+          $scope.attrKind = function(kindID) {
+            switch (kindID){
+              case 0:
+                return "GROUP";
+            }
+            return "?";
+          }
+          $scope.attrIcon = function(kindID) {
+            switch (kindID){
+              case 0:
+                return "group";
+            }
+            return "?";
+          }
+          $scope.newAttr = function(kindID) {
+            console.log($scope.account);
+            if (!$scope.account.Attributes)$scope.account.Attributes = [];
+            $scope.account.Attributes.push({
+              Kind: kindID,
+              Name: '',
+              Val: '',
+            });
+          }
+          $scope.deleteAttr = function(index){
+            $scope.account.Attributes.splice(index, 1);
+          }
+
           //Checks and applies validation classes. Returns true if fields are valid.
           function valid(){
+            if (!$scope.account.Attributes)$scope.account.Attributes = [];
+            var attrValidation = [];
+
+            for(var i = 0 ; i < 12; i++) {
+              $scope['attrVldn_' + i] = [];
+            }
+
+            for(var i = 0 ; i < $scope.account.Attributes.length; i++) {
+              $scope['attrVldn_' + i] = validationClass($scope.account.Attributes[i].Name, false);
+              attrValidation = attrValidation.concat($scope['attrVldn_' + i]);
+            }
             $scope.nameVldn = $scope.usernameVldn = [];
             $scope.nameVldn = validationClass($scope.account.DisplayName, false);
             $scope.usernameVldn = validationClass($scope.account.Username, false);
-            return !$scope.nameVldn.concat($scope.usernameVldn).includes('invalid');
+            return !$scope.nameVldn.concat($scope.usernameVldn).concat(attrValidation).includes('invalid');
           };
 
         }

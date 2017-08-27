@@ -19,6 +19,7 @@ import (
 var tables = []DatabaseTable{
 	&user.Table{},
 	&user.AuthTable{},
+	&user.AttrTable{},
 	&session.Table{},
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},

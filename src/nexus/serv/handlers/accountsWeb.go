@@ -212,9 +212,39 @@ func (h *AccountsWebHandler) HandleEditAccountV1(response http.ResponseWriter, r
 	if util.InternalHandlerError("json.Decode(user.DAO)", response, request, err) {
 		return
 	}
+
 	if err := user.Update(request.Context(), &newUserObject, h.DB); err != nil {
 		http.Error(response, "Database error", 500)
 		log.Printf("Error when updating user %d(%s): %s", newUserObject.UID, newUserObject.Username, err)
+	}
+
+	seen := map[int]bool{}
+	existingAttrs, err2 := user.GetAttrForUser(request.Context(), newUserObject.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetAttrForUser()", response, request, err2) {
+		return
+	}
+	for _, a := range newUserObject.Attributes {
+		a.UserID = newUserObject.UID
+		if a.UID == 0 {
+			if err := user.CreateAttr(request.Context(), a, h.DB); err != nil {
+				http.Error(response, "Database error", 500)
+				log.Printf("Error when creating Attr %s.%s: %s", a.KindStr(), a.Name, err.Error())
+			}
+		} else {
+			seen[a.UID] = true
+			if err := user.UpdateAttr(request.Context(), a, h.DB); err != nil {
+				http.Error(response, "Database error", 500)
+				log.Printf("Error when updating Attr %s.%s: %s", a.KindStr(), a.Name, err.Error())
+			}
+		}
+	}
+	for _, a := range existingAttrs {
+		if !seen[a.UID] {
+			if err := user.DeleteAttr(request.Context(), a.UID, h.DB); err != nil {
+				http.Error(response, "Database error", 500)
+				log.Printf("Error when deleting Attr %d: %s", a.UID, err.Error())
+			}
+		}
 	}
 }
 
@@ -238,6 +268,10 @@ func (h *AccountsWebHandler) HandleListAccountsV1(response http.ResponseWriter, 
 	for i := range accounts {
 		accounts[i].Grants, err = datastore.ListByUser(request.Context(), accounts[i].UID, h.DB)
 		if util.InternalHandlerError("datastore.ListByUser()", response, request, err) {
+			return
+		}
+		accounts[i].Attributes, err = user.GetAttrForUser(request.Context(), accounts[i].UID, h.DB)
+		if util.InternalHandlerError("user.GetAttrForUser()", response, request, err) {
 			return
 		}
 	}

@@ -31,6 +31,26 @@
         </div>
       </div>
 
+      <div class="row" style="margin-bottom: 2px;padding: 0 0.75rem;" ng-show="isEditMode"> <!-- Attributes -->
+        <label>Add attributes</label>
+        <a class="btn-floating" ng-click="newAttr(0)"><i class="material-icons">group_add</i></a>
+      </div>
+      <div class="row" style="margin-bottom: 2px;" ng-repeat="attr in account.Attributes" ng-show="isEditMode"> <!-- Attributes Actual -->
+        <div class="input-field col s4 valign-wrapper">
+          <i class="material-icons prefix">{{attrIcon(attr.Kind)}}</i>
+          <input id="a_name_{{$index}}" ng-model="attr.Name" type="text" ng-class="attrVldn_{{$index}}">
+          <label for="a_name_{{$index}}">Name</label>
+        </div>
+        <div class="input-field col s5">
+          <input id="a_order_{{$index}}" ng-model="attr.Val" type="text">
+          <label class="active" for="a_order_{{$index}}">Value</label>
+        </div>
+        <div class="col s3 input-field" style="height: 3rem;">
+          <a class="btn-floating red" ng-click="deleteAttr($index)"><i class="material-icons left">delete</i></a>
+        </div>
+        <span class="badge blue" style="color: white;">{{attrKind(attr.Kind)}}</span>
+      </div>
+
       <div class="row" style="margin-bottom: 2px;"> <!-- Admin permissions -->
         <div class="input-field col s4">
           <input type="checkbox" id="accAdmin_selector" ng-click="account.AdminPerms.Accounts=!account.AdminPerms.Accounts" ng-checked="account.AdminPerms.Accounts==true" />
