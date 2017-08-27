@@ -73,13 +73,52 @@
 
   <ul id="nav-mobile" class="side-nav">
     <li><a href="#" ng-click="changePage('home')">Home</a></li>
+    <li><a href="#" ng-click="changePage('files')">Files</a></li>
     <li><a href="#" ng-click="changePage('messenger')">Messenger</a></li>
     {!{if .AdminPerms.Accounts}!}<li><a href="#" ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
     {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
   </ul>
 
 
-  <div ng-show="page == 'home'" class="container row">
+  <div ng-show="page == 'home'" class="container">
+    <!-- rgba(0, 0, 0, 0.05); -->
+
+    <div class="row" id="card-container">
+      <div class="col s3">
+        <div class="card">
+            <div class="card-content green white-text">
+                <p class="card-stats-title valign-wrapper"><i class="material-icons">wb_cloudy</i>  Umbrella?</p>
+                <h4 class="card-stats-number">NO</h4>
+            </div>
+        </div>
+      </div>
+      <div class="col s3">
+        <div class="card">
+            <div class="card-content blue-grey white-text">
+                <p class="card-stats-title valign-wrapper"><i class="material-icons">ac_unit</i>  Cold?</p>
+                <h4 class="card-stats-number">NO</h4>
+            </div>
+        </div>
+      </div>
+      <div class="col s3">
+        <div class="card">
+            <div class="card-content pink white-text">
+                <p class="card-stats-title valign-wrapper"><i class="material-icons">attach_money</i> Trans Balance</p>
+                <h4 class="card-stats-number">$123.45</h4>
+            </div>
+        </div>
+      </div>
+      <div class="col s3">
+        <div class="card">
+            <div class="card-content purple white-text">
+                <p class="card-stats-title valign-wrapper"><i class="material-icons">network_check</i> Sys master</p>
+                <h4 class="card-stats-number">OK</h4>
+            </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
     <div class="fixed-action-btn">
       <a href="/settings/show" class="btn-floating btn-large blue tooltipped" data-position="left" data-delay="50" data-tooltip="Settings">
         <i class="large material-icons">build</i>

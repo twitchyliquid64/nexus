@@ -115,3 +115,33 @@ nav .brand-logo {
 .json-key    { color: brown; }
 .json-value  { color: navy; }
 .json-string { color: olive; }
+
+
+.card {
+  overflow: hidden;
+}
+#card-container .card .card-content {
+  padding: 10px 14px;
+}
+#card-container .card-content {
+  text-align: center;
+}
+#card-container .card-stats-title {
+  font-size: 1.2rem;
+  justify-content: center;
+}
+#card-container .card-stats-number {
+  font-size: 1.8rem;
+  line-height: 2.0rem;
+  margin: 0.2rem 0 0.2rem 0;
+  font-weight: 500;
+}
+#card-container .card-stats-compare {
+  font-size: 1.0rem;
+}
+#card-container .card .card-action {
+  padding: 10px 14px;
+}
+.card-stats-title .material-icons {
+  font-size: 18px;
+}
