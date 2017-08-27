@@ -137,11 +137,41 @@ nav .brand-logo {
   font-weight: 500;
 }
 #card-container .card-stats-compare {
-  font-size: 1.0rem;
+  font-size: 0.8rem;
+  opacity: 0.9;
 }
 #card-container .card .card-action {
   padding: 10px 14px;
 }
 .card-stats-title .material-icons {
   font-size: 18px;
+}
+
+
+
+.dash-collection .collection-header {
+    font-size: 1.14rem;
+    font-weight: 500;
+}
+.dash-collection p.collections-title {
+    font-size: 1.0rem;
+    padding: 0;
+    margin: 0;
+    font-weight: 500;
+}
+.dash-collection p.collections-content {
+    font-size: 0.9rem;
+    padding: 0;
+    margin: 0;
+    font-weight: 400;
+}
+.task-cat {
+    padding: 2px 4px;
+    color: #fff;
+    font-weight: 300;
+    font-size: 0.8rem;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    background-clip: padding-box;
 }

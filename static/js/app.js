@@ -5,6 +5,8 @@ app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $roo
     $scope.changePage = function(pageName){
         $scope.page = pageName;
         $rootScope.$broadcast('page-change',{page: pageName});
+        if ($scope.page == 'home')
+          $scope.dashUpdated = Date.now();
     };
 }]);
 

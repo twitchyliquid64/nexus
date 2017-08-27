@@ -1,0 +1,43 @@
+<div class="row" id="card-container">
+  {!{range .Cards}!}
+  <div class="col s{!{.Width}!}">
+    <div class="card">
+        <div class="card-content {!{.Color}!} white-text">
+            <p class="card-stats-title valign-wrapper"><i class="material-icons">{!{.Icon}!}</i>  {!{.Title}!}</p>
+            <h4 class="card-stats-number">{!{.Content}!}</h4>
+            <p class="card-stats-compare" style="min-height: 18px;">
+              {!{.Subtext}!}
+            </p>
+        </div>
+    </div>
+  </div>
+  {!{end}!}
+</div>
+
+<div class="row" id="main-dash-row">
+  {!{range .Lists}!}
+  <div class="col s12 m12 {!{if .Fill}!}l12{!{else}!}l6{!{end}!}">
+      <ul class="collection dash-collection">
+        <li class="collection-item avatar">
+            <i class="large material-icons circle light-blue darken-2">{!{.Icon}!}</i>
+            <span class="collection-header">{!{.Title}!}</span>
+            <p>{!{.Subtitle}!}</p>
+            <a href="#" class="secondary-content" style="color: #ff4081;"><i class="material-icons">{!{.SecondaryIcon}!}</i></a>
+        </li>
+        {!{range .Items}!}
+        <li class="collection-item">
+            <div class="row" style="margin-bottom: 0;">
+                <div class="col s8">
+                    <p class="collections-title">{!{.Title}!}</p>
+                    <p class="collections-content">{!{.Text}!}</p>
+                </div>
+                <div class="col s4" style="text-align:right;">
+                    <span class="task-cat {!{.TagColor}!}">{!{.Tag}!}</span>
+                </div>
+            </div>
+        </li>
+        {!{end}!}
+      </ul>
+  </div>
+  {!{end}!}
+</div>

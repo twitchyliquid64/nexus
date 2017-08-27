@@ -20,6 +20,7 @@ var httpHandlers = []handler{
 	&handlers.MaintenanceHandler{},
 	&handlers.FSHandler{},
 	&handlers.SettingsHandler{},
+	&handlers.DashboardHandler{},
 }
 
 type handler interface {

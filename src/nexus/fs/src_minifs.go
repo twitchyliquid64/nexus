@@ -100,7 +100,7 @@ func (_ *miniFS) Delete(ctx context.Context, p string, userID int) error {
 		if err2 != nil {
 			return err2
 		}
-		if len(d) > 0 {
+		if len(d) > 1 {
 			return ErrHasFiles
 		}
 	}
@@ -205,7 +205,6 @@ func (_ *miniFS) NewFolder(ctx context.Context, p string, userID int) error {
 	}, db)
 	return err
 }
-
 
 func (s *miniFS) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
 	d, err := ioutil.ReadAll(data)
