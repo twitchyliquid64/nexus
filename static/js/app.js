@@ -2,6 +2,9 @@ var app = angular.module('nexus', ['ui.materialize', 'angularMoment']);
 
 app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $rootScope) {
     $scope.page = "home";
+    $scope.refreshDash = function(){
+      $scope.dashUpdated = Date.now();
+    }
     $scope.changePage = function(pageName){
         $scope.page = pageName;
         $rootScope.$broadcast('page-change',{page: pageName});
