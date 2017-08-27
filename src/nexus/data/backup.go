@@ -16,10 +16,14 @@ import (
 )
 
 var (
+	lastRun = time.Time{}
+
 	dbDumpInProgress     = false
 	dbDumpPagesRemaining = 0
 	dbDumpPagesTotal     = 0
+	dbDumpDuration       = time.Duration(0)
 	dbUploadInProgress   = false
+	dbUploadDuration     = time.Duration(0)
 
 	dbConfiguredBackupInterval time.Duration
 	dbLastBackup               time.Time
@@ -32,6 +36,8 @@ func GetBackupStatistics() map[string]interface{} {
 		"Upload in progress": dbUploadInProgress,
 		"Backup interval":    dbConfiguredBackupInterval,
 		"Last backup":        dbLastBackup,
+		"Dump time":          dbDumpDuration,
+		"Upload time":        dbUploadDuration,
 	}
 }
 
@@ -60,7 +66,10 @@ func getS3Handle() (*s3gof3r.S3, error) {
 
 func backupUpload(fPath string) error {
 	dbUploadInProgress = true
-	defer func() { dbUploadInProgress = false }()
+	defer func() {
+		dbUploadInProgress = false
+		dbUploadDuration = time.Now().Sub(lastRun) - dbDumpDuration
+	}()
 
 	uploadConfig := &s3gof3r.Config{
 		Concurrency: 2,
@@ -89,10 +98,13 @@ func backupUpload(fPath string) error {
 }
 
 func backupRoutine(backupInterval time.Duration) {
-	lastRun := time.Now()
+	lastRun = time.Now()
 	for {
 		time.Sleep(time.Second * 10)
 		if lastRun.Add(backupInterval).Before(time.Now()) {
+			if dbDumpInProgress || dbUploadInProgress {
+				continue
+			}
 			lastRun = time.Now()
 			log.Println("[backup] Starting backup.")
 
@@ -128,6 +140,9 @@ func backupRoutine(backupInterval time.Duration) {
 }
 
 func doBackup(srcDBConn *gosqlite3.SQLiteConn) (string, error) {
+	defer func() {
+		dbDumpDuration = time.Now().Sub(lastRun)
+	}()
 	f, err := ioutil.TempFile("", "db-backup-")
 	if err != nil {
 		return "", err
