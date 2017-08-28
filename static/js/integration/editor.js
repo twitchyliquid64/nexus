@@ -137,6 +137,28 @@ var codeGlobals = [
       detail: 'Contains methods to insert, delete, and query from datastores you have access to.',
     },
   },
+  {
+    name: 'web',
+    value: 'web',
+    meta: 'www',
+    score: 110,
+    reference: {
+      heading: 'web',
+      kind: 'global object',
+      detail: 'Contains methods to query HTTP(S) servers.',
+    },
+  },
+  {
+    name: 't',
+    value: 't',
+    meta: 'time',
+    score: 110,
+    reference: {
+      heading: 't',
+      kind: 'global object',
+      detail: 'Contains methods to manipulate time.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -698,6 +720,66 @@ var codeSubs = [
            success: true,
         }
       ) + ');</div><br><br><p>Note the success attribute will always be true if the lookup succeeded. The rowid is a unique identifier for that row, and is always populated.</p>',
+    },
+  },
+  {
+    prefix: 't.',
+    name: 'now',
+    value: 'now()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.now()',
+      kind: 'method',
+      detail: 'Returns the current time as a time object.',
+    },
+  },
+  {
+    prefix: 't.',
+    name: 'unix',
+    value: 'unix()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.unix(<seconds>)',
+      kind: 'method',
+      detail: 'Converts the given epoch into a time object.',
+    },
+  },
+  {
+    prefix: 't.',
+    name: 'nano',
+    value: 'nano()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.nano(<nano-seconds>)',
+      kind: 'method',
+      detail: 'Converts the nanoseconds-since-epoch into a time object.',
+    },
+  },
+  {
+    prefix: 't.',
+    name: 'addDate',
+    value: 'addDate()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.addDate()',
+      kind: 'method',
+      detail: 't.addDate(<timeObj>[, years, [months, [days]]]). Adds days/months/years onto the given time object, returning an updated time object.',
+    },
+  },
+  {
+    prefix: 't.',
+    name: 'addTime',
+    value: 'addTime()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.addTime()',
+      kind: 'method',
+      detail: 't.addTime(<timeObj>[, hours, [minutes, [seconds]]]). Adds hours/minutes/seconds onto the given time object, returning an updated time object.',
     },
   },
 ]

@@ -73,21 +73,21 @@ func coerceValueForColDatatype(datatype Datatype, val interface{}) (interface{},
 		case time.Time:
 			return v, nil
 		case int:
-			return time.Unix(int64(v/1000), int64(v)), nil
+			return time.Unix(int64(v/1000), int64(v%1e9)), nil
 		case int64:
-			return time.Unix(int64(v/1000), int64(v)), nil
+			return time.Unix(int64(v/1000), int64(v%1e9)), nil
 		case uint64:
-			return time.Unix(int64(v/1000), int64(v)), nil
+			return time.Unix(int64(v/1000), int64(v%1e9)), nil
 		case float32:
-			return time.Unix(int64(v/1000), int64(v)), nil
+			return time.Unix(int64(v/1000), 0), nil
 		case float64:
-			return time.Unix(int64(v/1000), int64(v)), nil
+			return time.Unix(int64(v/1000), 0), nil
 		case string:
 			s, strErr := strconv.Atoi(v)
 			if strErr != nil {
 				return nil, fmt.Errorf("could not convert string for time column: %s", strErr.Error())
 			}
-			return time.Unix(int64(s/1000), int64(s)), nil
+			return time.Unix(int64(s/1000), int64(s%1e9)), nil
 		}
 	case INT, UINT:
 		switch v := val.(type) {

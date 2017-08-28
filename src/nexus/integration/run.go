@@ -26,6 +26,7 @@ var initialisers = []builtin{
 	&kvInitialiser{},
 	&fsInitialiser{},
 	&datastoreInitialiser{},
+	&tInitialiser{},
 }
 
 // Run contains the state of a running runnable.
