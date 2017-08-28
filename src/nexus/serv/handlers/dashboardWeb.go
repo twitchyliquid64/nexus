@@ -55,10 +55,12 @@ type listConfig struct {
 	SecondaryIcon string `json:"secondary-icon"`
 	Fill          bool   `json:"fill"`
 	Items         []struct {
-		Title    string `json:"title"`
-		Text     string `json:"text"`
-		Tag      string `json:"tag"`
-		TagColor string `json:"tag-color"`
+		Title     string `json:"title"`
+		Text      string `json:"text"`
+		Tag       string `json:"tag"`
+		TagColor  string `json:"tag-color"`
+		Icon      string `json:"icon"`
+		IconColor string `json:"icon-color"`
 	} `json:"items"`
 }
 

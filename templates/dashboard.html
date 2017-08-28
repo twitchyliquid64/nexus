@@ -25,8 +25,9 @@
             <a href="#" class="secondary-content" style="color: #ff4081;"><i class="material-icons">{!{.SecondaryIcon}!}</i></a>
         </li>
         {!{range .Items}!}
-        <li class="collection-item">
+        <li class="collection-item {!{if .Icon}!}avatar{!{end}!}">
             <div class="row" style="margin-bottom: 0;">
+                {!{if .Icon}!}<i class="material-icons circle {!{.IconColor}!}">{!{.Icon}!}</i>{!{end}!}
                 <div class="col s8">
                     <p class="collections-title">{!{.Title}!}</p>
                     <p class="collections-content">{!{.Text}!}</p>
