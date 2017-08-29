@@ -175,3 +175,20 @@ nav .brand-logo {
     border-radius: 2px;
     background-clip: padding-box;
 }
+
+.jqstooltip {
+ background-color: #c6e5f6 !important;
+ font-size: 11px !important;
+ padding: 5px !important;
+ color: black !important;
+ overflow: hidden !important;
+ text-align: center !important;
+ border-color: #CCCCCC !important;
+ min-width: 64px !important;
+ min-height: 20px !important;
+}
+
+.jqsfield {
+ font-size: 10px !important;
+ color: black !important; /*set the text color here */
+}

@@ -5,6 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"nexus/fs"
@@ -50,6 +52,7 @@ type cardConfig struct {
 
 type listConfig struct {
 	Icon          string `json:"icon"`
+	IconColor     string `json:"icon-color"`
 	Title         string `json:"title"`
 	Subtitle      string `json:"subtitle"`
 	SecondaryIcon string `json:"secondary-icon"`
@@ -61,6 +64,10 @@ type listConfig struct {
 		TagColor  string `json:"tag-color"`
 		Icon      string `json:"icon"`
 		IconColor string `json:"icon-color"`
+
+		ChartType    string                 `json:"chart-type"`
+		ChartData    []int                  `json:"chart-data"`
+		ChartOptions map[string]interface{} `json:"chart-options"`
 	} `json:"items"`
 }
 
@@ -142,5 +149,24 @@ func (h *DashboardHandler) Render(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	util.LogIfErr("dashboard.Render(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/dashboard.html"), renderData, response))
+	t, err := template.New("t").Funcs(template.FuncMap{
+		"chartData": func(data []int) string {
+			out := ""
+			for i, point := range data {
+				out += fmt.Sprint(point)
+				if i < len(data)-1 {
+					out += ","
+				}
+			}
+			return out
+		}}).Delims("{!{", "}!}").ParseFiles(path.Join(h.TemplatePath, "templates", "dashboard.html"))
+
+	if util.InternalHandlerError("template.Parse()", response, request, err) {
+		return
+	}
+
+	err = t.ExecuteTemplate(response, "dashboard.html", renderData)
+	if util.InternalHandlerError("template.Execute()", response, request, err) {
+		return
+	}
 }

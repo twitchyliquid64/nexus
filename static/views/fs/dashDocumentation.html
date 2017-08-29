@@ -1,0 +1,48 @@
+<h5 style="margin-top: 0px;">Dash-{{showDashDoc[1]}} reference</h5>
+
+<div ng-if="showDashDoc[1]=='card'">
+  <pre>
+{
+    "title": "{{showDashDoc[3]}}",
+    "content": "",
+    "color": "",
+    "icon": "",
+    "subtext: "",
+    "width": 3
+}
+  </pre>
+</div>
+
+<div ng-if="showDashDoc[1]=='list'">
+  <pre>
+{
+    "title": "{{showDashDoc[3]}}",
+    "subtitle": "",
+    "icon": "",
+    "icon-color": "",
+    "secondary-icon": "",
+    "fill": true,
+    "items": [
+        {
+            "title": "",
+            "text": "",
+            "tag-color": "",
+            "tag": ""
+        },
+        {
+            "title": "",
+            "text": ""
+        },
+        {
+            "title": "",
+            "text": "",
+            "chart-type": "line",
+            "chart-options": {
+                "width": 70,
+            },
+            "chart-data": [1,2]
+        }
+    ]
+}
+  </pre>
+</div>

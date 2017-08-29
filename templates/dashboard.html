@@ -19,7 +19,7 @@
   <div class="col s12 m12 {!{if .Fill}!}l12{!{else}!}l6{!{end}!}">
       <ul class="collection dash-collection">
         <li class="collection-item avatar">
-            <i class="large material-icons circle light-blue darken-2">{!{.Icon}!}</i>
+            <i class="large material-icons circle {!{if .IconColor}!}{!{.IconColor}!}{!{else}!}light-blue darken-2{!{end}!}">{!{.Icon}!}</i>
             <span class="collection-header">{!{.Title}!}</span>
             <p>{!{.Subtitle}!}</p>
             <a href="#" class="secondary-content" style="color: #ff4081;"><i class="material-icons">{!{.SecondaryIcon}!}</i></a>
@@ -27,14 +27,24 @@
         {!{range .Items}!}
         <li class="collection-item {!{if .Icon}!}avatar{!{end}!}">
             <div class="row" style="margin-bottom: 0;">
-                {!{if .Icon}!}<i class="material-icons circle {!{.IconColor}!}">{!{.Icon}!}</i>{!{end}!}
-                <div class="col s8">
+                {!{if .Icon -}!}
+                  <i class="material-icons circle {!{.IconColor}!}">{!{.Icon}!}</i>
+                {!{- end}!}
+                <div class="col  {!{- if and .Tag .ChartType}!} s6 {!{else}!} {!{if or .Tag .ChartType}!}s8{!{else}!}s12{!{end -}!} {!{end}!}">
                     <p class="collections-title">{!{.Title}!}</p>
                     <p class="collections-content">{!{.Text}!}</p>
                 </div>
-                <div class="col s4" style="text-align:right;">
+                {!{if .Tag -}!}
+                <div class="col {!{if .ChartType}!}s3{!{else}!}s4{!{end}!}" style="text-align:right;">
                     <span class="task-cat {!{.TagColor}!}">{!{.Tag}!}</span>
                 </div>
+                {!{- end}!}
+                {!{if .ChartType -}!}
+                <div class="col {!{if .Tag}!}s3{!{else}!}s4{!{end}!}" style="text-align:right;">
+                    <span class="inlinesparkline" sparkType="{!{ .ChartType }!}"
+                    {!{ range $name, $val := .ChartOptions }!} spark{!{$name}!}="{!{$val}!}"{!{end}!}>{!{chartData .ChartData}!}</span>
+                </div>
+                {!{- end}!}
             </div>
         </li>
         {!{end}!}
@@ -49,3 +59,7 @@
     <i class="large material-icons">refresh</i>
   </a>
 </div>
+
+<script>
+  $("#main-dash-row .inlinesparkline").sparkline('html', { enableTagOptions: true });
+</script>

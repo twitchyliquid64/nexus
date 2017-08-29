@@ -9,6 +9,7 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
   $scope.path = null;
   $scope.file = null;
   $scope.content = null;
+  $scope.showDashDoc = false;
 
   $scope.save = function(){
     $scope.loading = true;
@@ -51,10 +52,11 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
     });
   }
 
+  function endsWith(str, suffix) {
+      return str.indexOf(suffix, str.length - suffix.length) !== -1;
+  }
+
   $rootScope.$on('files-editor', function(event, args) {
-    function endsWith(str, suffix) {
-        return str.indexOf(suffix, str.length - suffix.length) !== -1;
-    }
     $scope.file = args.file;
     $scope.path = args.path;
     $scope.lastSaved = moment(args.file.Modified);
@@ -70,6 +72,7 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
     if (endsWith($scope.path, '.json')){
       $scope.selectedMode = 'json';
     }
+    $scope.showDashDoc = $scope.path.match('/minifs/dashboard/(list|card|todo)-([0-9]+)-(.*)\\.json$');
     $scope.loadData();
   });
 
@@ -115,6 +118,8 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
         $scope.modeChange();
       }
       $scope.editorObj.resize();
+    } else {
+      $scope.showDashDoc = false;
     }
   });
 
