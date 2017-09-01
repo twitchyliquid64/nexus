@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -26,10 +27,16 @@ func die(msg string) {
 	os.Exit(1)
 }
 
-var dbFlag = flag.String("db", "dev.db", "path to the database file")
-var nameFlag = flag.String("name", "", "")
-var usernameFlag = flag.String("username", "", "")
-var kindFlag = flag.String("kind", "", "")
+var (
+	dbFlag          = flag.String("db", "dev.db", "path to the database file")
+	nameFlag        = flag.String("name", "", "")
+	usernameFlag    = flag.String("username", "", "")
+	kindFlag        = flag.String("kind", "", "")
+	caCertPathFlag  = flag.String("ca_cert", "", "Path to CA cert")
+	caKeyPathFlag   = flag.String("ca_key", "", "Path to CA key")
+	cliCertPathFlag = flag.String("client_cert", "", "Path to client cert (to mint)")
+	cliKeyPathFlag  = flag.String("client_key", "", "Path to client key (to mint)")
+)
 
 var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"CREATEUSER":     createUserCommand,
@@ -41,6 +48,8 @@ var commandTable = map[string]func(context.Context, *sql.DB) error{
 	"LISTGRANTS":     listGrants,
 	"LISTDATASTORES": listDatastores,
 	"CREATEGRANT":    createGrant,
+	"CREATECA":       createCaCertCommand,
+	"MINTCLIENTCERT": mintClientCertCommand,
 }
 
 func printCommands() {
@@ -98,6 +107,68 @@ func main() {
 	} else {
 		fmt.Println("OK.")
 	}
+}
+
+func createCaCertCommand(ctx context.Context, db *sql.DB) error {
+	if *caCertPathFlag == "" {
+		*caCertPathFlag = prompt("Path to CA Cert file [/etc/subnet/ca_cert.pem]")
+	}
+	if *caCertPathFlag == "" {
+		*caCertPathFlag = "/etc/subnet/ca_cert.pem"
+	}
+
+	if *caKeyPathFlag == "" {
+		*caKeyPathFlag = prompt("Path to CA Key file [/etc/subnet/ca_key.pem]")
+	}
+	if *caKeyPathFlag == "" {
+		*caKeyPathFlag = "/etc/subnet/ca_key.pem"
+	}
+
+	if _, statErr := os.Stat(path.Dir(*caCertPathFlag)); path.IsAbs(*caCertPathFlag) && os.IsNotExist(statErr) {
+		return fmt.Errorf("Directory %q does not exist", path.Dir(*caCertPathFlag))
+	}
+	if _, statErr := os.Stat(path.Dir(*caKeyPathFlag)); path.IsAbs(*caKeyPathFlag) && os.IsNotExist(statErr) {
+		return fmt.Errorf("Directory %q does not exist", path.Dir(*caKeyPathFlag))
+	}
+
+	return makeCaCert(*caCertPathFlag, *caKeyPathFlag)
+}
+
+func mintClientCertCommand(ctx context.Context, db *sql.DB) error {
+	if *caCertPathFlag == "" {
+		*caCertPathFlag = prompt("Path to CA Cert file [/etc/subnet/ca_cert.pem]")
+	}
+	if *caCertPathFlag == "" {
+		*caCertPathFlag = "/etc/subnet/ca_cert.pem"
+	}
+	if *caKeyPathFlag == "" {
+		*caKeyPathFlag = prompt("Path to CA Key file [/etc/subnet/ca_key.pem]")
+	}
+	if *caKeyPathFlag == "" {
+		*caKeyPathFlag = "/etc/subnet/ca_key.pem"
+	}
+
+	if *cliCertPathFlag == "" {
+		*cliCertPathFlag = prompt("File name of client cert (to mint) [client_cert.pem]")
+	}
+	if *cliCertPathFlag == "" {
+		*cliCertPathFlag = "client_cert.pem"
+	}
+	if *cliKeyPathFlag == "" {
+		*cliKeyPathFlag = prompt("File name of client key (to mint) [client_key.pem]")
+	}
+	if *cliKeyPathFlag == "" {
+		*cliKeyPathFlag = "client_key.pem"
+	}
+
+	if _, statErr := os.Stat(path.Dir(*cliCertPathFlag)); path.IsAbs(*cliCertPathFlag) && os.IsNotExist(statErr) {
+		return fmt.Errorf("Directory %q does not exist", path.Dir(*cliCertPathFlag))
+	}
+	if _, statErr := os.Stat(path.Dir(*cliKeyPathFlag)); path.IsAbs(*cliKeyPathFlag) && os.IsNotExist(statErr) {
+		return fmt.Errorf("Directory %q does not exist", path.Dir(*cliKeyPathFlag))
+	}
+
+	return issueClientCert(*caCertPathFlag, *caKeyPathFlag, *cliCertPathFlag, *cliKeyPathFlag)
 }
 
 func createUserCommand(ctx context.Context, db *sql.DB) error {
