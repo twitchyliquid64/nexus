@@ -131,6 +131,7 @@ func makeServer(ctx context.Context, mux *http.ServeMux, listenAddr string) *htt
 	if *tlsCacheFileFlag != "" {
 		s.TLSConfig = &tls.Config{
 			GetCertificate: letsEncryptManager.GetCertificate,
+			ClientAuth:     tls.RequestClientCert,
 		}
 	}
 	return s
