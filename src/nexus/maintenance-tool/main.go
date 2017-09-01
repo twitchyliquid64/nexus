@@ -147,8 +147,11 @@ func getUserListRemote(ctx context.Context, db *sql.DB) error {
 	tlsConfig.BuildNameToCertificate()
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
 	client := &http.Client{Transport: transport}
-
-	resp, err := client.Get("https://" + serverAddress + "/federation/v1/accounts/users")
+	req, err := http.NewRequest("GET", "https://"+serverAddress+"/federation/v1/accounts/users", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
