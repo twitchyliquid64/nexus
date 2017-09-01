@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -39,17 +43,18 @@ var (
 )
 
 var commandTable = map[string]func(context.Context, *sql.DB) error{
-	"CREATEUSER":     createUserCommand,
-	"RESETAUTH":      resetAuthCommand,
-	"CREATESESSION":  createSession,
-	"LISTSESSIONS":   listSessions,
-	"ADDMSGSOURCE":   addMessagingSource,
-	"LISTMSGSOURCES": listMessagingSources,
-	"LISTGRANTS":     listGrants,
-	"LISTDATASTORES": listDatastores,
-	"CREATEGRANT":    createGrant,
-	"CREATECA":       createCaCertCommand,
-	"MINTCLIENTCERT": mintClientCertCommand,
+	"CREATEUSER":        createUserCommand,
+	"RESETAUTH":         resetAuthCommand,
+	"CREATESESSION":     createSession,
+	"LISTSESSIONS":      listSessions,
+	"ADDMSGSOURCE":      addMessagingSource,
+	"LISTMSGSOURCES":    listMessagingSources,
+	"LISTGRANTS":        listGrants,
+	"LISTDATASTORES":    listDatastores,
+	"CREATEGRANT":       createGrant,
+	"CREATECA":          createCaCertCommand,
+	"MINTCLIENTCERT":    mintClientCertCommand,
+	"GETUSERLISTREMOTE": getUserListRemote,
 }
 
 func printCommands() {
@@ -79,7 +84,8 @@ func validateCommandLine() {
 		die(fmt.Sprintf("USAGE: %s [--db <db-path>] command <command-specific-args>", os.Args[0]))
 	}
 
-	_, commandExists := commandTable[strings.ToUpper(flag.Arg(0))]
+	cmd := strings.Replace(strings.ToUpper(flag.Arg(0)), "-", "", -1)
+	_, commandExists := commandTable[cmd]
 	if !commandExists {
 		fmt.Printf("Error: %q is not a valid command.\n", flag.Arg(0))
 		printCommands()
@@ -98,7 +104,8 @@ func main() {
 	fmt.Println("OK")
 	defer db.Close()
 
-	err = commandTable[strings.ToUpper(flag.Arg(0))](ctx, db)
+	cmd := strings.Replace(strings.ToUpper(flag.Arg(0)), "-", "", -1)
+	err = commandTable[cmd](ctx, db)
 	fmt.Printf("%s: ", flag.Arg(0))
 	if err != nil {
 		fmt.Println("ERROR!")
@@ -107,6 +114,49 @@ func main() {
 	} else {
 		fmt.Println("OK.")
 	}
+}
+
+func getUserListRemote(ctx context.Context, db *sql.DB) error {
+	if *cliCertPathFlag == "" {
+		*cliCertPathFlag = prompt("File name of client cert (to use) [client_cert.pem]")
+	}
+	if *cliCertPathFlag == "" {
+		*cliCertPathFlag = "client_cert.pem"
+	}
+	if *cliKeyPathFlag == "" {
+		*cliKeyPathFlag = prompt("File name of client key (to use) [client_key.pem]")
+	}
+	if *cliKeyPathFlag == "" {
+		*cliKeyPathFlag = "client_key.pem"
+	}
+	var serverAddress string
+	for serverAddress == "" {
+		serverAddress = prompt("Server address")
+	}
+
+	// Load client cert
+	cert, err := tls.LoadX509KeyPair(*cliCertPathFlag, *cliKeyPathFlag)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Setup HTTPS client
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+	tlsConfig.BuildNameToCertificate()
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	client := &http.Client{Transport: transport}
+
+	resp, err := client.Get("https://" + serverAddress + "/federation/v1/accounts/users")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	io.Copy(os.Stdout, resp.Body)
+	fmt.Println()
+	return nil
 }
 
 func createCaCertCommand(ctx context.Context, db *sql.DB) error {

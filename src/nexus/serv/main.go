@@ -29,6 +29,8 @@ var listenerFlag = flag.String("listener", "localhost:8080", "Address to listen 
 var tlsCacheFileFlag = flag.String("key-cache", "", "Path to store SSL secrets")
 var allowedDomains = flag.String("domains", "", "Comma-separated list of domains which are allowed to work")
 var backupDuration = flag.Duration("backup-duration", 0, "(optional) Time between full backup runs")
+var federationCert = flag.String("federation-cert", "", "Path to certificate to use to verify federation requests")
+var federationEnabled = flag.Bool("federation-enabled", false, "Whether federation requests will be serviced or ignored")
 var letsEncryptManager letsencrypt.Manager
 
 func main() {

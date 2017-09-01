@@ -21,6 +21,7 @@ var httpHandlers = []handler{
 	&handlers.FSHandler{},
 	&handlers.SettingsHandler{},
 	&handlers.DashboardHandler{},
+	&handlers.FederationHandler{},
 }
 
 type handler interface {
