@@ -112,7 +112,7 @@ func (t *WebTriggers) makeRequestVMObj(trig *integration.Trigger, r *http.Reques
 			return otto.Value{}
 		}
 
-		session, err := session.Get(context.Background(), sidCookie.Value, db)
+		session, err := session.Get(context.Background(), sidCookie.Value, true, db)
 		if err != nil {
 			return vm.MakeCustomError("web", err.Error())
 		}

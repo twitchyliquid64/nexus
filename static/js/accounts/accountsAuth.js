@@ -107,6 +107,7 @@ app.controller('AccountsAuthController', ["$scope", "$rootScope", "$http", funct
       Class: 1,
       Val1: '',
       Val2: '',
+      Score: 1000,
     };
   }
 

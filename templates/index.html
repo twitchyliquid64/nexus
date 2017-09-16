@@ -251,13 +251,13 @@
     <div ng-controller="AccountsAuthController">
       <loader loading="loading" error="error"></loader>
       <p>Showing authentication methods for <i>{{account.DisplayName}}</i> ({{account.UID}}).</p>
-      <p>For a sign in to succeed, at least one auth method must pass, and all required auth methods must pass.</p>
+      <p>For a sign in to succeed, at least one auth method must pass, and all required auth methods must pass. Additionally, the combined score of all passing auth methods must equal or exceed 1000.</p>
       <p ng-hide="auths">No auth methods are currently setup for this user. The user will only be able to login with the accounts basic password, if one exists.</p>
 
       <ul class="collection">
         <li class="collection-item avatar" ng-repeat="auth in auths">
           <i class="material-icons circle">{{icon(auth)}}</i>
-          <span class="title">{{auth.Val2}}</span>
+          <span class="title">{{auth.Val2}} ({{auth.Score}})</span>
           <p>{{kName(auth.Kind)}} <br>
              <label>{{cName(auth.Class)}}</label>
           </p>
@@ -310,6 +310,12 @@
                 <div class="input-field col s12">
                   <input id="authSecretNewInput" type="{{inputType}}" ng-model="new.Val1">
                   <label for="authSecretNewInput">Secret / Password</label>
+                </div>
+              </div>
+              <div class="row" style="margin-bottom: 6px;"> <!-- Score -->
+                <div class="input-field col s12">
+                  <input id="authScoreNewInput" type="number" ng-model="new.Score">
+                  <label for="authScoreNewInput">Score</label>
                 </div>
               </div>
 

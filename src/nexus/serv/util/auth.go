@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"log"
 	"net/http"
 	"nexus/data/session"
@@ -21,6 +22,12 @@ type AuthDetails struct {
 	OTPUsed           bool
 	PassUsed          bool
 	PassedMethod      []string
+	TotalScore        int
+}
+
+func (a *AuthDetails) String() string {
+	b, _ := json.Marshal(a)
+	return string(b)
 }
 
 // CheckAuth checks if the provided credentials are valid for that user.
@@ -80,6 +87,7 @@ func CheckAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, Au
 
 		if didPass {
 			details.PassedMethod = append(details.PassedMethod, methodString)
+			details.TotalScore += method.Score
 			switch method.Kind {
 			case user.KindPassword:
 				details.PassUsed = true
@@ -88,7 +96,22 @@ func CheckAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, Au
 			}
 		}
 	}
+	if details.TotalScore < 1000 {
+		if methodExists(authMethods, user.KindOTP) {
+			details.OTPWanted = true
+		}
+		return false, details, nil
+	}
 	return didPassOne, details, nil
+}
+
+func methodExists(methods []*user.Auth, methodKind int) bool {
+	for _, method := range methods {
+		if method.Kind == methodKind {
+			return true
+		}
+	}
+	return false
 }
 
 // AuthInfo returns the session, username, displayname of the logged-in user.
@@ -98,7 +121,7 @@ func AuthInfo(r *http.Request, db *sql.DB) (*session.DAO, *user.DAO, error) {
 		return nil, nil, err
 	}
 
-	session, err := session.Get(r.Context(), sidCookie.Value, db)
+	session, err := session.Get(r.Context(), sidCookie.Value, false, db)
 	if err != nil {
 		return nil, nil, err
 	}

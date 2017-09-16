@@ -59,7 +59,7 @@ func (h *RoboCoreHandler) HandleAuth(response http.ResponseWriter, request *http
 			return
 		}
 
-		sid, err := session.Create(ctx, usr.UID, false, true, session.AuthPass, h.DB)
+		sid, err := session.Create(ctx, usr.UID, false, true, session.AuthPass, "{}", h.DB)
 		if util.InternalHandlerError("session.Create()", response, request, err) {
 			return
 		}

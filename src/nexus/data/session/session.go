@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"nexus/data/util"
 	"nexus/metrics"
@@ -45,7 +46,8 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	  revoked BOOLEAN NOT NULL DEFAULT 0,
     can_access_web BOOLEAN NOT NULL DEFAULT 1,
     can_access_sys_api BOOLEAN NOT NULL DEFAULT 0,
-    authed_via varchar(64)
+    authed_via varchar(64),
+		auth_data varchar(4096) NOT NULL DEFAULT "{}"
 	);
 
   CREATE INDEX IF NOT EXISTS sessions_sid ON sessions(sid);
@@ -57,7 +59,24 @@ func (t *Table) Setup(ctx context.Context, db *sql.DB) error {
 	if err = tx.Commit(); err != nil {
 		return err
 	}
-	return nil
+	return t.migrationDataColumn(ctx, db)
+}
+
+func (t *Table) migrationDataColumn(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, "SELECT auth_data FROM sessions LIMIT 1;")
+	if err == nil {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(`ALTER TABLE sessions ADD COLUMN auth_data varchar(4096) NOT NULL DEFAULT "{}";`)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // Forms is called by the form renderer to get any settings forms relevant to this table.
@@ -72,7 +91,7 @@ func (t *Table) Forms() []*util.FormDescriptor {
 					Name: "All Sessions",
 					Desc: "All sessions we have on file.",
 					ID:   "sessions_list",
-					Cols: []string{"#", "Created", "revoked?", "auth"},
+					Cols: []string{"#", "Created", "revoked?", "Score", "Methods"},
 					FetchContent: func(ctx context.Context, uid int, db *sql.DB) ([]interface{}, error) {
 						data, err := GetAllForUser(ctx, uid, db)
 						if err != nil {
@@ -80,7 +99,9 @@ func (t *Table) Forms() []*util.FormDescriptor {
 						}
 						out := make([]interface{}, len(data))
 						for i, s := range data {
-							out[i] = []interface{}{s.SessionUID, s.Created.Format(time.Stamp), s.Revoked, s.AuthedVia}
+							authData := map[string]interface{}{}
+							json.Unmarshal([]byte(s.AuthDataRaw), &authData)
+							out[i] = []interface{}{s.SessionUID, s.Created.Format(time.Stamp), s.Revoked, authData["TotalScore"], authData["PassedMethod"]}
 						}
 						return out, nil
 					},
@@ -138,16 +159,19 @@ type DAO struct {
 	UID        int
 	SID        string
 	Created    time.Time
-	AccessWeb  bool
-	AccessAPI  bool
-	AuthedVia  string
-	Revoked    bool
+
+	AccessWeb bool
+	AccessAPI bool
+	AuthedVia string
+	Revoked   bool
+
+	AuthDataRaw string
 }
 
 // GetAllForUser is called to get all sessions for a given uid.
 func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked
+		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked, auth_data
 		FROM sessions
 		WHERE uid = ?
 		ORDER BY created_at DESC;
@@ -161,7 +185,7 @@ func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 	for res.Next() {
 		var o DAO
 		o.UID = uid
-		if err := res.Scan(&o.SessionUID, &o.SID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia, &o.Revoked); err != nil {
+		if err := res.Scan(&o.SessionUID, &o.SID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia, &o.Revoked, &o.AuthDataRaw); err != nil {
 			return nil, err
 		}
 		output = append(output, &o)
@@ -189,12 +213,14 @@ func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 }
 
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
-func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
+func Get(ctx context.Context, sid string, getDetails bool, db *sql.DB) (*DAO, error) {
 	defer metrics.GetSessionSIDDbTime.Time(time.Now())
+	query := `SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = ? AND revoked = 0;`
+	if getDetails {
+		query = `SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via, auth_data FROM sessions WHERE sid = ? AND revoked = 0;`
+	}
 
-	res, err := db.QueryContext(ctx, `
-		SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = ? AND revoked = 0;
-	`, sid)
+	res, err := db.QueryContext(ctx, query, sid)
 	if err != nil {
 		return nil, err
 	}
@@ -205,11 +231,14 @@ func Get(ctx context.Context, sid string, db *sql.DB) (*DAO, error) {
 	}
 	var o DAO
 	o.SID = sid
+	if getDetails {
+		return &o, res.Scan(&o.SessionUID, &o.UID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia, &o.AuthDataRaw)
+	}
 	return &o, res.Scan(&o.SessionUID, &o.UID, &o.Created, &o.AccessWeb, &o.AccessAPI, &o.AuthedVia)
 }
 
 // Create creates a session in the datastore.
-func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia AuthKind, db *sql.DB) (string, error) {
+func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia AuthKind, details string, db *sql.DB) (string, error) {
 	sid, err := GenerateRandomString(32)
 	if err != nil {
 		return "", err
@@ -221,9 +250,9 @@ func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia Aut
 	}
 	_, err = tx.Exec(`
 	INSERT INTO
-		sessions (uid, sid, can_access_web, can_access_sys_api, authed_via)
-		VALUES (?, ?, ?, ?, ?);
-	`, uid, sid, allowWeb, allowAPI, string(authedVia))
+		sessions (uid, sid, can_access_web, can_access_sys_api, authed_via, auth_data)
+		VALUES (?, ?, ?, ?, ?, ?);
+	`, uid, sid, allowWeb, allowAPI, string(authedVia), details)
 	if err != nil {
 		tx.Rollback()
 		return "", err
