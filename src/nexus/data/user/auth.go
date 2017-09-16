@@ -165,7 +165,7 @@ func UpdateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 	_, err = tx.ExecContext(ctx, `
 	UPDATE user_auth SET
 		kind=?, class=?, val1=?, val2=?, val3=?, score=?
-			WHERE rowid = ?`, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3, auth.UID, auth.Score)
+			WHERE rowid = ?`, auth.Kind, auth.Class, auth.Val1, auth.Val2, auth.Val3, auth.Score, auth.UID)
 	if err != nil {
 		return err
 	}
