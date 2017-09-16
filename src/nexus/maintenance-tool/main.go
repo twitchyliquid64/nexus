@@ -309,7 +309,7 @@ func createSession(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	sid, err := session.Create(ctx, usr.UID, true, true, session.Admin, db)
+	sid, err := session.Create(ctx, usr.UID, true, true, session.Admin, "{\"Score\": 1000}", db)
 	if err == nil {
 		fmt.Printf("\nSession = %q\n", sid)
 	}
