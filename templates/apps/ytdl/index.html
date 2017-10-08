@@ -1,0 +1,187 @@
+<html>
+<head>
+    <title>Youtube DL</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+    </style>
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+    <script type="text/javascript">
+      var app = angular.module('ytdl', ['ui.materialize', 'angularMoment']);
+
+      app.filter('secondsToDateTime', [function() {
+          /**
+           * This code returns a date string formatted manually.
+           * Code "new Date(1970, 0, 1).setSeconds(seconds)" returns malformed output on days.
+           * Eg. 4 days, magically becomes 5, 15 becomes 16 and so on...;
+           * */
+          return function(seconds) {
+          var days = Math.floor(seconds/86400);
+          var hours = Math.floor((seconds % 86400) / 3600);
+          var mins = Math.floor(((seconds % 86400) % 3600) / 60);
+          var secs = ((seconds % 86400) % 3600) % 60;
+          return (days > 0 ? days+'d ' : '') + ('00'+hours).slice(-2) +':' + ('00'+mins).slice(-2)+':' + ('00'+secs).slice(-2);
+          };
+      }]);
+
+      app.controller('StatusController', ["$scope", "$rootScope", "$location", "$http", "$interval", function ($scope, $rootScope, $location, $http, $interval) {
+        $scope.status = {};
+        $scope.update = function(){
+          $scope.loading = true;
+          $http({
+            method: 'GET',
+            url: '/app/ytdl/status',
+          }).then(function successCallback(response) {
+            $scope.status = response.data;
+          });
+        }
+        $interval($scope.update, 2500);
+      }]);
+
+      app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", "$window", function ($scope, $rootScope, $location, $http, $window) {
+        $scope.vid = '';
+        $scope.metadata = null;
+        $scope.loading = false;
+        $scope.path = '';
+
+        $scope.clear = function(){
+          $scope.vid = '';
+          $scope.metadata = null;
+          $scope.path = '';
+        }
+
+        $scope.getInfo = function(){
+          $scope.loading = true;
+          $http({
+            method: 'GET',
+            url: '/app/ytdl/metadata?id=' + $scope.vid,
+          }).then(function successCallback(response) {
+            $scope.loading = false;
+            $scope.metadata = response.data;
+            $scope.path = '/music/' + response.data.Title.replace('&', 'and').replace(/[^\w\s-]/gi, '') + '.mp3';
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+          });
+        }
+
+        $scope.queue = function(){
+          $scope.loading = true;
+          $http({
+            method: 'POST',
+            url: '/app/ytdl/queue',
+            data: {vid: $scope.metadata.Id, download_path: $scope.path},
+          }).then(function successCallback(response) {
+            $scope.loading = false;
+            if (response.data.success){
+              $window.location.reload();
+            }
+          }, function errorCallback(response) {
+            $scope.loading = false;
+            $scope.error = response;
+            Materialize.toast(JSON.stringify(response), 3000);
+          });
+        }
+      }]);
+    </script>
+</head>
+<body ng-app="ytdl" ng-cloak>
+  <nav class="teal darken-4" role="navigation" ng-controller="StatusController">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">video_library</i> Youtube DL</a>
+      <ul class="right hide-on-med-and-down">
+        <li ng-if="!status.idle"><span style="color:#fff;">{{status.queue}} videos in queue</span></li>
+        <li ng-if="!status.idle"><i class="material-icons">signal_cellular_4_bar</i></li>
+        <li ng-if="status.idle"><i class="material-icons">signal_cellular_null</i>idle</li>
+        <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container row" ng-controller="BodyController">
+    <div>
+      <p>Download youtube videos as Mp3.</p>
+    </div>
+
+    <div class="section" ng-show="!metadata">
+      <blockquote ng-show="error"><h5>Error</h5>{{error.data}}
+      </blockquote>
+
+      <form>
+        <div class="input-field">
+          <input id="yt_id" type="text" class="validate" ng-model="vid">
+          <label for="yt_id">Video ID</label>
+        </div>
+        <button class="btn waves-effect waves-light" ng-click="getInfo()" ng-class="{disabled: loading}">Get info
+          <i class="material-icons right">search</i>
+        </button>
+      </form>
+    </div>
+
+    <div class="section" ng-if="metadata">
+      <ul class="collection with-header">
+        <li class="collection-header" style="min-height: 115px;" >
+          <div class="right">
+            <img src="{{metadata.Thumbnail_url}}" />
+          </div>
+          <h5>Video information</h5>
+        </li>
+        <li class="collection-item">
+          Title
+          <label>{{metadata.Title}}</label>
+        </li>
+        <li class="collection-item">
+          Author
+          <label>{{metadata.Author}}</label>
+        </li>
+        <li class="collection-item">
+          Average Rating
+          <label>{{metadata.Avg_rating | number:1}}</label>
+        </li>
+        <li class="collection-item">
+          Views
+          <label>{{metadata.View_count}}</label>
+        </li>
+        <li class="collection-item">path
+          Duration
+          <label>{{metadata.Length_seconds | secondsToDateTime}}</label>
+        </li>
+      </ul>
+    </div>
+
+    <div class="section" ng-if="metadata">
+      <form>
+        <div class="input-field">
+          <input id="out_p" type="text" class="validate" ng-model="path">
+          <label for="out_p">Output path</label>
+        </div>
+        <button class="btn waves-effect waves-light" ng-class="{disabled: loading}" ng-click="queue()">Download to MP3
+          <i class="material-icons right">file_download</i>
+        </button>
+        <button class="btn waves-effect grey" ng-class="{disabled: loading}" ng-click="clear()">Clear
+          <i class="material-icons right">clear</i>
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

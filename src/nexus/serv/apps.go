@@ -21,6 +21,7 @@ type app interface {
 
 var apps = []app{
 	&nexus_apps.CodenameApp{},
+	&nexus_apps.YtdlApp{},
 }
 
 // appsInternalHandler is a special-case handler to serve the list of apps a user can access.
