@@ -1,0 +1,43 @@
+<html>
+<head>
+    <title>Codename generator</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+</head>
+<body>
+  <nav class="red darken-4" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">font_download</i> Codename generator</a>
+    </div>
+  </nav>
+
+  <div class="container row">
+    <div class="">
+      <p>This generates random words based on the concatenation of vowels and constanants.</p>
+    </div>
+    <div class="section">
+      {!{range .}!}
+        <div class="section">
+          <h5>{!{.Title}!}</h5>
+          <table class="responsive-table">
+            <tr>
+              {!{range .Suggestions}!}<td>{!{.}!}</td>{!{end}!}
+            </tr>
+          </table>
+        </div>
+      {!{end}!}
+
+      <a href="/app/codename" class="btn"><i class="material-icons left">refresh</i> New words</a>
+      <a href="/" class="btn"><i class="material-icons left">home</i> Return to Nexus</a>
+    </div>
+  </div>
+</body>
+</html>

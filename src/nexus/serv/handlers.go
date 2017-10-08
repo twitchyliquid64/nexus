@@ -8,6 +8,7 @@ import (
 	"nexus/integration"
 	"nexus/serv/handlers"
 	"reflect"
+	"strings"
 )
 
 var httpHandlers = []handler{
@@ -22,6 +23,7 @@ var httpHandlers = []handler{
 	&handlers.SettingsHandler{},
 	&handlers.DashboardHandler{},
 	&handlers.FederationHandler{},
+	&appsInternalHandler{},
 }
 
 type handler interface {
@@ -38,11 +40,20 @@ func makeMux(ctx context.Context, db *sql.DB) *http.ServeMux {
 		if err := handler.BindMux(ctx, mux, db); err != nil {
 			log.Printf("[E] Cannot bind handler: %s", err.Error())
 		} else {
-			log.Printf("[mux] Registered %s", reflect.TypeOf(handler).String()[len("*handlers."):])
+			name := reflect.TypeOf(handler).String()
+			name = name[strings.Index(name, ".")+1:]
+			log.Printf("[mux] Registered %s", name)
+		}
+	}
+
+	for _, appHandler := range apps {
+		if err := appHandler.BindMux(ctx, mux, db); err != nil {
+			log.Printf("[E] Cannot bind application %q: %s", appHandler.Name(), err.Error())
+		} else {
+			log.Printf("[mux] Initialized app %s", appHandler.Name())
 		}
 	}
 
 	mux.Handle("/integration/", integration.WebTrigger)
-
 	return mux
 }

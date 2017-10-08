@@ -65,6 +65,7 @@
         {!{if .AdminPerms.Accounts}!}<li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>{!{end}!}
         <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
         {!{if .AdminPerms.Integrations}!}<li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>{!{end}!}
+        <li ng-class="{active: page == 'apps'}"><a href="#" ng-click="changePage('apps')"><i class="material-icons">apps</i></a></li>
         <li><a href="/settings/show"><i class="material-icons">settings</i></a></li>
         <li><a href="/logout"><i class="material-icons">exit_to_app</i></a></li>
 
@@ -79,8 +80,21 @@
     <li><a href="#" ng-click="changePage('messenger')">Messenger</a></li>
     {!{if .AdminPerms.Accounts}!}<li><a href="#" ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
     {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
+    <li><a href="#" ng-click="changePage('apps')">Apps</a></li>
   </ul>
 
+  <div ng-show="page == 'apps'" class="container" ng-controller="AppController">
+    <h5>Apps</h5>
+    <loader loading="loading" error="error"></loader>
+    <div class="row">
+      <a class="col s12 m3 app-icon-container" ng-repeat="app in apps" href="{{app.URL}}">
+        <div class="app-icon center-align">
+          <i class="material-icons medium">{{app.Icon}}</i><br>
+          {{app.Name}}
+        </div>
+      </a>
+    </div>
+  </div>
 
   <div ng-show="page == 'home'" class="container" ng-include="'/dashboard/main?updated=' + dashUpdated">
     <!-- rgba(0, 0, 0, 0.05); -->

@@ -52,7 +52,31 @@ app.directive('loader', function($rootScope){
 
 
 
+app.controller('AppController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
+  $scope.loading = false;
+  $scope.apps = [];
+  $scope.update = function(){
+    $scope.loading = true;
+    $http({
+      method: 'GET',
+      url: '/apps/list'
+    }).then(function successCallback(response) {
+      $scope.loading = false;
+      $scope.apps = response.data;
+    }, function errorCallback(response) {
+      $scope.loading = false;
+      $scope.error = response;
+    });
+  }
 
+  $rootScope.$on('page-change', function(event, args) {
+    if (args.page == 'apps'){
+      $scope.update();
+    } else {
+      $scope.apps = [];
+    }
+  });
+}]);
 
 
 
