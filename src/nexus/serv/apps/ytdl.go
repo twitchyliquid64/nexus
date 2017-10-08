@@ -8,11 +8,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"nexus/data/session"
 	"nexus/data/user"
+	"nexus/fs"
 	"nexus/serv/util"
 	"os"
 	"os/exec"
@@ -28,6 +30,7 @@ import (
 type pendingDownload struct {
 	VID          string `json:"vid"`
 	DownloadPath string `json:"download_path"`
+	UID          int
 }
 
 var (
@@ -100,8 +103,19 @@ func (a *YtdlApp) downloaderRoutine() {
 			downloadErr := downloadToMp3(download.VID, tempDir)
 			if downloadErr != nil {
 				removeContents(tempDir)
+				continue
 			}
-
+			d, err := ioutil.ReadFile(path.Join(tempDir, "output.mp3"))
+			if err != nil {
+				log.Printf("ReadFile() err: %v", err)
+				removeContents(tempDir)
+				continue
+			}
+			err = fs.Save(context.Background(), download.DownloadPath, download.UID, d)
+			if err != nil {
+				log.Printf("fs.Save() err: %v", err)
+			}
+			removeContents(tempDir)
 		} else {
 			pendingDownloadLock.Unlock()
 		}
@@ -110,8 +124,7 @@ func (a *YtdlApp) downloaderRoutine() {
 
 // actually downloads a VID to a dir. Transocodes to MP3 if necessary.
 func downloadToMp3(vid, tempDir string) error {
-	cmd := exec.Command("youtube-dl")
-	cmd.Args = []string{"--extract-audio", "--audio-format", "mp3", "https://www.youtube.com/watch?v=" + vid, "-o", path.Join(tempDir, "output.mp3")}
+	cmd := exec.Command("youtube-dl", "--extract-audio", "--audio-format", "mp3", "-o", path.Join(tempDir, "output.mp3"), "https://www.youtube.com/watch?v="+vid)
 	cmd.Dir = tempDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -130,20 +143,8 @@ func downloadToMp3(vid, tempDir string) error {
 		log.Printf("YtdlApp.downloaderRoutine(): Unexpected files after download: %+v", files)
 		return err
 	}
-	if strings.HasSuffix(files[0].Name(), ".mp3") {
-		return nil
-	}
-
-	log.Printf("Attempting transcode on %s", files[0].Name())
-	cmd = exec.Command("ffmpeg")
-	cmd.Args = []string{"-i", files[0].Name(), "-vn", "-c:a", "libmp3lame", "outputf.mp3"}
-	cmd.Dir = tempDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		log.Printf("ffmpeg err: %v", err)
-		return err
+	if !strings.HasSuffix(files[0].Name(), ".mp3") {
+		return errors.New("expected an mp3 file")
 	}
 	return nil
 }
@@ -183,6 +184,11 @@ func (a *YtdlApp) doEnqueueVideo(response http.ResponseWriter, request *http.Req
 	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
 		return
 	}
+	_, u, err := util.AuthInfo(request, a.DB)
+	if util.InternalHandlerError("util.AuthInfo)", response, request, err) {
+		return
+	}
+	input.UID = u.UID
 
 	pendingDownloadLock.Lock()
 	pendingDownloads = append(pendingDownloads, input)

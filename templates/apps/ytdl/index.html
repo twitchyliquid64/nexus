@@ -44,7 +44,7 @@
       }]);
 
       app.controller('StatusController', ["$scope", "$rootScope", "$location", "$http", "$interval", function ($scope, $rootScope, $location, $http, $interval) {
-        $scope.status = {};
+        $scope.status = {idle:true, queue:0};
         $scope.update = function(){
           $scope.loading = true;
           $http({
@@ -89,7 +89,7 @@
           $http({
             method: 'POST',
             url: '/app/ytdl/queue',
-            data: {vid: $scope.metadata.Id, download_path: $scope.path},
+            data: {vid: $scope.metadata.Id, download_path: document.getElementById("out_p").value},
           }).then(function successCallback(response) {
             $scope.loading = false;
             if (response.data.success){
@@ -121,7 +121,6 @@
     <div>
       <p>Download youtube videos as Mp3.</p>
     </div>
-
     <div class="section" ng-show="!metadata">
       <blockquote ng-show="error"><h5>Error</h5>{{error.data}}
       </blockquote>
