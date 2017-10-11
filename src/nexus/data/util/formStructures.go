@@ -145,6 +145,7 @@ type Field struct {
 	ID                string
 	ValidationPattern string
 	SelectOptions     map[string]string
+	Val               string
 }
 
 // Type returns what type of field the struct represents.
@@ -165,6 +166,11 @@ func (f *Field) UniqueID() string {
 // ValidationRegex returns a regex that must match for the form to be valid.
 func (f *Field) ValidationRegex() string {
 	return f.ValidationPattern
+}
+
+// Value returns a value if one is set
+func (f *Field) Value() string {
+	return f.Val
 }
 
 // Options returns the set of options for a select field.

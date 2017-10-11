@@ -35,6 +35,7 @@ type field interface {
 	Label() string
 	UniqueID() string
 	ValidationRegex() string
+	Value() string
 }
 
 type table interface {

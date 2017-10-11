@@ -65,6 +65,7 @@
                 <div class="input-field col s12">
                   <input id="{!{ .UniqueID }!}" type="text" name="{!{ .UniqueID }!}"
                     {!{ if .ValidationRegex }!}pattern="{!{ .ValidationRegex }!}"{!{ end }!}
+                    {!{ if .Value }!}value="{!{ .Value }!}"{!{ end }!}
                     required="" aria-required="true" class="validate">
                   <label for="{!{ .UniqueID }!}">{!{ .Name }!}</label>
                 </div>

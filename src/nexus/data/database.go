@@ -7,6 +7,7 @@ import (
 	"nexus/data/datastore"
 	"nexus/data/fs"
 	"nexus/data/integration"
+	"nexus/data/mc"
 	"nexus/data/messaging"
 	"nexus/data/session"
 	"nexus/data/user"
@@ -33,6 +34,7 @@ var tables = []DatabaseTable{
 	&integration.StdDataTable{},
 	&fs.MiniFsTable{},
 	&fs.SourceTable{},
+	&mc.APIKeyTable{},
 }
 
 var sqlite3conn = []*sqlite3.SQLiteConn{}

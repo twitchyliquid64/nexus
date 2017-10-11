@@ -84,6 +84,11 @@
           });
         }
 
+        $scope.force = function(){
+          $scope.metadata = {Title: "Unknown", Id: $scope.vid};
+          $scope.path = '/music/output.mp3';
+        }
+
         $scope.queue = function(){
           $scope.loading = true;
           $http({
@@ -133,6 +138,9 @@
         <button class="btn waves-effect waves-light" ng-click="getInfo()" ng-class="{disabled: loading}">Get info
           <i class="material-icons right">search</i>
         </button>
+        <button class="btn waves-effect waves-light red" ng-click="force()" ng-class="{disabled: loading}" ng-show="error">Force
+          <i class="material-icons right">launch</i>
+        </button>
       </form>
     </div>
 
@@ -160,7 +168,7 @@
           Views
           <label>{{metadata.View_count}}</label>
         </li>
-        <li class="collection-item">path
+        <li class="collection-item">
           Duration
           <label>{{metadata.Length_seconds | secondsToDateTime}}</label>
         </li>

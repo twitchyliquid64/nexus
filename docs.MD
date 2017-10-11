@@ -20,3 +20,11 @@ export AWS_BACKUP_PATH=".." # Path in the bucket to push the backup to
 5. You can now make HTTPS requests to get the list of users. Use the client cert. Make requests to `/federation/v1/accounts/users`.
 
 You can test the endpoint using: `./maintenance-tool GETUSERLISTREMOTE`.
+
+### App-specific
+
+#### Enable ytdl
+
+1. Install `youtube-dl` and `ffmpeg`.
+2. For the users who should have access, add an attribute to their account named `ytdl` with value `allow`.
+3. Make sure they have a fs source  `/music`.
