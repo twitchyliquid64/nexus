@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"nexus/data/session"
 	nexus_apps "nexus/serv/apps"
+	"nexus/serv/apps/mc"
 	"nexus/serv/util"
 )
 
@@ -22,6 +23,7 @@ type app interface {
 var apps = []app{
 	&nexus_apps.CodenameApp{},
 	&nexus_apps.YtdlApp{},
+	&mc.ReconApp{},
 }
 
 // appsInternalHandler is a special-case handler to serve the list of apps a user can access.

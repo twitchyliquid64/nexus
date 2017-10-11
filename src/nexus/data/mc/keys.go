@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"net/url"
 	"nexus/data/session"
 	"nexus/data/util"
 	"os"
@@ -48,7 +47,7 @@ func (t *APIKeyTable) Forms() []*util.FormDescriptor {
 	if err != nil {
 		panic(err) // random source failure, we should crash out
 	}
-	randomAPIKey = url.QueryEscape(randomAPIKey)
+	randomAPIKey = randomAPIKey[:10]
 
 	return []*util.FormDescriptor{
 		&util.FormDescriptor{
@@ -198,6 +197,26 @@ func GetEntityKeysForUser(ctx context.Context, uid int, db *sql.DB) ([]APIKey, e
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, owner_uid, created_at, key, kind, name FROM mc_entity_keys WHERE owner_uid = ?;
 	`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []APIKey
+	for res.Next() {
+		var o APIKey
+		if err := res.Scan(&o.UID, &o.OwnerID, &o.CreatedAt, &o.Key, &o.Kind, &o.Name); err != nil {
+			return nil, err
+		}
+		output = append(output, o)
+	}
+	return output, nil
+}
+
+// GetAllEntityKeys returns all APIKeys.
+func GetAllEntityKeys(ctx context.Context, db *sql.DB) ([]APIKey, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT rowid, owner_uid, created_at, key, kind, name FROM mc_entity_keys;`)
 	if err != nil {
 		return nil, err
 	}

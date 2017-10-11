@@ -25,16 +25,22 @@ var tables = []DatabaseTable{
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},
 	&datastore.StoreGrant{},
+
 	&messaging.SourceTable{},
 	&messaging.ConversationTable{},
 	&messaging.MessageTable{},
+
 	&integration.Table{},
 	&integration.TriggerTable{},
 	&integration.LogTable{},
 	&integration.StdDataTable{},
+
 	&fs.MiniFsTable{},
 	&fs.SourceTable{},
+
 	&mc.APIKeyTable{},
+	&mc.StatusTable{},
+	&mc.LocationTable{},
 }
 
 var sqlite3conn = []*sqlite3.SQLiteConn{}

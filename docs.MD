@@ -26,5 +26,9 @@ You can test the endpoint using: `./maintenance-tool GETUSERLISTREMOTE`.
 #### Enable ytdl
 
 1. Install `youtube-dl` and `ffmpeg`.
-2. For the users who should have access, add an attribute to their account named `ytdl` with value `allow`.
+2. For the users who should have access, add an attribute to their account named `ytdl` with the value `allow`.
 3. Make sure they have a fs source  `/music`.
+
+#### Enable Recon
+
+For the users who should have access, add an attribute `recon` to their account with the value `allow`.
