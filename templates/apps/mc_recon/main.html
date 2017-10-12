@@ -29,9 +29,9 @@
       {!{range .}!}
         <li>
           <div class="collapsible-header"><i class="material-icons">
-            {!{- if .Kind | eq `phone`}!}smartphone{!{end -}!}
-            {!{- if .Kind | eq `static_autonomous`}!}business{!{end -}!}
-          </i>{!{.Name}!}</div>
+            {!{- if .Device.Kind | eq `phone`}!}smartphone{!{end -}!}
+            {!{- if .Device.Kind | eq `static_autonomous`}!}business{!{end -}!}
+          </i>{!{.Device.Name}!}</div>
           <div class="collapsible-body">
             <table class="container section">
               <thead>
@@ -43,15 +43,19 @@
               <tbody>
                 <tr>
                   <td>Created</td>
-                  <td>{!{.CreatedAt.Local.Format `Jan _2 03:04PM, 2006`}!}</td>
+                  <td>{!{.Device.CreatedAt.Local.Format `Jan _2 03:04PM, 2006`}!}</td>
                 </tr>
                 <tr>
                   <td>Type</td>
-                  <td>{!{.Kind}!}</td>
+                  <td>{!{.Device.Kind}!}</td>
                 </tr>
                 <tr>
                   <td>Key</td>
-                  <td>{!{.Key}!}</td>
+                  <td>{!{.Device.Key}!}</td>
+                </tr>
+                <tr>
+                  <td>Recent location updates (last 24 hours)</td>
+                  <td>{!{.LocationCount}!}</td>
                 </tr>
               </tbody>
             </table>

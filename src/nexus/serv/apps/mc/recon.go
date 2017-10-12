@@ -71,14 +71,32 @@ func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Re
 		return
 	}
 
+	type deviceInfo struct {
+		Device        *mc.APIKey
+		LocationCount int
+	}
+	var templateData []deviceInfo
+
 	devices, err := mc.GetAllEntityKeys(request.Context(), a.DB)
 	if err != nil {
 		log.Printf("mc.GetAllEntityKeys() Error: %v", err)
 		http.Error(response, "Internal server error", 500)
 		return
 	}
+	for _, device := range devices {
+		locCount, err := mc.LocationsCountForEntityRecent(request.Context(), device.UID, a.DB)
+		if err != nil {
+			log.Printf("mc.LocationsCountForEntityRecent() Error: %v", err)
+			http.Error(response, "Internal server error", 500)
+			return
+		}
+		templateData = append(templateData, deviceInfo{
+			Device:        &device,
+			LocationCount: locCount,
+		})
+	}
 
-	util.LogIfErr("ReconApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_render/main.html"), devices, response))
+	util.LogIfErr("ReconApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/main.html"), templateData, response))
 }
 
 // EntryURL implements app.

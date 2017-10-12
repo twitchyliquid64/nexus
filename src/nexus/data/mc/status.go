@@ -25,6 +25,9 @@ func (t *StatusTable) Setup(ctx context.Context, db *sql.DB) error {
 		bat INT NOT NULL,
     is_heartbeat BOOL NOT NULL
 	);
+
+	CREATE INDEX IF NOT EXISTS mc_entity_statuses_entity_time ON mc_entity_statuses(entity_uid, created_at);
+
 	`)
 	if err != nil {
 		return err

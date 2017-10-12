@@ -28,6 +28,8 @@ func (t *LocationTable) Setup(ctx context.Context, db *sql.DB) error {
     acc INT NOT NULL,
     course INT NOT NULL
 	);
+
+	CREATE INDEX IF NOT EXISTS mc_entity_locations_entity_time ON mc_entity_locations(entity_uid, created_at);
 	`)
 	if err != nil {
 		return err
@@ -52,6 +54,24 @@ type Location struct {
 	Lat, Lon, Kph float64
 	Accuracy      int
 	Course        int
+}
+
+// LocationsCountForEntityRecent returns the number of location updates for the given entity in the last 24 hours.
+func LocationsCountForEntityRecent(ctx context.Context, id int, db *sql.DB) (int, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT COUNT(*) FROM mc_entity_locations WHERE entity_uid = ? AND created_at > date('now', '-1 day');
+	`, id)
+	if err != nil {
+		return 0, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return 0, nil
+	}
+
+	var o int
+	return o, res.Scan(&o)
 }
 
 // CreateLocation creates a location entry.
