@@ -87,7 +87,7 @@ func RecentStatusInfoForEntity(ctx context.Context, id int, db *sql.DB) (int, ti
 	res, err := db.QueryContext(ctx, `
 		SELECT * FROM
 			(SELECT COUNT(*) FROM mc_entity_statuses WHERE entity_uid = ? AND created_at > date('now', '-1 day')),
-			(SELECT created_at, status FROM mc_entity_statuses WHERE entity_uid = ? ORDER BY created_at DESC LIMIT 1);
+			(SELECT created_at, status FROM mc_entity_statuses WHERE entity_uid = ? AND is_heartbeat = 0 ORDER BY created_at DESC LIMIT 1);
 	`, id, id)
 	if err != nil {
 		return 0, time.Time{}, "", err
