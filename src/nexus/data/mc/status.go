@@ -23,7 +23,10 @@ func (t *StatusTable) Setup(ctx context.Context, db *sql.DB) error {
 	  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status varchar(512) NOT NULL,
 		bat INT NOT NULL,
-    is_heartbeat BOOL NOT NULL
+    is_heartbeat BOOL NOT NULL,
+
+		is_structured BOOL NOT NULL DEFAULT false,
+		additional_data varchar(512) NOT NULL DEFAULT ''
 	);
 
 	CREATE INDEX IF NOT EXISTS mc_entity_statuses_entity_time ON mc_entity_statuses(entity_uid, created_at);
@@ -35,7 +38,29 @@ func (t *StatusTable) Setup(ctx context.Context, db *sql.DB) error {
 	if err = tx.Commit(); err != nil {
 		return err
 	}
-	return nil
+	return t.migrateTableColumns(ctx, db)
+}
+
+// called on initialization to detect if the table should be migrated to include new columns 'is_structured' and 'additional_data'
+func (t *StatusTable) migrateTableColumns(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, "SELECT is_structured FROM mc_entity_statuses LIMIT 1;")
+	if err == nil {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(`ALTER TABLE mc_entity_statuses ADD COLUMN is_structured BOOL NOT NULL DEFAULT false;`)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(`ALTER TABLE mc_entity_statuses ADD COLUMN additional_data varchar(512) NOT NULL DEFAULT '';`)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // Forms is called by the form renderer to get any settings forms relevant to this table.
@@ -48,9 +73,35 @@ type Status struct {
 	UID          int
 	EntityKeyUID int
 	CreatedAt    time.Time
+
+	IsStructured   bool
+	AdditionalData string
+
 	Status       string
 	BatteryLevel int
 	IsHeartbeat  bool
+}
+
+// RecentStatusInfoForEntity returns information about the latest status.
+func RecentStatusInfoForEntity(ctx context.Context, id int, db *sql.DB) (int, time.Time, string, error) {
+	res, err := db.QueryContext(ctx, `
+		SELECT * FROM
+			(SELECT COUNT(*) FROM mc_entity_statuses WHERE entity_uid = ? AND created_at > date('now', '-1 day')),
+			(SELECT created_at, status FROM mc_entity_statuses WHERE entity_uid = ? ORDER BY created_at DESC LIMIT 1);
+	`, id, id)
+	if err != nil {
+		return 0, time.Time{}, "", err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return 0, time.Time{}, "", nil
+	}
+
+	var o int
+	var t time.Time
+	var latest string
+	return o, t, latest, res.Scan(&o, &t, &latest)
 }
 
 // CreateStatus creates a status entry.
@@ -62,11 +113,11 @@ func CreateStatus(ctx context.Context, s *Status, db *sql.DB) (int, error) {
 
 	e, err := tx.Exec(`
       INSERT INTO
-        mc_entity_statuses (entity_uid, status, bat, is_heartbeat)
+        mc_entity_statuses (entity_uid, status, bat, is_heartbeat, is_structured, additional_data)
         VALUES (
-          ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?
         );
-    `, s.EntityKeyUID, s.Status, s.BatteryLevel, s.IsHeartbeat)
+    `, s.EntityKeyUID, s.Status, s.BatteryLevel, s.IsHeartbeat, s.IsStructured, s.AdditionalData)
 	if err != nil {
 		tx.Rollback()
 		return 0, err

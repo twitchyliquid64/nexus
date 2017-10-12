@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 // ReconApp represents the recon application, as well as API endpoints for collecting data from entities in the field.
@@ -74,6 +75,12 @@ func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Re
 	type deviceInfo struct {
 		Device        *mc.APIKey
 		LocationCount int
+		StatusCount   int
+
+		LastLoc    time.Time
+		Now        time.Time
+		LastStatus time.Time
+		Status     string
 	}
 	var templateData []deviceInfo
 
@@ -84,15 +91,26 @@ func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Re
 		return
 	}
 	for _, device := range devices {
-		locCount, err := mc.LocationsCountForEntityRecent(request.Context(), device.UID, a.DB)
+		locCount, lastLoc, err := mc.LocationsCountForEntityRecent(request.Context(), device.UID, a.DB)
 		if err != nil {
 			log.Printf("mc.LocationsCountForEntityRecent() Error: %v", err)
+			http.Error(response, "Internal server error", 500)
+			return
+		}
+		statusCount, lastStatus, status, err := mc.RecentStatusInfoForEntity(request.Context(), device.UID, a.DB)
+		if err != nil {
+			log.Printf("mc.StatusesCountForEntityRecent() Error: %v", err)
 			http.Error(response, "Internal server error", 500)
 			return
 		}
 		templateData = append(templateData, deviceInfo{
 			Device:        &device,
 			LocationCount: locCount,
+			LastLoc:       lastLoc,
+			Now:           time.Now(),
+			StatusCount:   statusCount,
+			LastStatus:    lastStatus,
+			Status:        status,
 		})
 	}
 

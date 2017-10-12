@@ -17,10 +17,40 @@
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">location_searching</i> MC :: Recon</a>
       <ul class="right hide-on-med-and-down">
+        <li>
+          <div class="switch">
+            <label>
+              <input type="checkbox" id="refresh-checkbox">
+              <span class="lever"></span>
+              Auto-refresh
+            </label>
+          </div>
+        </li>
         <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
       </ul>
     </div>
   </nav>
+
+  <script>
+  var timerObj = null;
+  $("#refresh-checkbox").change(function() {
+      if (timerObj) {
+        clearTimeout(timerObj);
+        timerObj = null;
+      }
+      console.log("checked:", this.checked);
+      if(this.checked) {
+          timerObj = setTimeout(function(){
+            location.href = '/app/recon?reload=true';
+          }, 15000);
+      }
+  });
+  $(function(){
+    if (location.search == '?reload=true'){
+      $("#refresh-checkbox").click();
+    }
+  });
+  </script>
 
   <div class="container row">
     <div class="">
@@ -28,10 +58,22 @@
       <ul class="collapsible" data-collapsible="accordion">
       {!{range .}!}
         <li>
-          <div class="collapsible-header"><i class="material-icons">
-            {!{- if .Device.Kind | eq `phone`}!}smartphone{!{end -}!}
-            {!{- if .Device.Kind | eq `static_autonomous`}!}business{!{end -}!}
-          </i>{!{.Device.Name}!}</div>
+
+
+          <div class="collapsible-header">
+            <i class="material-icons">
+              {!{- if .Device.Kind | eq `phone`}!}smartphone{!{end -}!}
+              {!{- if .Device.Kind | eq `static_autonomous`}!}business{!{end -}!}
+            </i>{!{.Device.Name}!}
+            {!{if eq .Status `OK` `ok` `Ok` `nominal` `Ready` `Go` -}!}
+            <label class="right green-text">{!{.Status}!}</label>
+            {!{- else if eq .Status `ERR` `Fault` `Error` `Alarm` `No-go` `Abort` -}!}
+            <label class="right red-text">{!{.Status}!}</label>
+            {!{- else -}!}
+            <label class="right">{!{.Status}!}</label>
+            {!{- end}!}
+          </div>
+
           <div class="collapsible-body">
             <table class="container section">
               <thead>
@@ -57,6 +99,40 @@
                   <td>Recent location updates (last 24 hours)</td>
                   <td>{!{.LocationCount}!}</td>
                 </tr>
+                {!{if ne .LocationCount 0 -}!}
+                <tr>{!{$duration := .Now.Sub .LastLoc}!}
+                  <td>Last location</td>
+                  <td>
+                    {!{- if ge $duration.Hours 1.0 -}!}
+                    {!{- printf "%.1f" $duration.Hours -}!}h
+                    {!{- else -}!}
+                      {!{- if le $duration.Minutes 60.0 -}!}
+                      {!{- printf "%.0f" $duration.Minutes -}!}h
+                      {!{- end -}!}
+                    {!{- end}!} ago {!{- `` -}!}
+                  </td>
+                </tr>
+                <tr>
+                  <td>Recent status updates (last 24 hours)</td>
+                  <td>{!{.StatusCount}!}</td>
+                </tr>
+                {!{- end}!}
+                {!{if ne .StatusCount 0 -}!}
+                <tr>{!{$duration := .Now.Sub .LastStatus}!}
+                  <td>Last status</td>
+                  <td>
+                    {!{- if ge $duration.Hours 1.0 -}!}
+                    {!{- printf "%.1f" $duration.Hours -}!}h
+                    {!{- else -}!}
+                      {!{- if ge $duration.Seconds 60.0 -}!}
+                      {!{- printf "%.0f" $duration.Minutes -}!}m
+                      {!{- else -}!}
+                      {!{- printf "%.0f" $duration.Seconds -}!}s
+                      {!{- end -}!}
+                    {!{- end}!} ago {!{- `` -}!}
+                  </td>
+                </tr>
+                {!{- end}!}
               </tbody>
             </table>
           </div>

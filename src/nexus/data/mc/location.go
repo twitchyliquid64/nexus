@@ -57,21 +57,24 @@ type Location struct {
 }
 
 // LocationsCountForEntityRecent returns the number of location updates for the given entity in the last 24 hours.
-func LocationsCountForEntityRecent(ctx context.Context, id int, db *sql.DB) (int, error) {
+func LocationsCountForEntityRecent(ctx context.Context, id int, db *sql.DB) (int, time.Time, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT COUNT(*) FROM mc_entity_locations WHERE entity_uid = ? AND created_at > date('now', '-1 day');
-	`, id)
+		SELECT * FROM
+			(SELECT COUNT(*) FROM mc_entity_locations WHERE entity_uid = ? AND created_at > date('now', '-1 day')),
+			(SELECT created_at FROM mc_entity_locations WHERE entity_uid = ? ORDER BY created_at DESC LIMIT 1);
+	`, id, id)
 	if err != nil {
-		return 0, err
+		return 0, time.Time{}, err
 	}
 	defer res.Close()
 
 	if !res.Next() {
-		return 0, nil
+		return 0, time.Time{}, nil
 	}
 
 	var o int
-	return o, res.Scan(&o)
+	var t time.Time
+	return o, t, res.Scan(&o, &t)
 }
 
 // CreateLocation creates a location entry.
