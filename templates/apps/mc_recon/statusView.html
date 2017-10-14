@@ -32,6 +32,7 @@
         $scope.loading = false;
         $scope.uid = parseInt(window.location.href.substr(window.location.href.lastIndexOf('/') + 1));
         $scope.offset = 0;
+        $scope.lastUpdated = moment();
 
         $scope.page = function(amt){
           $scope.offset += amt*100;
@@ -52,6 +53,7 @@
           }).then(function successCallback(response) {
             $scope.loading = false;
             $scope.records = response.data;
+            $scope.lastUpdated = moment();
           }, function errorCallback(response) {
             $scope.loading = false;
           });
@@ -61,20 +63,24 @@
       }]);
     </script>
 </head>
-<body ng-app="recon" ng-cloak>
+<body ng-app="recon" ng-cloak  ng-controller="BodyController">
   <nav class="indigo darken-3" role="navigation">
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">location_searching</i> MC :: Recon</a>
       <ul class="right hide-on-med-and-down">
+        <li>Last updated: <span am-time-ago="lastUpdated"></span></li>
         <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
       </ul>
     </div>
   </nav>
 
-  <div class="container row" ng-controller="BodyController">
+  <div class="container row">
     <div class="">
       <h5>Status log for Device (UID={{uid}})</h5>
 
+      <div class="progress" ng-show="loading">
+          <div class="indeterminate"></div>
+      </div>
 
       <a class="waves-effect waves-light btn" href="/app/recon"><i class="material-icons left">arrow_back</i>Back</a>
       <a class="waves-effect waves-light btn" ng-class="{disabled: offset<=0}" ng-disabled="offset<=0" ng-click="page(-1)"><i class="material-icons left">keyboard_arrow_left</i>Previous page</a>
@@ -108,6 +114,12 @@
         </tbody>
       </table>
 
+    </div>
+
+    <div class="fixed-action-btn">
+      <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Refresh" ng-click="getInfo()">
+        <i class="large material-icons">refresh</i>
+      </a>
     </div>
   </div>
 </body>
