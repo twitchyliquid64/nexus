@@ -1,0 +1,114 @@
+<html>
+<head>
+    <title>MC :: Recon</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+    </style>
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+    <script type="text/javascript">
+      var app = angular.module('recon', ['ui.materialize', 'angularMoment']);
+
+      app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", "$window", function ($scope, $rootScope, $location, $http, $window) {
+        $scope.records = [];
+        $scope.loading = false;
+        $scope.uid = parseInt(window.location.href.substr(window.location.href.lastIndexOf('/') + 1));
+        $scope.offset = 0;
+
+        $scope.page = function(amt){
+          $scope.offset += amt*100;
+          if ($scope.offset < 0)$scope.offset = 0;
+          $scope.getInfo();
+        }
+
+        $scope.getInfo = function(){
+          $scope.loading = true;
+          $http({
+            method: 'POST',
+            url: '/app/recon/api/status',
+            data: {
+              UID: $scope.uid,
+              Offset: $scope.offset,
+              Limit: 100,
+            }
+          }).then(function successCallback(response) {
+            $scope.loading = false;
+            $scope.records = response.data;
+          }, function errorCallback(response) {
+            $scope.loading = false;
+          });
+        }
+
+        $scope.getInfo();
+      }]);
+    </script>
+</head>
+<body ng-app="recon" ng-cloak>
+  <nav class="indigo darken-3" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">location_searching</i> MC :: Recon</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container row" ng-controller="BodyController">
+    <div class="">
+      <h5>Status log for Device (UID={{uid}})</h5>
+
+
+      <a class="waves-effect waves-light btn" href="/app/recon"><i class="material-icons left">arrow_back</i>Back</a>
+      <a class="waves-effect waves-light btn" ng-class="{disabled: offset<=0}" ng-disabled="offset<=0" ng-click="page(-1)"><i class="material-icons left">keyboard_arrow_left</i>Previous page</a>
+      <a class="waves-effect waves-light btn" ng-class="{disabled: (records.length<100 || !records)}" ng-disable="!records" ng-click="page(1)"><i class="material-icons right">keyboard_arrow_right</i>Next page</a>
+
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Msg</th>
+            <th>Time</th>
+            <th>+</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="status in records">
+            <td ng-bind="status.UID"></td>
+            <td class="valign-wrapper">
+              {{status.Status}}
+              <i ng-if="status.IsHeartbeat" class="material-icons tiny">favorite</i>
+            </td>
+            <td am-time-ago="status.CreatedAt"></td>
+            <td class="valign-wrapper">
+              <div class="chip" ng-if="status.BatteryLevel>1" style="margin-bottom:0px;">
+                <i class="close material-icons">battery_std</i>
+                {{status.BatteryLevel}}%
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</body>
+</html>

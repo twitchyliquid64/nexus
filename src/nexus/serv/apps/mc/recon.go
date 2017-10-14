@@ -3,6 +3,7 @@ package mc
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"nexus/data/mc"
@@ -39,6 +40,8 @@ func (a *ReconApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) 
 	mux.HandleFunc("/app/recon/status", a.handleStatus)
 	mux.HandleFunc("/app/recon/heartbeat", a.handleHeartbeat)
 	mux.HandleFunc("/app/recon/loc", a.handleLocationUpdate)
+	mux.HandleFunc("/app/recon/api/status", a.serveStatusList)
+	mux.HandleFunc("/app/recon/status/", a.renderStatusView)
 	return nil
 }
 
@@ -65,6 +68,38 @@ func (a *ReconApp) handleCheckAuthorized(response http.ResponseWriter, request *
 		return false
 	}
 	return true
+}
+
+func (a *ReconApp) serveStatusList(response http.ResponseWriter, request *http.Request) {
+	if !a.handleCheckAuthorized(response, request) {
+		return
+	}
+
+	type statusListRequest struct {
+		UID, Limit, Offset int
+	}
+	var input statusListRequest
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&input)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	statuses, err := mc.ListStatus(request.Context(), input.UID, input.Limit, input.Offset, a.DB)
+	b, err := json.Marshal(statuses)
+	if err != nil {
+		http.Error(response, err.Error(), 500)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+func (a *ReconApp) renderStatusView(response http.ResponseWriter, request *http.Request) {
+	if !a.handleCheckAuthorized(response, request) {
+		return
+	}
+	util.LogIfErr("ReconApp.renderStatusView(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/statusView.html"), nil, response))
 }
 
 func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Request) {
@@ -114,7 +149,7 @@ func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Re
 		})
 	}
 
-	util.LogIfErr("ReconApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/main.html"), templateData, response))
+	util.LogIfErr("ReconApp.renderMainPage(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/main.html"), templateData, response))
 }
 
 // EntryURL implements app.

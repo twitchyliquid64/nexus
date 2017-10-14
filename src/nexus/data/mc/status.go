@@ -104,6 +104,26 @@ func RecentStatusInfoForEntity(ctx context.Context, id int, db *sql.DB) (int, ti
 	return o, t, latest, res.Scan(&o, &t, &latest)
 }
 
+// ListStatus returns the statuses for an entity sorted most recent first.
+func ListStatus(ctx context.Context, uid, limit, offset int, db *sql.DB) ([]Status, error) {
+	res, err := db.QueryContext(ctx, `SELECT rowid, entity_uid, created_at, status, bat, is_heartbeat, is_structured, additional_data
+			FROM mc_entity_statuses WHERE entity_uid = ? ORDER BY created_at DESC LIMIT ? OFFSET ?;`, uid, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []Status
+	for res.Next() {
+		var out Status
+		if err := res.Scan(&out.UID, &out.EntityKeyUID, &out.CreatedAt, &out.Status, &out.BatteryLevel, &out.IsHeartbeat, &out.IsStructured, &out.AdditionalData); err != nil {
+			return nil, err
+		}
+		output = append(output, out)
+	}
+	return output, nil
+}
+
 // CreateStatus creates a status entry.
 func CreateStatus(ctx context.Context, s *Status, db *sql.DB) (int, error) {
 	tx, err := db.Begin()

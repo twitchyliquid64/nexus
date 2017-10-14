@@ -107,7 +107,7 @@
                     {!{- printf "%.1f" $duration.Hours -}!}h
                     {!{- else -}!}
                       {!{- if le $duration.Minutes 60.0 -}!}
-                      {!{- printf "%.0f" $duration.Minutes -}!}h
+                      {!{- printf "%.0f" $duration.Minutes -}!}m
                       {!{- end -}!}
                     {!{- end}!} ago {!{- `` -}!}
                   </td>
@@ -135,6 +135,15 @@
                 {!{- end}!}
               </tbody>
             </table>
+
+            <div class="row" style="margin: 25px;">
+              <button class="btn waves-effect waves-light teal darken-2 col s6">Location
+                <i class="material-icons right">location_on</i>
+              </button>
+              <a class="btn waves-effect waves-light deep-purple lighten-2 col s6" href="/app/recon/status/{!{.Device.UID}!}">Status
+                <i class="material-icons right">update</i>
+              </a>
+            </div>
           </div>
         </li>
       {!{end}!}
