@@ -24,3 +24,4 @@
 /migrate-tool
 
 *.pyc
+/devtest.sh

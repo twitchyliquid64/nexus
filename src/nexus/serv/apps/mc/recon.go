@@ -41,7 +41,9 @@ func (a *ReconApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) 
 	mux.HandleFunc("/app/recon/heartbeat", a.handleHeartbeat)
 	mux.HandleFunc("/app/recon/loc", a.handleLocationUpdate)
 	mux.HandleFunc("/app/recon/api/status", a.serveStatusList)
+	mux.HandleFunc("/app/recon/api/location", a.serveLocationList)
 	mux.HandleFunc("/app/recon/status/", a.renderStatusView)
+	mux.HandleFunc("/app/recon/location/", a.renderLocationView)
 	return nil
 }
 
@@ -95,11 +97,53 @@ func (a *ReconApp) serveStatusList(response http.ResponseWriter, request *http.R
 	response.Write(b)
 }
 
+func (a *ReconApp) serveLocationList(response http.ResponseWriter, request *http.Request) {
+	if !a.handleCheckAuthorized(response, request) {
+		return
+	}
+
+	type locationListRequest struct {
+		UID        int
+		Start, End int64
+	}
+	var input locationListRequest
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&input)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	locations, err := mc.ListLocation(request.Context(), input.UID, time.Unix(input.Start, 0), time.Unix(input.End, 0), a.DB)
+	b, err := json.Marshal(locations)
+	if err != nil {
+		http.Error(response, err.Error(), 500)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
 func (a *ReconApp) renderStatusView(response http.ResponseWriter, request *http.Request) {
 	if !a.handleCheckAuthorized(response, request) {
 		return
 	}
 	util.LogIfErr("ReconApp.renderStatusView(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/statusView.html"), nil, response))
+}
+
+func (a *ReconApp) renderLocationView(response http.ResponseWriter, request *http.Request) {
+	if !a.handleCheckAuthorized(response, request) {
+		return
+	}
+
+	templateData := struct {
+		MapsAPIKey, PickerFrom, PickerTo string
+	}{
+		MapsAPIKey: os.Getenv("GOOGLE_MAPS_API_KEY"),
+		PickerFrom: time.Now().Format("02 January, 2006"),
+		PickerTo:   time.Now().Format("02 January, 2006"),
+	}
+
+	util.LogIfErr("ReconApp.renderLocationView(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/locationView.html"), templateData, response))
 }
 
 func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Request) {

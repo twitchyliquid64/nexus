@@ -1,0 +1,108 @@
+<html>
+<head>
+    <title>MC :: Recon</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+
+    @media screen and (min-width: 200px) {
+        #map_canvas {
+            margin: 0 auto;
+            height: 650px;
+            min-width: 150px;
+            max-width: 2250px;
+            float: left;
+            width: 100%;
+        }
+    }
+    </style>
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+    <script type="text/javascript" src="https://maps.google.com/maps/api/js?key={!{.MapsAPIKey}!}"></script>
+    <script type="text/javascript" src="/static/js/apps/recon/locationViewController.js"></script>
+
+</head>
+<body ng-app="recon" ng-cloak  ng-controller="BodyController">
+  <nav class="indigo darken-3" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">location_searching</i> MC :: Recon</a>
+      <ul class="right hide-on-med-and-down">
+        <li>Last updated: <span am-time-ago="lastUpdated"></span></li>
+        <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container row">
+    <div class="">
+      <h5>Location for Device (UID={{uid}})</h5>
+      <div class="section" style="min-height: 35px;">
+        <div class="progress" ng-show="loading">
+            <div class="indeterminate"></div>
+        </div>
+        <a class="waves-effect waves-light btn" href="/app/recon"><i class="material-icons left">arrow_back</i>Back</a>
+        <span ng-if="to">From {{from | amFromUnix | amDateFormat:'MMMM Do HH:mm'}} to {{to | amFromUnix | amDateFormat:'MMMM Do HH:mm'}}</span>
+      </div>
+
+      <div id="map_canvas"></div>
+
+      <div class="section">
+        <div class="row">
+          <div class="input-field col s3">
+            <label for="startDate">Start Date</label>
+            <input id="startDate" type="text" class="datepicker" value="{!{.PickerFrom}!}">
+          </div>
+          <div class="input-field col s3">
+            <label for="endDate">End Date</label>
+            <input id="endDate" type="text" class="datepicker" value="{!{.PickerTo}!}">
+          </div>
+          <div class="input-field col s3">
+            <label style="position: float; top:-0px;">Start time</label>
+            <input type="range" id="timeSliderLeft" min="0" max="100" value="0" />
+          </div>
+          <div class="input-field col s3">
+            <label style="position: float; top:-0px;">End time</label>
+            <input type="range" id="timeSliderRight" min="0" max="100" value="100" />
+          </div>
+        </div>
+      </div>
+      <div class="row" ng-if="records[records.length-1]">
+        <div class="col s3">
+          {{to | amFromUnix | amDateFormat:'HH:mm, Do MMMM'}}
+        </div>
+        <div class="col s3">
+          <span>{{records[records.length-1].Kph}} km/hr</span>
+        </div>
+        <div class="col s3">
+          <span>Accurate to {{records[records.length-1].Accuracy}}m</span>
+        </div>
+        <div class="col s3">
+          <span>{{records[records.length-1].Course}}°</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixed-action-btn">
+      <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="Refresh" ng-click="getInfo()">
+        <i class="large material-icons">refresh</i>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

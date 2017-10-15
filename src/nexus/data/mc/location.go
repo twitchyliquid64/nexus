@@ -77,6 +77,26 @@ func LocationsCountForEntityRecent(ctx context.Context, id int, db *sql.DB) (int
 	return o, t, res.Scan(&o, &t)
 }
 
+// ListLocation returns the locations for an entity within the two times.
+func ListLocation(ctx context.Context, uid int, from, to time.Time, db *sql.DB) ([]Location, error) {
+	res, err := db.QueryContext(ctx, `SELECT rowid, entity_uid, created_at, lat, lon, kph, acc, course
+			FROM mc_entity_locations WHERE entity_uid = ? AND created_at > ? AND created_at < ? ORDER BY created_at DESC;`, uid, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var output []Location
+	for res.Next() {
+		var out Location
+		if err := res.Scan(&out.UID, &out.EntityKeyUID, &out.CreatedAt, &out.Lat, &out.Lon, &out.Kph, &out.Accuracy, &out.Course); err != nil {
+			return nil, err
+		}
+		output = append(output, out)
+	}
+	return output, nil
+}
+
 // CreateLocation creates a location entry.
 func CreateLocation(ctx context.Context, s *Location, db *sql.DB) (int, error) {
 	tx, err := db.Begin()
