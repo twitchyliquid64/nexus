@@ -84,7 +84,7 @@
       </div>
       <div class="row" ng-if="records[records.length-1]">
         <div class="col s3">
-          {{to | amFromUnix | amDateFormat:'HH:mm, Do MMMM'}}
+          {{records[records.length-1].CreatedAt | amDateFormat:'HH:mm, MMMM Do'}}
         </div>
         <div class="col s3">
           <span>{{records[records.length-1].Kph}} km/hr</span>
