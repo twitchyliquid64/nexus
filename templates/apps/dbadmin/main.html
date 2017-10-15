@@ -1,0 +1,69 @@
+<html>
+<head>
+    <title>Database Admin</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+    </style>
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+    <script type="text/javascript">
+      var app = angular.module('dba', ['ui.materialize', 'angularMoment']);
+
+      app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", "$window", function ($scope, $rootScope, $location, $http, $window) {
+        $scope.loading = false;
+      }]);
+    </script>
+</head>
+<body ng-app="dba" ng-cloak>
+  <nav class="red darken-1" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">storage</i> Database Admin</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" ng-controller="BodyController">
+    <div class="progress" ng-show="loading">
+        <div class="indeterminate"></div>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <div class="input-field col s12">
+          <textarea id="textarea1" class="materialize-textarea" rows="10"></textarea>
+          <label for="textarea1">Query</label>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn waves-effect waves-light blue" ng-click="exec()" ng-class="{disabled: loading}">Query
+          <i class="material-icons right">help_outline</i>
+        </button>
+        <button class="btn waves-effect waves-light red" ng-click="exec()" ng-class="{disabled: loading}">Execute
+          <i class="material-icons right">launch</i>
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -46,6 +46,11 @@ var tables = []DatabaseTable{
 var sqlite3conn = []*sqlite3.SQLiteConn{}
 var sqlite3backupconn = []*sqlite3.SQLiteConn{}
 
+// GetSQLiteConn returns the underlying database connection.
+func GetSQLiteConn() *sqlite3.SQLiteConn {
+	return sqlite3conn[0]
+}
+
 // DatabaseTable represents the manager object for a database table.
 type DatabaseTable interface {
 	Setup(ctx context.Context, db *sql.DB) error

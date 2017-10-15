@@ -36,12 +36,12 @@ func (a *CodenameApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.D
 	}
 	a.DB = db
 
-	mux.HandleFunc("/app/codename", a.Render)
+	mux.HandleFunc("/app/codename", a.render)
 	return nil
 }
 
-// Render generates page content.
-func (a *CodenameApp) Render(response http.ResponseWriter, request *http.Request) {
+// render generates page content.
+func (a *CodenameApp) render(response http.ResponseWriter, request *http.Request) {
 	_, u, err := util.AuthInfo(request, a.DB)
 	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
 		http.Redirect(response, request, "/login", 303)
