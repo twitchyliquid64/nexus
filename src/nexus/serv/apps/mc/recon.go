@@ -12,6 +12,7 @@ import (
 	"nexus/serv/util"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -42,6 +43,7 @@ func (a *ReconApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) 
 	mux.HandleFunc("/app/recon/loc", a.handleLocationUpdate)
 	mux.HandleFunc("/app/recon/api/status", a.serveStatusList)
 	mux.HandleFunc("/app/recon/api/location", a.serveLocationList)
+	mux.HandleFunc("/app/recon/api/entity/", a.serveEntity)
 	mux.HandleFunc("/app/recon/status/", a.renderStatusView)
 	mux.HandleFunc("/app/recon/location/", a.renderLocationView)
 	return nil
@@ -89,6 +91,23 @@ func (a *ReconApp) serveStatusList(response http.ResponseWriter, request *http.R
 
 	statuses, err := mc.ListStatus(request.Context(), input.UID, input.Limit, input.Offset, a.DB)
 	b, err := json.Marshal(statuses)
+	if err != nil {
+		http.Error(response, err.Error(), 500)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+func (a *ReconApp) serveEntity(response http.ResponseWriter, request *http.Request) {
+	if !a.handleCheckAuthorized(response, request) {
+		return
+	}
+	spl := strings.Split(request.URL.Path, "/")
+	entityUID, _ := strconv.Atoi(spl[len(spl)-1])
+
+	entity, err := mc.GetEntityKeyByUID(request.Context(), entityUID, a.DB)
+	b, err := json.Marshal(entity)
 	if err != nil {
 		http.Error(response, err.Error(), 500)
 		return

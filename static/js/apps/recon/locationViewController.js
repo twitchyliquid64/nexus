@@ -23,6 +23,7 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
   $scope.lastUpdated = moment();
   $scope.from = null;
   $scope.to = null;
+  $scope.device = null;
 
   self.initMap = function(){
     var centerlatlng = new google.maps.LatLng(-33.915803, 151.195242);
@@ -32,7 +33,18 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
         mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     $scope.map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-    $scope.getInfo();
+    $scope.getDeviceDetails().then(function(){
+      $scope.getInfo();
+    });
+
+  }
+
+  $scope.icon = function(){
+    switch ($scope.device.Kind){
+      case "phone":
+        return "smartphone";
+    }
+    return "business";
   }
 
   $scope.refreshMap = function(){
@@ -56,6 +68,17 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
         bounds.extend(points[n]);
     }
     $scope.map.fitBounds(bounds);
+  }
+
+  $scope.getDeviceDetails = function(){
+    return $http({
+      method: 'GET',
+      url: '/app/recon/api/entity/' + $scope.uid,
+    }).then(function successCallback(response) {
+      $scope.device = response.data;
+    }, function errorCallback(response) {
+      $scope.loading = false;
+    });
   }
 
   $scope.getInfo = function(){

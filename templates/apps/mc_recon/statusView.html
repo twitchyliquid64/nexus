@@ -29,15 +29,27 @@
 
       app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", "$window", function ($scope, $rootScope, $location, $http, $window) {
         $scope.records = [];
-        $scope.loading = false;
+        $scope.loading = true;
         $scope.uid = parseInt(window.location.href.substr(window.location.href.lastIndexOf('/') + 1));
         $scope.offset = 0;
         $scope.lastUpdated = moment();
+        $scope.device = null;
 
         $scope.page = function(amt){
           $scope.offset += amt*100;
           if ($scope.offset < 0)$scope.offset = 0;
           $scope.getInfo();
+        }
+
+        $scope.getDeviceDetails = function(){
+          return $http({
+            method: 'GET',
+            url: '/app/recon/api/entity/' + $scope.uid,
+          }).then(function successCallback(response) {
+            $scope.device = response.data;
+          }, function errorCallback(response) {
+            $scope.loading = false;
+          });
         }
 
         $scope.getInfo = function(){
@@ -59,7 +71,16 @@
           });
         }
 
-        $scope.getInfo();
+
+        $scope.icon = function(){
+          switch ($scope.device.Kind){
+            case "phone":
+              return "smartphone";
+          }
+          return "business";
+        }
+
+        $scope.getDeviceDetails().then($scope.getInfo);
       }]);
     </script>
 </head>
@@ -76,7 +97,7 @@
 
   <div class="container row">
     <div class="">
-      <h5>Status log for Device (UID={{uid}})</h5>
+      <h5>Status log for <span ng-if="!device">Device</span><span ng-if="device"> <i class="material-icons">{{icon()}}</i> {{device.Name}}</span></h5>
 
       <div class="progress" ng-show="loading">
           <div class="indeterminate"></div>

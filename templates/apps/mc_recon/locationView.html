@@ -51,7 +51,7 @@
 
   <div class="container row">
     <div class="">
-      <h5>Location for Device (UID={{uid}})</h5>
+      <h5>Location for <span ng-if="!device">Device</span><span ng-if="device"> <i class="material-icons">{{icon()}}</i> {{device.Name}}</span></h5>
       <div class="section" style="min-height: 35px;">
         <div class="progress" ng-show="loading">
             <div class="indeterminate"></div>
