@@ -165,6 +165,7 @@ func (h *DashboardHandler) Render(response http.ResponseWriter, request *http.Re
 		return
 	}
 
+	util.ApplyStrictTransportSecurity(request, response)
 	err = t.ExecuteTemplate(response, "dashboard.html", renderData)
 	if util.InternalHandlerError("template.Execute()", response, request, err) {
 		return

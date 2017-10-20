@@ -91,6 +91,7 @@ func (h *SettingsHandler) Render(response http.ResponseWriter, request *http.Req
 		return
 	}
 
+	util.ApplyStrictTransportSecurity(request, response)
 	err = forms.Render(request.Context(), false, u.UID, response, h.DB)
 	if err != nil {
 		log.Printf("forms.Render() Error: %s", err)

@@ -57,3 +57,11 @@ func makeMux(ctx context.Context, db *sql.DB) *http.ServeMux {
 	mux.Handle("/integration/", integration.WebTrigger)
 	return mux
 }
+
+func redirect(w http.ResponseWriter, req *http.Request) {
+	rawURL := "https://" + req.Host + req.URL.Path
+	if len(req.URL.RawQuery) > 0 {
+		rawURL += "?" + req.URL.RawQuery
+	}
+	http.Redirect(w, req, rawURL, http.StatusPermanentRedirect)
+}

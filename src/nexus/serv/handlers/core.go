@@ -56,6 +56,7 @@ func (h *CoreHandler) HandleIndex(response http.ResponseWriter, request *http.Re
 		http.Error(response, "Internal server error", 500)
 		return
 	}
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("HandleIndex(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/index.html"), u, response))
 }
 
@@ -90,6 +91,7 @@ type loginTemplateData struct {
 func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Request) {
 	ctx := request.Context()
 	if request.Method == "GET" {
+		util.ApplyStrictTransportSecurity(request, response)
 		util.LogIfErr("HandleLogin(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/login.html"), loginTemplateData{Msg: request.FormValue("msg")}, response))
 	}
 

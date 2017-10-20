@@ -146,6 +146,7 @@ func (a *ReconApp) renderStatusView(response http.ResponseWriter, request *http.
 	if !a.handleCheckAuthorized(response, request) {
 		return
 	}
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("ReconApp.renderStatusView(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/statusView.html"), nil, response))
 }
 
@@ -162,6 +163,7 @@ func (a *ReconApp) renderLocationView(response http.ResponseWriter, request *htt
 		PickerTo:   time.Now().Format("02 January, 2006"),
 	}
 
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("ReconApp.renderLocationView(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/locationView.html"), templateData, response))
 }
 
@@ -212,6 +214,7 @@ func (a *ReconApp) renderMainPage(response http.ResponseWriter, request *http.Re
 		})
 	}
 
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("ReconApp.renderMainPage(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/mc_recon/main.html"), templateData, response))
 }
 

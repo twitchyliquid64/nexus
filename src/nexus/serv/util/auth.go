@@ -30,6 +30,13 @@ func (a *AuthDetails) String() string {
 	return string(b)
 }
 
+// ApplyStrictTransportSecurity sets HSTS headers if we are coming from HTTPS.
+func ApplyStrictTransportSecurity(request *http.Request, rw http.ResponseWriter) {
+	if request.URL.Scheme == "https" {
+		rw.Header().Set("Strict-Transport-Security", "max-age=2678400")
+	}
+}
+
 // CheckAuth checks if the provided credentials are valid for that user.
 func CheckAuth(ctx context.Context, request *http.Request, db *sql.DB) (bool, AuthDetails, error) {
 	usr, err := user.Get(ctx, request.FormValue("user"), db)

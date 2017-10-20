@@ -246,6 +246,7 @@ func (a *YtdlApp) render(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("YtdlApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/ytdl/index.html"), nil, response))
 }
 

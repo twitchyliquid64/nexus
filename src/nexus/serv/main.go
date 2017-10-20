@@ -74,6 +74,7 @@ func main() {
 		if err != nil {
 			die(err.Error())
 		}
+		go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 	}
 
 	mux := makeMux(ctx, db)

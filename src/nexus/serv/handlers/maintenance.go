@@ -77,6 +77,7 @@ func (h *MaintenanceHandler) StatsHandler(response http.ResponseWriter, request 
 	templateData.Metrics = metrics.GetByCategory()
 	templateData.BackupInfo = data.GetBackupStatistics()
 
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("StatsHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/statsResult.html"), templateData, response))
 }
 
@@ -138,5 +139,6 @@ func (h *MaintenanceHandler) CleanupHandler(response http.ResponseWriter, reques
 	templateData.VacuumErr = data.Vacuum(h.DB)
 	templateData.VacuumTime = time.Now().Sub(vacuumStart)
 
+	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("CleanupHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/maintenanceResult.html"), templateData, response))
 }
