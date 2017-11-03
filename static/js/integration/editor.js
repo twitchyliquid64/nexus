@@ -159,6 +159,17 @@ var codeGlobals = [
       detail: 'Contains methods to manipulate time.',
     },
   },
+  {
+    name: 'gcp',
+    value: 'gcp',
+    meta: 'cloud',
+    score: 110,
+    reference: {
+      heading: 'gcp',
+      kind: 'global object',
+      detail: 'Contains methods to interact with Google Cloud Platform.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -780,6 +791,32 @@ var codeSubs = [
       heading: 't.addTime()',
       kind: 'method',
       detail: 't.addTime(<timeObj>[, hours, [minutes, [seconds]]]). Adds hours/minutes/seconds onto the given time object, returning an updated time object.',
+    },
+  },
+  {
+    prefix: 'gcp.',
+    name: 'load_service_credential',
+    value: 'load_service_credential()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'gcp.load_service_credential()',
+      kind: 'method',
+      detail: 'gcp.load_service_credential(<path_to_cred_file>). Parses a credential file for a service account, returning a configuration which can be used to call APIs.',
+    },
+  },
+  {
+    prefix: 'gcp.',
+    name: 'compute_client',
+    value: 'compute_client()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'gcp.compute_client()',
+      kind: 'method',
+      detail: 'gcp.compute_client(<config>). Consumes a service account configuration (returned by gcp.load_service_credential()), and returns an object who\'s methods perform actions on GCP.',
+      more: '<h4>Compute client methods</h4><br><label>.list(&lt;GCP project name&gt;, &lt;GCP zone&gt;)</label><br>Returns an error or a list of instances.'+
+      'Instances are structured like <a href="https://godoc.org/google.golang.org/api/compute/v1#Instance">this</a>.',
     },
   },
 ]

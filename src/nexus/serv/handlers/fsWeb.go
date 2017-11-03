@@ -62,7 +62,7 @@ func (h *FSHandler) UploadHandler(response http.ResponseWriter, request *http.Re
 	defer file.Close()
 
 	//log.Printf("Got upload to base %s with filename %s for %s", request.FormValue("path"), handler.Filename, usr.DisplayName)
-	err = fs.Upload(request.Context(), request.FormValue("path") + "/" + handler.Filename, usr.UID, file)
+	err = fs.Upload(request.Context(), request.FormValue("path")+"/"+handler.Filename, usr.UID, file)
 	if err != nil {
 		h.error(response, request, "Upload failed", err, nil)
 		return
