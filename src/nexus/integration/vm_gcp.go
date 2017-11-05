@@ -2,11 +2,15 @@ package integration
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"nexus/fs"
+	"reflect"
 
 	compute "google.golang.org/api/compute/v1"
-	pubsub "google.golang.org/api/pubsub/v1"
 
 	"github.com/robertkrimen/otto"
 	"golang.org/x/oauth2"
@@ -29,7 +33,7 @@ func (b *gcpInitialiser) Apply(r *Run) error {
 			return r.VM.MakeCustomError("fs-error", err.Error())
 		}
 
-		conf, err := google.JWTConfigFromJSON(b.Bytes(), compute.CloudPlatformScope, pubsub.PubsubScope)
+		conf, err := google.JWTConfigFromJSON(b.Bytes(), compute.CloudPlatformScope)
 		if err != nil {
 			return r.VM.MakeCustomError("oauth-error", err.Error())
 		}
@@ -69,21 +73,15 @@ func (b *gcpInitialiser) Apply(r *Run) error {
 	}
 
 	if err := obj.Set("pubsub_client", func(call otto.FunctionCall) otto.Value {
-		export, err := call.Argument(0).Export()
+		client, err := call.Argument(0).Export()
 		if err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
-
-		pubsubService, err := pubsub.New(export.(*http.Client))
-		if err != nil {
-			return r.VM.MakeCustomError("internal-error", err.Error())
-		}
-
 		ret, err := makeObject(r.VM)
 		if err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
-		if err := b.MakePubSub(r, ret, pubsubService); err != nil {
+		if err := b.MakePubSub(r, ret, client.(*http.Client)); err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
 
@@ -95,13 +93,22 @@ func (b *gcpInitialiser) Apply(r *Run) error {
 	return r.VM.Set("gcp", obj)
 }
 
-func (b *gcpInitialiser) MakePubSub(r *Run, obj *otto.Object, service *pubsub.Service) error {
-	if err := obj.Set("list", func(call otto.FunctionCall) otto.Value {
-		topics, err := service.Projects.Topics.List(call.Argument(0).String()).Do()
+func (b *gcpInitialiser) MakePubSub(r *Run, obj *otto.Object, client *http.Client) error {
+	if err := obj.Set("list_topics", func(call otto.FunctionCall) otto.Value {
+		resp, err := client.Get("https://pubsub.googleapis.com/v1/projects/" + call.Argument(0).String() + "/topics")
 		if err != nil {
 			return r.VM.MakeCustomError("pubsub-error", err.Error())
 		}
-		v, err := r.VM.ToValue(topics.Topics)
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return r.VM.MakeCustomError("pubsub-error", resp.Status)
+		}
+		var out map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&out)
+		if err != nil {
+			return r.VM.MakeCustomError("decode-error", err.Error())
+		}
+		v, err := r.VM.ToValue(out)
 		if err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
@@ -111,11 +118,24 @@ func (b *gcpInitialiser) MakePubSub(r *Run, obj *otto.Object, service *pubsub.Se
 	}
 
 	if err := obj.Set("create", func(call otto.FunctionCall) otto.Value {
-		topic, err := service.Projects.Topics.Create(call.Argument(0).String(), &pubsub.Topic{}).Do()
+		uri, err := url.Parse("https://pubsub.googleapis.com/v1/projects/" + call.Argument(0).String() + "/topics/" + call.Argument(1).String())
+		if err != nil {
+			return r.VM.MakeCustomError("format-error", err.Error())
+		}
+		resp, err := client.Do(&http.Request{Method: "PUT", URL: uri})
 		if err != nil {
 			return r.VM.MakeCustomError("pubsub-error", err.Error())
 		}
-		v, err := r.VM.ToValue(topic)
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return r.VM.MakeCustomError("pubsub-error", resp.Status)
+		}
+		var out map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&out)
+		if err != nil {
+			return r.VM.MakeCustomError("decode-error", err.Error())
+		}
+		v, err := r.VM.ToValue(out)
 		if err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
@@ -125,27 +145,41 @@ func (b *gcpInitialiser) MakePubSub(r *Run, obj *otto.Object, service *pubsub.Se
 	}
 
 	if err := obj.Set("publish", func(call otto.FunctionCall) otto.Value {
-		var out []*pubsub.PubsubMessage
-		jsMessages, _ := call.Argument(1).Export()
-		for _, msg := range jsMessages.([]interface{}) {
-			m := msg.(map[string]interface{})
-			output := &pubsub.PubsubMessage{
-				Data:       m["data"].(string),
-				Attributes: make(map[string]string),
-			}
-			if attrs, ok := m["attrs"].(map[string]interface{}); ok {
-				for key, val := range attrs {
-					output.Attributes[key] = val.(string)
-				}
-			}
-			out = append(out, output)
+		uri, err := url.Parse("https://pubsub.googleapis.com/v1/projects/" + call.Argument(0).String() + "/topics/" + call.Argument(1).String())
+		if err != nil {
+			return r.VM.MakeCustomError("format-error", err.Error())
 		}
 
-		topic, err := service.Projects.Topics.Publish(call.Argument(0).String(), &pubsub.PublishRequest{Messages: out}).Do()
+		m, _ := call.Argument(2).Export()
+		if _, ok := m.([]map[string]interface{}); !ok {
+			return r.VM.MakeCustomError("format-error", "expected a list of pubsub message objects, got "+reflect.TypeOf(m).String())
+		}
+		jsMessages := m.([]map[string]interface{})
+		for i := range jsMessages {
+			if _, ok := jsMessages[i]["data"].(string); ok {
+				jsMessages[i]["data"] = base64.RawStdEncoding.EncodeToString([]byte(jsMessages[i]["data"].(string)))
+			}
+		}
+		b, err := json.Marshal(map[string]interface{}{"messages": jsMessages})
+		if err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+
+		resp, err := client.Post(uri.String()+":publish", "application/json", bytes.NewBuffer(b))
 		if err != nil {
 			return r.VM.MakeCustomError("pubsub-error", err.Error())
 		}
-		v, err := r.VM.ToValue(topic)
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			e, _ := ioutil.ReadAll(resp.Body)
+			return r.VM.MakeCustomError("pubsub-error", string(e))
+		}
+		var out map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&out)
+		if err != nil {
+			return r.VM.MakeCustomError("decode-error", err.Error())
+		}
+		v, err := r.VM.ToValue(out)
 		if err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}

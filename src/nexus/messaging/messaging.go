@@ -56,6 +56,7 @@ func Deinit() {
 	wg.Wait()
 }
 
+// Send dispatches a message to the relevant service handling the conversation indicated by cID.
 func Send(cID int, msg string) error {
 	for _, source := range workingSources {
 		if source.HandlesConversationID(cID) {

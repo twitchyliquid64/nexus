@@ -72,6 +72,9 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
         case 'HTTP':
           out['http'] = true;
           break;
+        case 'PUBSUB':
+          out['settings_remote'] = true;
+          break;
       }
 
     }

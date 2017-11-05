@@ -83,6 +83,17 @@ var codeGlobals = [
     },
   },
   {
+    name: 'pubsub',
+    value: 'pubsub',
+    meta: 'PUBSUB trigger only',
+    score: 110,
+    reference: {
+      heading: 'pubsub',
+      kind: 'global object',
+      detail: 'Only available when triggered by a PUBSUB request. Information/methods pertaining to the recieved PubSub, such as the message contents and the acknowledge() method.',
+    },
+  },
+  {
     name: 'browser',
     value: 'browser',
     meta: 'method',
@@ -242,7 +253,7 @@ var codeSubs = [
     reference: {
       heading: 'context.run_reason',
       kind: 'string',
-      detail: 'Cause of the execution. Typically "manual", "CRON", "HTTP" etc',
+      detail: 'Cause of the execution. Typically "manual", "CRON", "HTTP", "PUBSUB" etc',
     },
   },
   {
@@ -819,6 +830,89 @@ var codeSubs = [
       'Instances are structured like <a href="https://godoc.org/google.golang.org/api/compute/v1#Instance">this</a>.',
     },
   },
+  {
+    prefix: 'gcp.',
+    name: 'pubsub_client',
+    value: 'pubsub_client()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'gcp.pubsub_client()',
+      kind: 'method',
+      detail: 'gcp.pubsub_client(<config>). Consumes a service account configuration (returned by gcp.load_service_credential()), and returns an object who\'s methods can be used with GCP PubSub.',
+      more: '<h4>PubSub client methods</h4><br><label>.list_topics(&lt;GCP project ID&gt;)</label><br>Returns an error or a list of topics.'+
+      'Topics are structured like <a href="https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics#Topic">this</a>.<br>'+
+      '<br><label>.create(&lt;GCP project ID&gt;, &lt;Topic name&gt;)</label><br>Creates a new topic if it does not already exist. If the topic already exists, the return value will have the attribute "message" which reads "409 Conflict"<br>'+
+      '<br><label>.publish(&lt;GCP project ID&gt;, &lt;Topic name&gt;, &lt;List of message objects&gt;)</label><br>Message objects are structured like this:<br><br>' +
+      jsonPrettyPrint.toHtml({
+            data: "main content goes here.",
+            attributes: {
+                "key": "value",
+            },
+        }
+      ),
+    },
+  },
+  {
+    prefix: 'pubsub.',
+    name: 'topic_spec',
+    value: 'topic_spec',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'pubsub.topic_spec',
+      kind: 'string',
+      detail: 'Full representation of the topic which triggered the run. Formatted like projects/{project}/topics/{topic}.',
+    },
+  },
+  {
+    prefix: 'pubsub.',
+    name: 'trigger_name',
+    value: 'trigger_name',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'pubsub.trigger_name',
+      kind: 'string',
+      detail: 'Name of the trigger which caused the run.',
+    },
+  },
+  {
+    prefix: 'pubsub.',
+    name: 'topic',
+    value: 'topic',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'pubsub.topic',
+      kind: 'string',
+      detail: 'Name of the topic which caused the run.',
+    },
+  },
+  {
+    prefix: 'pubsub.',
+    name: 'message',
+    value: 'message',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'pubsub.message',
+      kind: 'object',
+      detail: 'Message object. Important attributes are \'data\' and the object \'attributes\'.',
+    },
+  },
+  {
+    prefix: 'pubsub.',
+    name: 'acknowledge',
+    value: 'acknowledge()',
+    meta: 'string',
+    score: 110,
+    reference: {
+      heading: 'pubsub.acknowledge()',
+      kind: 'method',
+      detail: 'Tells PubSub the message has been recieved successfully, and will not need to be re-delivered.',
+    },
+  },
 ]
 
 function startsWith(s, prefix) {
@@ -918,6 +1012,8 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
         return 'schedule';
       case 'HTTP':
         return 'http';
+      case 'PUBSUB':
+        return 'settings_remote';
     }
     return '?'
   }

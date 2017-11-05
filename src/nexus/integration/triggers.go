@@ -22,8 +22,9 @@ var WebTrigger = &triggers.WebTriggers{Start: startRunHandler}
 
 // trigger kind -> handler mapping
 var triggerHandlers = map[string]triggerImplementation{
-	"CRON": &triggers.CronTriggers{Start: startRunHandler},
-	"HTTP": WebTrigger,
+	"CRON":   &triggers.CronTriggers{Start: startRunHandler},
+	"HTTP":   WebTrigger,
+	"PUBSUB": &triggers.PubsubTriggers{Start: startRunHandler},
 }
 
 // function pointer injected into trigger handlers. Used to kick off a run.
