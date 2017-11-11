@@ -21,6 +21,7 @@ var tables = []DatabaseTable{
 	&user.Table{},
 	&user.AuthTable{},
 	&user.AttrTable{},
+	&user.ExternalAppsTable{},
 	&session.Table{},
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},

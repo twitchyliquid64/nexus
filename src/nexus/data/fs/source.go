@@ -132,11 +132,11 @@ func (t *SourceTable) Forms() []*util.FormDescriptor {
 func (t *SourceTable) deleteSourceActionHandler(rowID, formID, actionUID string, userID int, db *sql.DB) error {
 	uid, err := strconv.Atoi(rowID)
 	if err != nil {
-		return nil
+		return err
 	}
 	src, err := GetSourceByUID(context.Background(), uid, db)
 	if err != nil {
-		return nil
+		return err
 	}
 	if src.OwnerID != userID {
 		return errors.New("You do not have permission to modify that source")

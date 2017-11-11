@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"nexus/data/session"
+	"nexus/data/user"
 	nexus_apps "nexus/serv/apps"
 	"nexus/serv/apps/mc"
 	"nexus/serv/util"
@@ -50,9 +51,10 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 	}
 
 	type appInfo struct {
-		Name string
-		Icon string
-		URL  string
+		Name  string
+		Icon  string
+		URL   string
+		Extra string
 	}
 	var out []appInfo
 
@@ -70,6 +72,20 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 				URL:  app.EntryURL(),
 			})
 		}
+	}
+	extApps, err := user.GetExtAppsForUser(request.Context(), u.UID, h.db)
+	if err != nil {
+		http.Error(response, "Internal server error", 500)
+		log.Printf("GetExtAppsForUser(%q) Error: %v", u.Username, err)
+		return
+	}
+	for _, app := range extApps {
+		out = append(out, appInfo{
+			Name:  app.Name,
+			Icon:  app.Icon,
+			URL:   app.Val,
+			Extra: app.Extra,
+		})
 	}
 
 	b, err := json.Marshal(out)
