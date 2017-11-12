@@ -57,30 +57,30 @@
 <body ng-app="nexus" ng-controller="BodyController" ng-cloak>
   <nav class="light-blue lighten-2" role="navigation">
     <div class="nav-wrapper">
-      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">language</i> Nexus</a>
+      <a id="logo-container" class="brand-logo" ng-click="changePage('home')"><i class="material-icons">language</i> Nexus</a>
       <ul class="right hide-on-med-and-down">
-        <li ng-class="{active: page == 'messenger'}"><a href="#" ng-click="changePage('messenger')"><i class="material-icons">message</i></a></li>
-        <li ng-class="{active: page == 'files'}"><a href="#" ng-click="changePage('files')"><i class="material-icons">sd_storage</i></a></li>
-        <li ng-class="{active: page == 'home'}"><a href="#" ng-click="changePage('home')"><i class="material-icons">home</i></a></li>
-        {!{if .AdminPerms.Accounts}!}<li ng-class="{active: page == 'accounts'}"><a href="#" ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>{!{end}!}
-        <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a href="#" ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
-        {!{if .AdminPerms.Integrations}!}<li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a href="#" ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>{!{end}!}
-        <li ng-class="{active: page == 'apps'}"><a href="#" ng-click="changePage('apps')"><i class="material-icons">apps</i></a></li>
+        <li ng-class="{active: page == 'messenger'}"><a ng-click="changePage('messenger')"><i class="material-icons">message</i></a></li>
+        <li ng-class="{active: page == 'files'}"><a ng-click="changePage('files')"><i class="material-icons">sd_storage</i></a></li>
+        <li ng-class="{active: page == 'home'}"><a ng-click="changePage('home')"><i class="material-icons">home</i></a></li>
+        {!{if .AdminPerms.Accounts}!}<li ng-class="{active: page == 'accounts'}"><a ng-click="changePage('accounts')"><i class="material-icons left">supervisor_account</i> Accounts</a></li>{!{end}!}
+        <li ng-class="{active: page == 'data' || page == 'data-explorer'}"><a ng-click="changePage('data')"><i class="material-icons left">storage</i> Datastores</a></li>
+        {!{if .AdminPerms.Integrations}!}<li ng-class="{active: page == 'integration-editor' || page == 'integrations'}"><a ng-click="changePage('integrations')"><i class="material-icons left">import_export</i> Integrations</a></li>{!{end}!}
+        <li ng-class="{active: page == 'apps'}"><a ng-click="changePage('apps')"><i class="material-icons">apps</i></a></li>
         <li><a href="/settings/show"><i class="material-icons">settings</i></a></li>
         <li><a href="/logout"><i class="material-icons">exit_to_app</i></a></li>
 
       </ul>
-      <a href="#" data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
+      <a data-activates="nav-mobile"  data-sidenav="left" data-menuwidth="500" data-closeonclick="true" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
   </nav>
 
   <ul id="nav-mobile" class="side-nav">
-    <li><a href="#" ng-click="changePage('home')">Home</a></li>
-    <li><a href="#" ng-click="changePage('files')">Files</a></li>
-    <li><a href="#" ng-click="changePage('messenger')">Messenger</a></li>
-    {!{if .AdminPerms.Accounts}!}<li><a href="#" ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
-    {!{if .AdminPerms.Integrations}!}<li><a href="#" ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
-    <li><a href="#" ng-click="changePage('apps')">Apps</a></li>
+    <li><a ng-click="changePage('home')">Home</a></li>
+    <li><a ng-click="changePage('files')">Files</a></li>
+    <li><a ng-click="changePage('messenger')">Messenger</a></li>
+    {!{if .AdminPerms.Accounts}!}<li><a ng-click="changePage('accounts')">Accounts</a></li>{!{end}!}
+    {!{if .AdminPerms.Integrations}!}<li><a ng-click="changePage('integrations')">Integrations</a></li>{!{end}!}
+    <li><a ng-click="changePage('apps')">Apps</a></li>
   </ul>
 
   <div ng-show="page == 'apps'" class="container" ng-controller="AppController">
@@ -124,20 +124,20 @@
             <td ng-click="nav(file)" style="cursor: pointer; max-width: 350px;">{{name(file)}}</td>
             <td ng-click="nav(file)" style="cursor: pointer;">{{date(file)}}</td>
             <td>
-              <a class="btn-floating" href="#" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
-              <a class="btn-floating" href="#" ng-click="download(file)" ng-if="file.ItemKind==2"><i class="material-icons">file_download</i></a>
+              <a class="btn-floating" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" ng-click="download(file)" ng-if="file.ItemKind==2"><i class="material-icons">file_download</i></a>
             </td>
           </tr>
         </tbody>
       </table>
 
       <div class="fixed-action-btn">
-        <a href="#" class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="New File" ng-click="newFile()">
+        <a class="btn-floating btn-large red tooltipped" data-position="left" data-delay="50" data-tooltip="New File" ng-click="newFile()">
           <i class="large material-icons">add</i>
         </a>
         <ul>
-          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" href="#" ng-click="upload()"><i class="material-icons">file_upload</i></a></li>
-          <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="New folder" href="#" ng-click="newFolder()"><i class="material-icons">create_new_folder</i></a></li>
+          <li><a class="btn-floating yellow tooltipped" data-position="left" data-delay="50" data-tooltip="Upload" ng-click="upload()"><i class="material-icons">file_upload</i></a></li>
+          <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="New folder" ng-click="newFolder()"><i class="material-icons">create_new_folder</i></a></li>
         </ul>
       </div>
     </div>
@@ -275,7 +275,7 @@
           <p>{{kName(auth.Kind)}} <br>
              <label>{{cName(auth.Class)}}</label>
           </p>
-          <a href="#!" class="secondary-content" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
+          <a href="#" class="secondary-content" ng-click="deleteAuth(auth)"><i class="material-icons">delete</i></a>
         </li>
       </ul>
 
@@ -338,8 +338,8 @@
               </div>
 
               <div class="row" style="margin-bottom: 3px;">
-                <a href="#!" class="waves-effect waves-light btn" ng-click="newAuth()"><i class="material-icons left">add</i> Create</a>
-                <a href="#!" class="waves-effect waves-light btn-flat" ng-click="genOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
+                <a href="#" class="waves-effect waves-light btn" ng-click="newAuth()"><i class="material-icons left">add</i> Create</a>
+                <a href="#" class="waves-effect waves-light btn-flat" ng-click="genOTP()"><i class="material-icons left">vpn_key</i> Generate OTP</a>
               </div>
 
             </div>
@@ -544,12 +544,12 @@
               <li class="collection-item" ng-if="!datastoreSuggestions.filter" ng-repeat="datastore in datastoreSuggestions.datastores">
                 {{datastore.Name}}
                 <label>{{datastore.Kind}}</label>
-                <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
+                <a href="#" class="secondary-content"><i class="material-icons">data</i></a>
               </li>
               <li class="collection-item" ng-if="datastoreSuggestions.filter" ng-repeat="col in datastoreSuggestions.cols">
                 {{col.Name}}
                 <label>{{datastoreDatatypeToString(col.Datatype)}}</label>
-                <a href="#!" class="secondary-content"><i class="material-icons">data</i></a>
+                <a href="#" class="secondary-content"><i class="material-icons">data</i></a>
               </li>
             </ul>
           </div>
@@ -570,7 +570,7 @@
             <li class="collection-item" ng-repeat="trigger in runnable.Triggers">
               {{trigger.Name}}
               <label>{{trigger.Val1}}</label>
-              <a href="#!" class="secondary-content"><i class="material-icons">{{triggerIcon(trigger)}}</i></a>
+              <a href="#" class="secondary-content"><i class="material-icons">{{triggerIcon(trigger)}}</i></a>
             </li>
           </ul>
           <p ng-hide="runnable.Triggers.length">This script is not configured with any triggers. It will only execute when manually started.</p>

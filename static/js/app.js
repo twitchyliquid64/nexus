@@ -1,6 +1,6 @@
 var app = angular.module('nexus', ['ui.materialize', 'angularMoment']);
 
-app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $rootScope) {
+app.controller('BodyController', ["$scope", "$rootScope", "$location", function ($scope, $rootScope, $location) {
     $scope.page = "home";
     $scope.refreshDash = function(){
       $scope.dashUpdated = Date.now();
@@ -10,7 +10,17 @@ app.controller('BodyController', ["$scope", "$rootScope", function ($scope, $roo
         $rootScope.$broadcast('page-change',{page: pageName});
         if ($scope.page == 'home')
           $scope.dashUpdated = Date.now();
+        $location.hash(pageName);
     };
+
+    $rootScope.$on('$locationChangeSuccess', function(event, args, args2) {
+      console.log(location.hash);
+      var spl = location.hash.split('##');
+      if (spl.length > 1 && spl[1] != $scope.page){
+        console.log("Doing URL-based change");
+        $scope.changePage(spl[1]);
+      }
+   });
 }]);
 
 app.directive('loader', function($rootScope){
