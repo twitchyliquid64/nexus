@@ -86,7 +86,7 @@ type Log struct {
 // GetRecentRunsForRunnable returns the unique runIDs for a given runnable.
 func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]string, error) {
 	res, err := db.QueryContext(ctx, `
-		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? ORDER BY created_at DESC LIMIT 50;
+		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? ORDER BY created_at DESC LIMIT 85;
 	`, runnableUID, newerThan)
 	if err != nil {
 		return nil, err

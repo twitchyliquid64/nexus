@@ -13,6 +13,13 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
+const (
+	// maxAgeRuns is the max age of a run before it no longer appears in the list.
+	maxAgeRuns = time.Hour * 24 * 21
+	// max querible time.
+	maxAgeLogs = time.Hour * 24 * 180
+)
+
 // IntegrationHandler handles HTTP endpoints for the integrations UI.
 type IntegrationHandler struct {
 	DB *sql.DB
@@ -310,7 +317,7 @@ func (h *IntegrationHandler) HandleGetRuns(response http.ResponseWriter, request
 		return
 	}
 
-	runs, err := integration.GetRecentRunsForRunnable(request.Context(), id, time.Now().Add(-time.Hour*24*4), h.DB)
+	runs, err := integration.GetRecentRunsForRunnable(request.Context(), id, time.Now().Add(-maxAgeRuns), h.DB)
 	if util.InternalHandlerError("integration.GetRecentRunsForRunnable()", response, request, err) {
 		return
 	}
@@ -363,10 +370,10 @@ func (h *IntegrationHandler) HandleGetLogs(response http.ResponseWriter, request
 	var logs []*integration.Log
 
 	if filter.RunID != "" {
-		logs, err = integration.GetLogsFilteredByRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.RunID, filter.Offset, filter.Limit,
+		logs, err = integration.GetLogsFilteredByRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-maxAgeLogs), filter.RunID, filter.Offset, filter.Limit,
 			filter.Info, filter.Problem, filter.Sys, h.DB)
 	} else {
-		logs, err = integration.GetLogsForRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-time.Hour*24*4), filter.Offset, filter.Limit,
+		logs, err = integration.GetLogsForRunnable(request.Context(), filter.RunnableUID, time.Now().Add(-maxAgeLogs), filter.Offset, filter.Limit,
 			filter.Info, filter.Problem, filter.Sys, h.DB)
 	}
 	if util.InternalHandlerError("integration.GetLogsFilteredByRunnable()", response, request, err) {
