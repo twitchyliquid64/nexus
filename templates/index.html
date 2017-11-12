@@ -493,19 +493,18 @@
           </tr>
         </thead>
 
-        <tbody>
+        <tbody class="table-slim">
           <tr ng-repeat="runnable in integrations">
             <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.UID}}</td>
             <td ng-click="edit(runnable)" style="cursor: pointer;">{{runnable.Name}}</td>
             <td ng-click="edit(runnable)" style="cursor: pointer;">
               <i ng-repeat="(i,v) in computeTriggerIcons(runnable)" class="material-icons">{{i}}</i>
             </td>
-            <td>
+            <td class="actions">
               <a class="btn-floating" href="#" ng-click="delete(runnable)"><i class="material-icons">delete</i></a>
               <a class="btn-floating" href="#" ng-click="open(runnable)"><i class="material-icons">edit</i></a>
               <a class="btn-floating red" href="#" ng-click="run(runnable)"><i class="material-icons">play_arrow</i></a>
               <a class="btn-floating amber" href="#" ng-click="viewLogs(runnable)"><i class="material-icons">list</i></a>
-
             </td>
           </tr>
         </tbody>
