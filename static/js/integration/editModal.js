@@ -40,6 +40,7 @@
             $scope.integration = {
               Name: '',
               Kind: 'Runnable',
+              MaxRetention: 21,
             };
             $scope.triggers = [];
             $scope.cb = args.cb;
@@ -73,6 +74,9 @@
 
           $scope.onFinish = function(){
             if (valid()){
+              if (typeof $scope.integration.MaxRetention == 'string') {
+                $scope.integration.MaxRetention = parseInt($scope.integration.MaxRetention);
+              }
               $scope.cb($scope.integration, $scope.triggers);
               $scope.onCancel();
             }

@@ -35,7 +35,6 @@
             {!{if .LogsDeleteErr}!}
               <p class="text-red"><b>Error!: </b> {!{.LogsDeleteErr}!}</p>
             {!{else}!}
-              <p><b>Logs retention: </b> {!{.LogsRetentionDays}!} days</p>
               <p><b>Rows deleted: </b> {!{.NumLogsDeleted}!}</p>
               <p><b>Operation took: </b> {!{.LogsCleanupTime}!}</p>
             {!{end}!}

@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	maxLogsRetentionDays    = 21
 	maxSessionLengthDays    = 14
 	maxSessionRetentionDays = 28
 )
@@ -82,10 +81,9 @@ func (h *MaintenanceHandler) StatsHandler(response http.ResponseWriter, request 
 }
 
 type cleanupData struct {
-	LogsRetentionDays int
-	NumLogsDeleted    int64
-	LogsDeleteErr     error
-	LogsCleanupTime   time.Duration
+	NumLogsDeleted  int64
+	LogsDeleteErr   error
+	LogsCleanupTime time.Duration
 
 	MaxSessionDays     int
 	NumSessionsRevoked int64
@@ -121,8 +119,7 @@ func (h *MaintenanceHandler) CleanupHandler(response http.ResponseWriter, reques
 	}
 
 	logsCleanupStart := time.Now()
-	templateData.LogsRetentionDays = maxLogsRetentionDays
-	templateData.NumLogsDeleted, templateData.LogsDeleteErr = integration.DoLogsCleanup(request.Context(), maxLogsRetentionDays, h.DB)
+	templateData.NumLogsDeleted, templateData.LogsDeleteErr = integration.DoLogsCleanup(request.Context(), h.DB)
 	templateData.LogsCleanupTime = time.Now().Sub(logsCleanupStart)
 
 	sessionRevokeStart := time.Now()

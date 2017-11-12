@@ -7,25 +7,33 @@ import (
 )
 
 // DoLogsCleanup deletes old log entries.
-func DoLogsCleanup(ctx context.Context, days int, db *sql.DB) (int64, error) {
+func DoLogsCleanup(ctx context.Context, db *sql.DB) (int64, error) {
+	runnables, err := GetAllRunnable(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+	var numAffected int64
+
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
 	}
 
-	l, err := tx.ExecContext(ctx, `DELETE FROM integration_log WHERE created_at < ?;`, time.Now().AddDate(0, 0, -days))
-	if err != nil {
-		tx.Rollback()
-		return 0, err
+	for _, runnable := range runnables {
+		l, err := tx.ExecContext(ctx, `DELETE FROM integration_log WHERE created_at < ? AND integration_parent = ?;`, time.Now().AddDate(0, 0, -runnable.MaxRetention), runnable.UID)
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		num, err := l.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		numAffected += num
 	}
 
-	num, err := l.RowsAffected()
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	return num, tx.Commit()
+	return numAffected, tx.Commit()
 }
 
 // DoCreateRunnable implements all the logic to create a runnable and its triggers.
