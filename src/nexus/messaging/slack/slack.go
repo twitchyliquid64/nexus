@@ -269,9 +269,33 @@ func (s *Source) runLoop() {
 			case *slack.ConnectedEvent:
 
 			case *slack.MessageEvent:
-				err := s.onMessage(ev)
-				if err != nil {
-					log.Printf("Slack source failed to commit message: %s", err)
+				switch ev.SubType {
+				case "me_message":
+					ev.Msg.Text = "/me " + ev.Msg.Text
+					fallthrough
+				case "", "bot_message", "channel_join", "message_changed", "message_replied":
+					err := s.onMessage(ev)
+					if err != nil {
+						log.Printf("Slack source failed to commit message: %v", err)
+					}
+				case "channel_topic":
+					if _, ok := s.channelCache[ev.Channel]; !ok {
+						if err := s.syncChannels(); err != nil {
+							log.Printf("Could not find channel for channel_topic event: %v", err)
+							return
+						}
+					}
+					c, err := messaging.GetConversationByCID(context.Background(), s.channelCache[ev.Channel], s.db)
+					if err != nil {
+						log.Printf("Failed to get conversation for channel_topic event: %v", err)
+						return
+					}
+					c.SetMetadata("topic", ev.Topic)
+					err = messaging.UpdateConversationMetadata(context.Background(), c, s.db)
+					if err != nil {
+						log.Printf("Failed to update conversation for channel_topic event: %v", err)
+						return
+					}
 				}
 
 			case *slack.PresenceChangeEvent:
