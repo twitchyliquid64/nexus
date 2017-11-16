@@ -107,7 +107,10 @@ func (s *s3) List(ctx context.Context, p string, userID int) ([]ListResultItem, 
 }
 
 func (s *s3) NewFolder(ctx context.Context, p string, userID int) error {
-	return errors.New("not implemented")
+	if strings.HasSuffix(p, "/") {
+		return errors.New("unexpected trailing slash")
+	}
+	return s.Save(ctx, p+"/", userID, []byte(""))
 }
 
 func (s *s3) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
@@ -118,4 +121,8 @@ func (s *s3) Upload(ctx context.Context, p string, userID int, data io.Reader) e
 	defer s3Writer.Close()
 	_, err = io.Copy(s3Writer, data)
 	return err
+}
+
+func (s *s3) SignedURL(ctx context.Context, p string, expires time.Time, userID int) string {
+	return s.getGoAMZ().SignedURL(p, expires)
 }

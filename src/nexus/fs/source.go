@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"nexus/data/fs"
+	"os"
 	"strings"
 )
 
@@ -43,4 +44,30 @@ func getSourcesForUser(ctx context.Context, userID int) ([]*fs.Source, error) {
 		Kind:    fs.FSSourceMiniFS,
 	})
 	return out, err
+}
+
+// SourceForPath returns the source which handles the given path and user.
+func SourceForPath(ctx context.Context, path string, userID int) (*fs.Source, error) {
+	var err error
+	if path, err = validatePath(path); err != nil {
+		return nil, err
+	}
+
+	if path == "/" {
+		return nil, errors.New("multiple sources at root")
+	}
+
+	// identify the source and query that
+	sources, err := getSourcesForUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	splitPath := strings.Split(path, "/")
+	for _, source := range sources {
+		if splitPath[1] == source.Prefix {
+			return source, nil
+		}
+	}
+	return nil, os.ErrNotExist
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	dfs "nexus/data/fs"
 	"nexus/fs"
 	"nexus/serv/util"
 	"os"
@@ -139,13 +140,21 @@ func (h *FSHandler) DeleteHandler(response http.ResponseWriter, request *http.Re
 	}
 
 	var details struct {
-		Path string `json:"path"`
+		Path     string `json:"path"`
+		IsFolder bool   `json:"isFolder"`
 	}
 	decoder := json.NewDecoder(request.Body)
 	err = decoder.Decode(&details)
 	if err != nil {
 		h.error(response, request, "Request decode failed", err, nil)
 		return
+	}
+
+	// S3 directories have a trailing slash on them.
+	if src, err2 := fs.SourceForPath(request.Context(), details.Path, usr.UID); err2 == nil && src.Kind == dfs.FSSourceS3 {
+		if details.IsFolder {
+			details.Path = details.Path + "/"
+		}
 	}
 
 	err = fs.Delete(request.Context(), details.Path, usr.UID)
