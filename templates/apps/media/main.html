@@ -1,0 +1,91 @@
+<html>
+<head>
+    <title>Media Player</title>
+
+    <!-- Materialize CSS -->
+    <link rel="icon" sizes="192x192" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/css/material-icons.css">
+    <link rel="stylesheet" href="/static/css/materialize.min.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/general.css">
+
+    <style type="text/css">
+    /**
+     * Hide when Angular is not yet loaded and initialized
+     */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+      display: none !important;
+    }
+
+    #footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: white;
+      margin: 0px;
+    }
+    .thumb {
+      display: none;
+    }
+    </style>
+
+    <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
+
+    <script type="text/javascript" src="/static/js/apps/media/app.js"></script>
+</head>
+<body ng-app="media" ng-cloak ng-controller="BodyController">
+  <nav class="grey darken-3" role="navigation">
+    <div class="nav-wrapper">
+      <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">video_library</i> Media Player</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container row">
+    <div class="">
+      <h5 ng-if="!isListMode">{{path}}</h5>
+      <h5 ng-if="isListMode">Please select a data source</h5>
+      <loader loading="loading" error="error"></loader>
+
+      <div ng-if="isListMode" class="collection">
+        <a href="/app/media?path=/{{source.Prefix}}" ng-repeat="source in dataSources | filter:dataSourceFilter:strict" class="collection-item">{{source.Prefix}}</a>
+      </div>
+
+      <ul ng-if="!isListMode" class="collection">
+        <li ng-repeat="file in files | orderBy:'-ItemKind'" class="collection-item">
+          <a href="/app/media?path={{path}}/{{file.Name}}" ng-if="file.ItemKind==3" style="cursor: pointer;">{{file.Name}}</a>
+          <a ng-click="play(file)" ng-if="file.ItemKind!=3" style="cursor: pointer;">{{file.Name}}</a>
+
+          <a href="#!" class="secondary-content"><i class="material-icons">{{icon(file)}}</i></a>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+
+  <div id="footer" class="row valign-wrapper">
+    <div class="col s1">
+      <a class="waves-effect waves-teal btn-flat btn-large" ng-click="playButton();"><i class="material-icons">play_arrow</i></a>
+    </div>
+    <div class="col s1">
+      <a class="waves-effect waves-teal btn-flat btn-large" ng-click="pauseButton();"><i class="material-icons">pause</i></a>
+    </div>
+    <div class="col s3">
+      <input type="range" id="positionSlider" min="0" max="100" value="0" style="margin: 0px;" />
+    </div>
+    <div class="col s3">
+      {{aTime | musicSecs}} / {{aDuration | musicSecs}}
+    </div>
+    <div class="col s4" style="text-align: center;">
+      {{msg}}
+    </div>
+  </div>
+</body>
+</html>

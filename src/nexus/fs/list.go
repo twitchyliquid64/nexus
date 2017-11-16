@@ -44,7 +44,7 @@ func listSources(ctx context.Context, path string, userID int) ([]ListResultItem
 }
 
 func listFromSource(ctx context.Context, source *fs.Source, path string, userID int) ([]ListResultItem, error) {
-	src, err := expandSource(source)
+	src, err := ExpandSource(source)
 	if err != nil {
 		return nil, err
 	}

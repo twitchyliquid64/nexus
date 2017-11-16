@@ -15,24 +15,24 @@ import (
 	"github.com/rlmcpherson/s3gof3r"
 )
 
-type s3 struct {
+type S3 struct {
 	SecretKey  string
 	AccessKey  string
 	BucketName string
 	RegionName string
 }
 
-func (s *s3) getGoAMZ() *s3lib.Bucket {
+func (s *S3) getGoAMZ() *s3lib.Bucket {
 	s3cli := s3lib.New(aws.Auth{AccessKey: s.AccessKey, SecretKey: s.SecretKey, Token: ""}, aws.Regions[s.RegionName])
 	return s3cli.Bucket(s.BucketName)
 }
 
-func (s *s3) getStreamingCredentials() *s3gof3r.S3 {
+func (s *S3) getStreamingCredentials() *s3gof3r.S3 {
 	keys := s3gof3r.Keys{AccessKey: s.AccessKey, SecretKey: s.SecretKey}
 	return s3gof3r.New(strings.Replace(aws.Regions[s.RegionName].S3Endpoint, "https://", "", -1), keys)
 }
 
-func (s *s3) getStreamParameters() *s3gof3r.Config {
+func (s *S3) getStreamParameters() *s3gof3r.Config {
 	return &s3gof3r.Config{
 		Concurrency: 2,
 		PartSize:    6 * 1024 * 1024,
@@ -43,7 +43,8 @@ func (s *s3) getStreamParameters() *s3gof3r.Config {
 	}
 }
 
-func (s *s3) Contents(ctx context.Context, p string, userID int, writer io.Writer) error {
+// Contents implements Source.
+func (s *S3) Contents(ctx context.Context, p string, userID int, writer io.Writer) error {
 	s3Reader, _, err := s.getStreamingCredentials().Bucket(s.BucketName).GetReader(p, s.getStreamParameters())
 	if err != nil {
 		return err
@@ -53,7 +54,8 @@ func (s *s3) Contents(ctx context.Context, p string, userID int, writer io.Write
 	return err
 }
 
-func (s *s3) Save(ctx context.Context, p string, userID int, data []byte) error {
+// Save implements Source.
+func (s *S3) Save(ctx context.Context, p string, userID int, data []byte) error {
 	sizeToDetect := len(data)
 	if sizeToDetect > 1024 {
 		sizeToDetect = 1024
@@ -66,11 +68,13 @@ func (s *s3) Save(ctx context.Context, p string, userID int, data []byte) error 
 	return s.getGoAMZ().Put(p, data, contType, s3lib.Private)
 }
 
-func (s *s3) Delete(ctx context.Context, p string, userID int) error {
+// Delete implements Source.
+func (s *S3) Delete(ctx context.Context, p string, userID int) error {
 	return s.getGoAMZ().Del(p)
 }
 
-func (s *s3) List(ctx context.Context, p string, userID int) ([]ListResultItem, error) {
+// List implements Source.
+func (s *S3) List(ctx context.Context, p string, userID int) ([]ListResultItem, error) {
 	if p != "" && !strings.HasSuffix(p, "/") {
 		p = p + "/"
 	}
@@ -106,14 +110,16 @@ func (s *s3) List(ctx context.Context, p string, userID int) ([]ListResultItem, 
 	return out, nil
 }
 
-func (s *s3) NewFolder(ctx context.Context, p string, userID int) error {
+// NewFolder implements Source.
+func (s *S3) NewFolder(ctx context.Context, p string, userID int) error {
 	if strings.HasSuffix(p, "/") {
 		return errors.New("unexpected trailing slash")
 	}
 	return s.Save(ctx, p+"/", userID, []byte(""))
 }
 
-func (s *s3) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
+// Upload implements Source.
+func (s *S3) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
 	s3Writer, err := s.getStreamingCredentials().Bucket(s.BucketName).PutWriter(p, nil, nil)
 	if err != nil {
 		return err
@@ -123,6 +129,7 @@ func (s *s3) Upload(ctx context.Context, p string, userID int, data io.Reader) e
 	return err
 }
 
-func (s *s3) SignedURL(ctx context.Context, p string, expires time.Time, userID int) string {
+// SignedURL returns a temporary URL through which the file can be accessed anonymously.
+func (s *S3) SignedURL(ctx context.Context, p string, expires time.Time, userID int) string {
 	return s.getGoAMZ().SignedURL(p, expires)
 }

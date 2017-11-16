@@ -3,17 +3,17 @@ package fs
 import (
 	"context"
 	"errors"
-  "io"
-  "nexus/data/fs"
+	"io"
+	"nexus/data/fs"
 	"strings"
 )
 
 func uploadFromSource(ctx context.Context, source *fs.Source, path string, userID int, data io.Reader) error {
-  src, err := expandSource(source)
-  if err != nil {
-    return err
-  }
-  return src.Upload(ctx, path, userID, data)
+	src, err := ExpandSource(source)
+	if err != nil {
+		return err
+	}
+	return src.Upload(ctx, path, userID, data)
 }
 
 // Upload does a streaming save.

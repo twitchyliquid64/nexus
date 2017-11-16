@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// represents a virtual filesystem.
-type source interface {
+// Source represents a virtual filesystem.
+type Source interface {
 	Save(ctx context.Context, path string, userID int, data []byte) error
 	List(ctx context.Context, path string, userID int) ([]ListResultItem, error)
 	Delete(ctx context.Context, p string, userID int) error
@@ -19,13 +19,14 @@ type source interface {
 	Upload(ctx context.Context, p string, userID int, data io.Reader) error
 }
 
-func expandSource(s *fs.Source) (source, error) {
+// ExpandSource converts a *fs.Source to a Source.
+func ExpandSource(s *fs.Source) (Source, error) {
 	switch s.Kind {
 	case fs.FSSourceMiniFS:
 		return &miniFS{}, nil
 	case fs.FSSourceS3:
 		spl := strings.Split(s.Value1, ":")
-		return &s3{
+		return &S3{
 			BucketName: spl[0],
 			RegionName: spl[1],
 			AccessKey:  s.Value2,

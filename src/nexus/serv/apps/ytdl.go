@@ -262,7 +262,7 @@ func (a *YtdlApp) Name() string {
 
 // Icon implements app.
 func (a *YtdlApp) Icon() string {
-	return "video_library"
+	return "video_call"
 }
 
 // ShouldShowIcon implements app.

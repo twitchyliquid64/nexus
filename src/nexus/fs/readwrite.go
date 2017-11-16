@@ -2,14 +2,14 @@ package fs
 
 import (
 	"context"
-  "io"
+	"io"
 	"nexus/data/fs"
 	"os"
 	"strings"
 )
 
 func contentsFromSource(ctx context.Context, source *fs.Source, path string, userID int, writer io.Writer) error {
-	src, err := expandSource(source)
+	src, err := ExpandSource(source)
 	if err != nil {
 		return err
 	}

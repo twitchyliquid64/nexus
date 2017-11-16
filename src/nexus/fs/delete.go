@@ -11,7 +11,7 @@ import (
 var ErrHasFiles = errors.New("Cannot delete non-empty directory")
 
 func deleteFromSource(ctx context.Context, source *fs.Source, p string, userID int) error {
-	src, err := expandSource(source)
+	src, err := ExpandSource(source)
 	if err != nil {
 		return err
 	}

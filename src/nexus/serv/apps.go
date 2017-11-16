@@ -24,6 +24,7 @@ type app interface {
 var apps = []app{
 	&nexus_apps.CodenameApp{},
 	&nexus_apps.YtdlApp{},
+	&nexus_apps.MediaApp{},
 	&mc.ReconApp{},
 }
 

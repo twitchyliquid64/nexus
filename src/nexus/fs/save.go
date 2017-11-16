@@ -8,7 +8,7 @@ import (
 )
 
 func saveFromSource(ctx context.Context, source *fs.Source, path string, userID int, data []byte) error {
-	src, err := expandSource(source)
+	src, err := ExpandSource(source)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func Save(ctx context.Context, p string, userID int, data []byte) error {
 }
 
 func newFolderFromSource(ctx context.Context, source *fs.Source, path string, userID int) error {
-	src, err := expandSource(source)
+	src, err := ExpandSource(source)
 	if err != nil {
 		return err
 	}
