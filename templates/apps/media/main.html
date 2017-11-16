@@ -43,6 +43,15 @@
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">video_library</i> Media Player</a>
       <ul class="right hide-on-med-and-down">
+        <li>
+          <form>
+            <div class="input-field">
+              <input id="search" type="search" ng-model="filesFilter.Name" required>
+              <label class="label-icon" for="search"><i class="material-icons">search</i></label>
+              <i class="material-icons" ng-click="filesFilter.Name='';">close</i>
+            </div>
+          </form>
+        </li>
         <li><a href="/"><i class="material-icons">exit_to_app</i></a></li>
       </ul>
     </div>
@@ -59,7 +68,7 @@
       </div>
 
       <ul ng-if="!isListMode" class="collection">
-        <li ng-repeat="file in files | orderBy:'-ItemKind'" class="collection-item">
+        <li ng-repeat="file in files | filter:filesFilter:strict | orderBy:'-ItemKind'" class="collection-item">
           <a href="/app/media?path={{path}}/{{file.Name}}" ng-if="file.ItemKind==3" style="cursor: pointer;">{{file.Name}}</a>
           <a ng-click="play(file)" ng-if="file.ItemKind!=3" style="cursor: pointer;">{{file.Name}}</a>
 

@@ -72,6 +72,7 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
   $scope.dataSourceFilter = {Kind: 2};
 
   $scope.files = [];
+  $scope.filesFilter = {};
   $scope.msg = 'Please select a media file to begin playing.'
   $scope.audioElement = document.createElement('audio');
   $scope.audioElement.addEventListener("timeupdate",function(){
