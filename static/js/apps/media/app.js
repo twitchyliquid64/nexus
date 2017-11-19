@@ -144,14 +144,16 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
     if ($scope.audioElement) {
       $scope.audioElement.pause();
     }
+    var fname = file.Name.split('/');
+    fname = fname[fname.length-1];
 
     if (file.Name.endsWith('.mp3')) {
       $scope.loading = true;
-      $scope.msg = file.Name;
+      $scope.msg = fname;
       $http({
         method: 'POST',
         url: '/app/media/getURL',
-        data: {path: $scope.path + '/' + file.Name},
+        data: {path: $scope.path + '/' + fname},
       }).then(function successCallback(response) {
         $scope.loading = false;
         $scope.audioElement.setAttribute('src', response.data.url);
@@ -165,7 +167,7 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
       $http({
         method: 'POST',
         url: '/app/media/getURL',
-        data: {path: $scope.path + '/' + file.Name, video: true},
+        data: {path: $scope.path + '/' + fname, video: true},
       }).then(function successCallback(response) {
         $scope.loading = false;
         $window.location.href = '/app/media/vid?path=' + encodeURIComponent(response.data.url) + '&backurl=' + encodeURIComponent($window.location.href);
