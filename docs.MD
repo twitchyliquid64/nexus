@@ -23,6 +23,10 @@ You can test the endpoint using: `./maintenance-tool GETUSERLISTREMOTE`.
 
 ### App-specific
 
+#### Stop showing media player in list
+
+Set `media_player_icon` = `no` on the user's attributes.
+
 #### Enable ytdl
 
 1. Install `youtube-dl` and `ffmpeg`.
