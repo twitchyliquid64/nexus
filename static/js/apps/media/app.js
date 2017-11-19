@@ -160,6 +160,19 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
         $scope.loading = false;
         $scope.error = response;
       });
+    } else if (file.Name.endsWith('.mp4')) {
+      $scope.loading = true;
+      $http({
+        method: 'POST',
+        url: '/app/media/getURL',
+        data: {path: $scope.path + '/' + file.Name, video: true},
+      }).then(function successCallback(response) {
+        $scope.loading = false;
+        $window.location.href = '/app/media/vid?path=' + encodeURIComponent(response.data.url) + '&backurl=' + encodeURIComponent($window.location.href);
+      }, function errorCallback(response) {
+        $scope.loading = false;
+        $scope.error = response;
+      });
     }
   }
 
@@ -168,4 +181,18 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", "$http", 
   } else {
     $scope.getFiles();
   }
+}]);
+
+
+
+
+
+app.controller('VideoController', ["$scope", "$rootScope", "$location", "$http", "$window", function ($scope, $rootScope, $location, $http, $window) {
+  $scope.path = decodeURIComponent($.urlParam('path'));
+  $scope.backurl = decodeURIComponent($.urlParam('backurl'));
+  $('#mvid').html('\
+  <video class="responsive-video" controls>\
+    <source src="' + $scope.path + '" type="video/mp4">\
+  </video>\
+  ')
 }]);

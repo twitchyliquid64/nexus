@@ -38,6 +38,7 @@ func (a *MediaApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) 
 	a.DB = db
 
 	mux.HandleFunc("/app/media", a.Render)
+	mux.HandleFunc("/app/media/vid", a.RenderVideoPlayer)
 	mux.HandleFunc("/app/media/sources", a.DataSources)
 	mux.HandleFunc("/app/media/files", a.Files)
 	mux.HandleFunc("/app/media/getURL", a.GetURL)
@@ -57,6 +58,21 @@ func (a *MediaApp) Render(response http.ResponseWriter, request *http.Request) {
 	}
 
 	util.LogIfErr("MediaApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/media/main.html"), nil, response))
+}
+
+// RenderVideoPlayer generates page content.
+func (a *MediaApp) RenderVideoPlayer(response http.ResponseWriter, request *http.Request) {
+	_, _, err := util.AuthInfo(request, a.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	util.LogIfErr("MediaApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/media/videoplayer.html"), nil, response))
 }
 
 // DataSources handles JSON requests to list available sources.
@@ -140,7 +156,8 @@ func (a *MediaApp) GetURL(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var input struct {
-		Path string `json:"path"`
+		Path  string `json:"path"`
+		Video bool   `json:"video"`
 	}
 	err = json.NewDecoder(request.Body).Decode(&input)
 	if err != nil {
@@ -163,7 +180,12 @@ func (a *MediaApp) GetURL(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	url := s3src.SignedURL(request.Context(), strings.TrimPrefix(input.Path, "/"+fsSrc.Prefix+"/"), time.Now().Add(time.Hour), u.UID)
+	exp := time.Now().Add(time.Hour)
+	if input.Video {
+		exp = exp.Add(2 * time.Hour)
+	}
+
+	url := s3src.SignedURL(request.Context(), strings.TrimPrefix(input.Path, "/"+fsSrc.Prefix+"/"), exp, u.UID)
 	response.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(response).Encode(map[string]string{"url": url})
 	if err != nil {
