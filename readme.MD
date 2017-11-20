@@ -65,5 +65,4 @@ More complicated, automatically fetching a LetsEncrypt certificate and running o
 
 ## Wishlist / TODO
 
- - Websockets to get logs in realtime from the run-explorer view without refreshing.
  - Ability to initiate DMs in the messenger.

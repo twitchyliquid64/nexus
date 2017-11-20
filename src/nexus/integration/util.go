@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"nexus/data/integration"
+	notify "nexus/integration/log"
 
 	"github.com/robertkrimen/otto"
 )
@@ -53,24 +54,28 @@ func throwOttoException(vm *otto.Otto, message string) {
 }
 
 func logControlInfo(ctx context.Context, runID, msg string, runnableUID int, db *sql.DB) error {
-	return integration.WriteLog(ctx, &integration.Log{
+	packedMsg := &integration.Log{
 		ParentUID: runnableUID,
 		RunID:     runID,
 		Value:     msg,
 		Level:     integration.LevelInfo,
 		Kind:      integration.KindControlLog,
-	}, db)
+	}
+	notify.Log(packedMsg)
+	return integration.WriteLog(ctx, packedMsg, db)
 }
 
 func logControlData(ctx context.Context, runID, msg string, runnableUID, datat int, db *sql.DB) error {
-	return integration.WriteLog(ctx, &integration.Log{
+	packedMsg := &integration.Log{
 		ParentUID: runnableUID,
 		RunID:     runID,
 		Value:     msg,
 		Level:     integration.LevelInfo,
 		Kind:      integration.KindStructuredData,
 		Datatype:  datat,
-	}, db)
+	}
+	notify.Log(packedMsg)
+	return integration.WriteLog(ctx, packedMsg, db)
 }
 
 func logSystemError(ctx context.Context, runID string, err error, runnableUID int, db *sql.DB) error {
@@ -82,12 +87,15 @@ func logSystemError(ctx context.Context, runID string, err error, runnableUID in
 		msg = err.Error()
 	}
 
-	return integration.WriteLog(ctx, &integration.Log{
+	packedMsg := &integration.Log{
 		ParentUID: runnableUID,
 		RunID:     runID,
 		Value:     msg,
 		Level:     integration.LevelError,
 		Kind:      integration.KindStructuredData,
 		Datatype:  integration.DatatypeTrace,
-	}, db)
+	}
+	notify.Log(packedMsg)
+
+	return integration.WriteLog(ctx, packedMsg, db)
 }

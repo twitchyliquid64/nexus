@@ -63,6 +63,14 @@ func (b *tInitialiser) Apply(r *Run) error {
 		return err
 	}
 
+	if err := obj.Set("sleep", func(call otto.FunctionCall) otto.Value {
+		i, _ := call.Argument(0).ToInteger()
+		time.Sleep(time.Duration(i) * time.Millisecond)
+		return otto.Value{}
+	}); err != nil {
+		return err
+	}
+
 	if err := obj.Set("addTime", func(call otto.FunctionCall) otto.Value {
 		t, err := call.Argument(0).Export()
 		if err != nil {

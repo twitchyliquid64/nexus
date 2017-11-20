@@ -27,6 +27,7 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   $scope.error = null;
   $scope.limit = 200;
   $scope.filters = {info: true, prob: true, sys: true};
+  $scope.ws = null;
 
   $scope.update = function(){
     $scope.loading = true;
@@ -80,7 +81,7 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
   }
 
   function logLinesToHtml(lines){
-    var out = "<div class='log-container'>";
+    var out = "";
     for (var i = 0; i < lines.length; i++) {
       var d = moment(lines[i].CreatedAt);
 
@@ -129,7 +130,6 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
       }
       out += "</div>";
     }
-    out += "</div>";
     return out;
   }
 
@@ -139,7 +139,13 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
     $scope.offset = parseInt(offset);
     $scope.run = run;
     console.log("New constraints: ", run, filters, limit, offset);
+    if ($scope.ws) {
+      $scope.ws.close();
+      $scope.ws = null;
+    }
     $scope.updateEntries();
+    if (run != '!!')
+      $scope.setupWS(run);
   }
 
   $rootScope.$on('integration-run-explorer', function(event, args) {
@@ -147,12 +153,44 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
     $scope.runs = [];
     $scope.offset = 0;
     $scope.limit = 200;
+    if ($scope.ws) {
+      $scope.ws.close();
+      $scope.ws = null;
+    }
     if (args.runID){
       $scope.startRun = args.runID;
+      $scope.setupWS(args.runID);
     } else {
       $scope.startRun = null;
-    }
+    };
   });
+
+  $scope.setupWS = function(runID) {
+    $scope.ws = new WebSocket((location.protocol === 'https:'? "wss://" : "ws://") + location.hostname+(location.port ? ':'+location.port: '') + "/web/v1/integrations/log/stream/" + runID);
+    $scope.ws.onopen = function()
+    {
+      console.log("ws opened.");
+      $scope.$apply(function(){
+        $scope.wsConnected = true;
+      });
+    };
+
+    $scope.ws.onmessage = function (evt)
+    {
+      var received_msg = evt.data;
+      var parsed = JSON.parse(received_msg);
+      var current = document.getElementById('integrationLogOutput').innerHTML;
+      document.getElementById('integrationLogOutput').innerHTML = current + logLinesToHtml([parsed]);
+    };
+
+    $scope.ws.onclose = function(e)
+    {
+      console.log("ws closed.", e);
+      $scope.$apply(function(){
+        $scope.wsConnected = false;
+      });
+    };
+  };
 
   $rootScope.$on('page-change', function(event, args) {
     if (args.page == 'integration-run-explorer'){

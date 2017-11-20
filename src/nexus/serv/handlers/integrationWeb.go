@@ -4,11 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"nexus/data/integration"
 	integrationState "nexus/integration"
+	notify "nexus/integration/log"
 	"nexus/serv/util"
 	"time"
+
+	"golang.org/x/net/websocket"
 
 	"github.com/robertkrimen/otto"
 )
@@ -37,7 +41,49 @@ func (h *IntegrationHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 	mux.HandleFunc("/web/v1/integrations/run/manual", h.HandleRun)
 	mux.HandleFunc("/web/v1/integrations/log/runs", h.HandleGetRuns)
 	mux.HandleFunc("/web/v1/integrations/log/entries", h.HandleGetLogs)
+	mux.Handle("/web/v1/integrations/log/stream/", websocket.Handler(h.HandleLogsWS))
 	return nil
+}
+
+type logsConsumer struct {
+	c        *websocket.Conn
+	doneChan chan bool
+}
+
+func (l *logsConsumer) Done() {
+	close(l.doneChan)
+}
+func (l *logsConsumer) Message(msg *integration.Log) {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("[logsConsumer] json.Marshal() error: %v", err)
+		return
+	}
+	l.c.Write(b)
+}
+
+// HandleLogsWS provides realtime logs for a given runnable.
+func (h *IntegrationHandler) HandleLogsWS(c *websocket.Conn) {
+	s, usr, err := util.AuthInfo(c.Request(), h.DB)
+	if err != nil {
+		log.Printf("HandleLogWS Auth error: %v", err)
+		return
+	}
+	if !usr.AdminPerms.Integrations || !s.AccessWeb {
+		return
+	}
+
+	consumer := logsConsumer{
+		c:        c,
+		doneChan: make(chan bool),
+	}
+	log.Printf("Streaming logs for: %s", c.Request().URL.Path[len("/web/v1/integrations/log/stream/"):])
+	err = notify.Subscribe(c.Request().URL.Path[len("/web/v1/integrations/log/stream/"):], &consumer)
+	if err != nil {
+		log.Printf("HandleLogWS notify.Subscribe() error: %v", err)
+		return
+	}
+	<-consumer.doneChan
 }
 
 // HandleCreateRunnable handles web requests to create a runnable.

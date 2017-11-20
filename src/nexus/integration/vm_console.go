@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"nexus/data/integration"
+	notify "nexus/integration/log"
 
 	"github.com/robertkrimen/otto"
 )
@@ -42,13 +43,15 @@ func (b *consoleInitialiser) ApplyBasicLogMethods(r *Run, obj *otto.Object) erro
 		}
 		outStr := strings.Join(output, " ")
 
-		logErr := integration.WriteLog(r.Ctx, &integration.Log{
+		msg := &integration.Log{
 			ParentUID: r.Base.UID,
 			RunID:     r.ID,
 			Value:     outStr,
 			Level:     integration.LevelInfo,
 			Kind:      integration.KindLog,
-		}, db)
+		}
+		notify.Log(msg)
+		logErr := integration.WriteLog(r.Ctx, msg, db)
 
 		if logErr != nil {
 			log.Printf("[run][%s] %q Could not write log line - err: %s", r.ID, r.Base.Name, logErr)
@@ -70,13 +73,15 @@ func (b *consoleInitialiser) ApplyBasicLogMethods(r *Run, obj *otto.Object) erro
 		}
 		outStr := strings.Join(output, " ")
 
-		logErr := integration.WriteLog(r.Ctx, &integration.Log{
+		msg := &integration.Log{
 			ParentUID: r.Base.UID,
 			RunID:     r.ID,
 			Value:     outStr,
 			Level:     integration.LevelWarning,
 			Kind:      integration.KindLog,
-		}, db)
+		}
+		notify.Log(msg)
+		logErr := integration.WriteLog(r.Ctx, msg, db)
 
 		if logErr != nil {
 			log.Printf("[run][%s] %q Could not write log line - err: %s", r.ID, r.Base.Name, logErr)
@@ -98,13 +103,15 @@ func (b *consoleInitialiser) ApplyBasicLogMethods(r *Run, obj *otto.Object) erro
 		}
 		outStr := strings.Join(output, " ")
 
-		logErr := integration.WriteLog(r.Ctx, &integration.Log{
+		msg := &integration.Log{
 			ParentUID: r.Base.UID,
 			RunID:     r.ID,
 			Value:     outStr,
 			Level:     integration.LevelError,
 			Kind:      integration.KindLog,
-		}, db)
+		}
+		notify.Log(msg)
+		logErr := integration.WriteLog(r.Ctx, msg, db)
 
 		if logErr != nil {
 			log.Printf("[run][%s] %q Could not write log line - err: %s", r.ID, r.Base.Name, logErr)
@@ -139,13 +146,15 @@ func (b *consoleInitialiser) ApplyDataLogMethods(r *Run, obj *otto.Object) error
 			return otto.Value{}
 		}
 
-		logErr := integration.WriteLog(r.Ctx, &integration.Log{
+		msg := &integration.Log{
 			ParentUID: r.Base.UID,
 			RunID:     r.ID,
 			Value:     string(b),
 			Level:     integration.LevelInfo,
 			Kind:      integration.KindJSONData,
-		}, db)
+		}
+		notify.Log(msg)
+		logErr := integration.WriteLog(r.Ctx, msg, db)
 
 		if logErr != nil {
 			log.Printf("[run][%s] %q Could not write log line - err: %s", r.ID, r.Base.Name, logErr)

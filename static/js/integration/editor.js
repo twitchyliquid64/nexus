@@ -820,6 +820,18 @@ var codeSubs = [
     },
   },
   {
+    prefix: 't.',
+    name: 'sleep',
+    value: 'sleep()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 't.sleep()',
+      kind: 'method',
+      detail: 't.sleep(<milliseconds>). Just sleeps x milliseconds.',
+    },
+  },
+  {
     prefix: 'gcp.',
     name: 'load_service_credential',
     value: 'load_service_credential()',

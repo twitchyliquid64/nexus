@@ -588,11 +588,28 @@
 
   <div ng-show="page == 'integration-run-explorer'" style="margin: 0px 9px;">
     <div ng-controller="IntegrationRunExplorer">
-      <h3>{{runnable.Name}}</h3>
+      <div class="row valign-wrapper">
+        <div class="col s10">
+          <h3>{{runnable.Name}}</h3>
+        </div>
+        <div class="col s2 valign-wrapper" style="min-height: 80px;">
+          <div class="right-aligned valign-wrapper grey-text" ng-if="!wsConnected || loading">
+            <i class="material-icons left">signal_wifi_off</i>
+            Not streaming
+          </div>
+          <div class="right-aligned valign-wrapper green-text text-darken-2" ng-if="wsConnected && !loading">
+            <i class="material-icons left ">signal_wifi_4_bar</i>
+            Streaming
+          </div>
+        </div>
+      </div>
+
       <loader loading="loading" error="error"></loader>
       <run-filter runs="runs" runnable="runnable" on-change="filtersChanged(run, filters, limit, offset)"></run-filter>
 
-      <div id="integrationLogOutput"></div>
+      <div class='log-container'>
+        <div id="integrationLogOutput"></div>
+      </div>
     </div>
   </div>
 
