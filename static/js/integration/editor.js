@@ -741,7 +741,22 @@ var codeSubs = [
            ],
            success: true,
         }
-      ) + ');</div><br><br><p>Note the success attribute will always be true if the lookup succeeded. The rowid is a unique identifier for that row, and is always populated.</p>',
+      ) + ');</div><br><p>Note the success attribute will always be true if the lookup succeeded. The rowid is a unique identifier for that row, and is always populated.</p>',
+    },
+  },
+  {
+    prefix: 'datastore.',
+    name: 'deleteRow',
+    value: 'deleteRow()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'datastore.deleteRow()',
+      kind: 'method',
+      detail: 'Deletes a row with the given rowid in the given database. Errors if no such row exists. datastore.deleteRow(<datastore>, <rowid>)',
+      more: '<h4>datastore.deleteRow()</h4><br><label>Deleting row \'32\' from the \'Test\' datastore:</label><div style=\'white-space: pre-wrap;\'>' +
+      'datastore.delete("Test", 32);</div><br><br>' +
+      '<p>Note the success attribute will always be true if the lookup succeeded.</p>',
     },
   },
   {
@@ -961,9 +976,9 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
     }
 
     // show information about datastores
-    if (fullLine.match('.*datastore\\.(insert|query).*')){
+    if (fullLine.match('.*datastore\\.(insert|query|deleteRow|editRow).*')){
       $scope.datastoreSuggestions = {loading: true};
-      var datastoreExtract = fullLine.match('.*datastore\\.(insert|query)\\("(.*)".*');
+      var datastoreExtract = fullLine.match('.*datastore\\.(insert|query|deleteRow|editRow)\\("(.*)".*');
       if (datastoreExtract) { //show information on only the specified datastore
         $http({
           method: 'GET',

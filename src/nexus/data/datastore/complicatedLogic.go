@@ -145,6 +145,32 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 	return tx.Commit()
 }
 
+// DeleteRow delets a row with the corresponding rowID.
+func DeleteRow(ctx context.Context, dsID, rowID int, db *sql.DB) error {
+	queryStr := "DELETE FROM ds_" + strconv.Itoa(dsID) + " WHERE rowid = ?"
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	r, err := tx.Exec(queryStr+";", rowID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	rowsAffected, err := r.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	if rowsAffected == 0 {
+		tx.Rollback()
+		return errors.New("no record with that rowid")
+	}
+
+	return tx.Commit()
+}
+
 // EditRow edits a row with the corresponding rowID.
 func EditRow(ctx context.Context, dsID, rowID int, rowData map[string]interface{}, db *sql.DB) error {
 	cols, err := GetColumns(ctx, dsID, db)

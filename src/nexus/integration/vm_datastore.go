@@ -19,6 +19,7 @@ var binders = []functionBinder{
 	bindInsert,
 	bindQuery,
 	bindEditRow,
+	bindDeleteRow,
 }
 
 func bindEditRow(obj *otto.Object, r *Run) error {
@@ -60,13 +61,55 @@ func bindEditRow(obj *otto.Object, r *Run) error {
 
 		err = datastore.EditRow(ctx, storedDS.UID, int(rowID), fields, db)
 		if err != nil {
-			log.Printf("[run][%s][datastore.editRow] Failed to insert: %s", r.ID, err)
+			log.Printf("[run][%s][datastore.editRow] Failed to edit: %s", r.ID, err)
 			return r.VM.MakeCustomError("datastore", err.Error())
 		}
 
 		resultObj, err := makeObject(r.VM)
 		if err != nil {
 			log.Printf("[RUN][%s][datastore.editRow] makeObject Err: %s", r.ID, err.Error())
+			return r.VM.MakeCustomError("datastore-internal err", err.Error())
+		}
+		resultObj.Set("success", true)
+		return resultObj.Value()
+	})
+}
+
+func bindDeleteRow(obj *otto.Object, r *Run) error {
+	return obj.Set("deleteRow", func(call otto.FunctionCall) otto.Value {
+		ctx := context.Background()
+		datastoreName := call.Argument(0).String()
+		storedDS, err := datastore.GetDatastoreByName(ctx, datastoreName, db)
+		if err != nil {
+			log.Printf("[run][%s][datastore.deleteRow] Could not read DB by that name: %s", r.ID, err)
+			return r.VM.MakeCustomError("datastore", err.Error())
+		}
+
+		// check allowed to access
+		if storedDS.OwnerID != r.Base.OwnerID {
+			canAccess, errAccess := datastore.CheckAccess(ctx, r.Base.OwnerID, storedDS.UID, false, db)
+			if errAccess != nil {
+				return r.VM.MakeCustomError("datastore-internal err", errAccess.Error())
+			}
+			if !canAccess {
+				return r.VM.MakeCustomError("datastore", "cannot delete row on a datastore you do not own")
+			}
+		}
+		rowID, err := call.Argument(1).ToInteger()
+		if err != nil {
+			log.Printf("[run][%s][datastore.deleteRow] Failed to export argument 1: %s", r.ID, err)
+			return r.VM.MakeCustomError("datastore", err.Error())
+		}
+
+		err = datastore.DeleteRow(ctx, storedDS.UID, int(rowID), db)
+		if err != nil {
+			log.Printf("[run][%s][datastore.deleteRow] Failed to delete: %s", r.ID, err)
+			return r.VM.MakeCustomError("datastore", err.Error())
+		}
+
+		resultObj, err := makeObject(r.VM)
+		if err != nil {
+			log.Printf("[RUN][%s][datastore.deleteRow] makeObject Err: %s", r.ID, err.Error())
 			return r.VM.MakeCustomError("datastore-internal err", err.Error())
 		}
 		resultObj.Set("success", true)
