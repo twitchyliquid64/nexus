@@ -50,6 +50,24 @@ type cardConfig struct {
 	Width   int    `json:"width"`
 }
 
+type logConfig struct {
+	Icon          string  `json:"icon"`
+	IconColor     string  `json:"icon-color"`
+	Title         string  `json:"title"`
+	Subtitle      string  `json:"subtitle"`
+	SecondaryIcon string  `json:"secondary-icon"`
+	Fill          bool    `json:"fill"`
+	Height        float64 `json:"height"`
+
+	Items []struct {
+		Type     string `json:"type"`
+		Sections []struct {
+			Class string `json:"class"`
+			Text  string `json:"text"`
+		} `json:"sections"`
+	} `json:"items"`
+}
+
 type listConfig struct {
 	Icon          string `json:"icon"`
 	IconColor     string `json:"icon-color"`
@@ -74,6 +92,7 @@ type listConfig struct {
 type renderData struct {
 	Cards []cardConfig
 	Lists []listConfig
+	Logs  []logConfig
 }
 
 type byName []fs.ListResultItem
@@ -123,6 +142,18 @@ func loadRenderData(ctx context.Context, files []fs.ListResultItem, userID int) 
 				continue
 			}
 			out.Lists = append(out.Lists, c)
+		case "log":
+			content, err := contents(ctx, file.Name, userID)
+			if err != nil {
+				return nil, err
+			}
+			c := logConfig{Icon: "settings"}
+			err = json.Unmarshal(content, &c)
+			if err != nil {
+				log.Printf("Failed to unmarshal %q: %v", file.Name, err)
+				continue
+			}
+			out.Logs = append(out.Logs, c)
 		}
 	}
 
@@ -159,6 +190,9 @@ func (h *DashboardHandler) Render(response http.ResponseWriter, request *http.Re
 				}
 			}
 			return out
+		},
+		"logSize": func(height float64) string {
+			return fmt.Sprintf("%dpx", int(height*64.5))
 		}}).Delims("{!{", "}!}").ParseFiles(path.Join(h.TemplatePath, "templates", "dashboard.html"))
 
 	if util.InternalHandlerError("template.Parse()", response, request, err) {

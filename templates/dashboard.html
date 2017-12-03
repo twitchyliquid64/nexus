@@ -51,6 +51,31 @@
       </ul>
   </div>
   {!{end}!}
+
+  {!{range .Logs}!}
+  <div class="col s12 m12 {!{if .Fill}!}l12{!{else}!}l6{!{end}!}">
+      <ul class="collection dash-collection">
+        <li class="collection-item avatar">
+            <i class="large material-icons circle {!{if .IconColor}!}{!{.IconColor}!}{!{else}!}light-blue darken-2{!{end}!}">{!{.Icon}!}</i>
+            <span class="collection-header">{!{.Title}!}</span>
+            <p>{!{.Subtitle}!}</p>
+            <a href="#" class="secondary-content" style="color: #ff4081;"><i class="material-icons">{!{.SecondaryIcon}!}</i></a>
+        </li>
+
+        <li class="collection-item log-data-section" style="min-height: {!{logSize .Height}!};">
+          {!{range .Items}!}
+            <div class="log-data-entry">
+              {!{if eq .Type `log-line`}!}
+                {!{range .Sections}!}
+                <span class="{!{.Class}!}">{!{.Text}!}</span>
+                {!{end}!}
+              {!{end}!}
+            </div>
+          {!{end}!}
+        </li>
+      </ul>
+  </div>
+  {!{end}!}
 </div>
 
 
