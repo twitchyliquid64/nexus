@@ -49,6 +49,7 @@ func Make(ctx context.Context, src *messaging.Source, db *sql.DB, wg *sync.WaitG
 		updateTicker:  time.NewTicker(updateStateDuration),
 		wg:            wg,
 	}
+	out.slack.SetDebug(true)
 
 	err := out.syncChannels()
 	if err != nil {
@@ -270,6 +271,7 @@ func (s *Source) runLoop() {
 			case *slack.AckMessage:
 			case *slack.LatencyReport:
 			case *slack.ConnectedEvent:
+				log.Println("Slack connected.")
 
 			case *slack.MessageEvent:
 				switch ev.SubType {
@@ -309,8 +311,6 @@ func (s *Source) runLoop() {
 
 			case *slack.ConnectionErrorEvent:
 				log.Printf("Slack Connection Error: %+v\n", ev)
-				log.Printf("Doing a backoff sleep for 70 seconds.\n")
-				time.Sleep(70 * time.Second)
 
 			default:
 				log.Printf("Unexpected: %v\n", reflect.TypeOf(msg.Data))

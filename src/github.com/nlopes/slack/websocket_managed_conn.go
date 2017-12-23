@@ -70,7 +70,7 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 	// used to provide exponential backoff wait time with jitter before trying
 	// to connect to slack again
 	boff := &backoff{
-		Min:    100 * time.Millisecond,
+		Min:    30 * time.Second,
 		Max:    5 * time.Minute,
 		Factor: 2,
 		Jitter: true,
@@ -100,10 +100,18 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 			ErrorObj: err,
 		}}
 		// get time we should wait before attempting to connect again
-		dur := boff.Duration()
-		rtm.Debugf("reconnection %d failed: %s", boff.attempts+1, err)
-		rtm.Debugln(" -> reconnecting in", dur)
-		time.Sleep(dur)
+
+		if oErr, ok := err.(*OverloadError); ok && oErr.RetryAfter.Unix() != 0 { // check if we should slow down
+			rtm.Debugf("429 recieved: waiting till %v", oErr.RetryAfter)
+			for oErr.RetryAfter.After(time.Now()) {
+				time.Sleep(time.Second)
+			}
+		} else {
+			dur := boff.Duration()
+			rtm.Debugf("reconnection %d failed: %s", boff.attempts+1, err)
+			rtm.Debugln(" -> reconnecting in", dur)
+			time.Sleep(dur)
+		}
 	}
 }
 

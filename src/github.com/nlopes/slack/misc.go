@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -27,6 +28,14 @@ type WebError string
 
 func (s WebError) Error() string {
 	return string(s)
+}
+
+type OverloadError struct {
+	RetryAfter time.Time
+}
+
+func (s OverloadError) Error() string {
+	return "429 Too Many Requests, slow down"
 }
 
 func fileUploadReq(path, fpath, fieldname string, values url.Values) (*http.Request, error) {
@@ -107,12 +116,35 @@ func postWithMultipartResponse(path, filepath, fieldname string, values url.Valu
 	return parseResponseBody(resp.Body, &intf, debug)
 }
 
+func parseRetryAfter(h http.Header) error {
+	var t time.Time
+	v := h.Get("Retry-After")
+	if v == "" {
+		return OverloadError{}
+	}
+
+	n, err := strconv.ParseUint(v, 10, 31)
+	if err != nil {
+		t, err = time.Parse(time.RFC1123, v)
+		if err != nil {
+			return OverloadError{}
+		}
+		return OverloadError{t}
+	}
+
+	return OverloadError{time.Now().Add(time.Duration(n) * time.Second)}
+}
+
 func postForm(endpoint string, values url.Values, intf interface{}, debug bool) error {
 	resp, err := HTTPClient.PostForm(endpoint, values)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return parseRetryAfter(resp.Header)
+	}
 
 	// Slack seems to send an HTML body along with 5xx error codes. Don't parse it.
 	if resp.StatusCode != 200 {
