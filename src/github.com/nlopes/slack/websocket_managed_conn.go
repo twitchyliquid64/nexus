@@ -70,7 +70,7 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 	// used to provide exponential backoff wait time with jitter before trying
 	// to connect to slack again
 	boff := &backoff{
-		Min:    30 * time.Second,
+		Min:    61 * time.Second,
 		Max:    5 * time.Minute,
 		Factor: 2,
 		Jitter: true,

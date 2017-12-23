@@ -49,7 +49,7 @@ func Make(ctx context.Context, src *messaging.Source, db *sql.DB, wg *sync.WaitG
 		updateTicker:  time.NewTicker(updateStateDuration),
 		wg:            wg,
 	}
-	out.slack.SetDebug(true)
+	// out.slack.SetDebug(true)
 
 	err := out.syncChannels()
 	if err != nil {
