@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
@@ -119,20 +120,21 @@ func postWithMultipartResponse(path, filepath, fieldname string, values url.Valu
 func parseRetryAfter(h http.Header) error {
 	var t time.Time
 	v := h.Get("Retry-After")
+	log.Printf("Retry-After (slack): %q", v)
 	if v == "" {
-		return OverloadError{}
+		return &OverloadError{}
 	}
 
 	n, err := strconv.ParseUint(v, 10, 31)
 	if err != nil {
 		t, err = time.Parse(time.RFC1123, v)
 		if err != nil {
-			return OverloadError{}
+			return &OverloadError{}
 		}
-		return OverloadError{t}
+		return &OverloadError{t}
 	}
 
-	return OverloadError{time.Now().Add(time.Duration(n) * time.Second)}
+	return &OverloadError{time.Now().Add(time.Duration(n) * time.Second)}
 }
 
 func postForm(endpoint string, values url.Values, intf interface{}, debug bool) error {
