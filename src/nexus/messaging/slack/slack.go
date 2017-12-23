@@ -15,7 +15,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
-const updateStateDuration = time.Minute * 22
+const updateStateDuration = time.Minute * 32
 
 // Source represents a integration with a slack channel for a user.
 type Source struct {
@@ -67,8 +67,9 @@ func (s *Source) syncChannels() error {
 	}
 	for _, channel := range chans {
 		log.Printf("Syncing slack channel - ID: %s, Name: %s\n", channel.ID, channel.Name)
-		time.Sleep(600 * time.Millisecond)
+		time.Sleep(800 * time.Millisecond)
 		err = s.checkEnrollChannel(ctx, channel.ID, channel.Name)
+
 		if err != nil {
 			return err
 		}
@@ -84,7 +85,7 @@ func (s *Source) syncChannels() error {
 			return err
 		}
 		log.Printf("Syncing slack IMs - ID: %s, Name: %s\n", im.ID, usr.Name)
-		time.Sleep(600 * time.Millisecond)
+		time.Sleep(800 * time.Millisecond)
 		err = s.checkEnrollDM(ctx, im.ID, usr.Name+" ("+usr.RealName+")")
 		if err != nil {
 			return err
@@ -308,6 +309,8 @@ func (s *Source) runLoop() {
 
 			case *slack.ConnectionErrorEvent:
 				log.Printf("Slack Connection Error: %+v\n", ev)
+				log.Printf("Doing a backoff sleep for 20 seconds.\n")
+				time.Sleep(20 * time.Second)
 
 			default:
 				log.Printf("Unexpected: %v\n", reflect.TypeOf(msg.Data))
