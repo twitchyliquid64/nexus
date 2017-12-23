@@ -31,6 +31,7 @@ type RTM struct {
 	rawEvents        chan json.RawMessage
 	wasIntentional   bool
 	isConnected      bool
+	waitingReconnect bool
 
 	// Client is the main API, embedded
 	Client

@@ -101,6 +101,7 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 		}}
 		// get time we should wait before attempting to connect again
 
+		rtm.waitingReconnect = true
 		if oErr, ok := err.(*OverloadError); ok && oErr.RetryAfter.Unix() != 0 { // check if we should slow down
 			rtm.Debugf("429 recieved: waiting till %v", oErr.RetryAfter)
 			for oErr.RetryAfter.After(time.Now()) {
@@ -112,6 +113,7 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 			rtm.Debugln(" -> reconnecting in", dur)
 			time.Sleep(dur)
 		}
+		rtm.waitingReconnect = false
 	}
 }
 
@@ -172,10 +174,12 @@ func (rtm *RTM) handleEvents(keepRunning chan bool, interval time.Duration) {
 			return
 			// send pings on ticker interval
 		case <-ticker.C:
-			err := rtm.ping()
-			if err != nil {
-				_ = rtm.killConnection(keepRunning, false)
-				return
+			if !rtm.waitingReconnect {
+				err := rtm.ping()
+				if err != nil {
+					_ = rtm.killConnection(keepRunning, false)
+					return
+				}
 			}
 		case <-rtm.forcePing:
 			err := rtm.ping()
