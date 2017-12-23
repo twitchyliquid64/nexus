@@ -67,6 +67,7 @@ func (s *Source) syncChannels() error {
 	}
 	for _, channel := range chans {
 		log.Printf("Syncing slack channel - ID: %s, Name: %s\n", channel.ID, channel.Name)
+		time.Sleep(600 * time.Millisecond)
 		err = s.checkEnrollChannel(ctx, channel.ID, channel.Name)
 		if err != nil {
 			return err
@@ -83,6 +84,7 @@ func (s *Source) syncChannels() error {
 			return err
 		}
 		log.Printf("Syncing slack IMs - ID: %s, Name: %s\n", im.ID, usr.Name)
+		time.Sleep(600 * time.Millisecond)
 		err = s.checkEnrollDM(ctx, im.ID, usr.Name+" ("+usr.RealName+")")
 		if err != nil {
 			return err
