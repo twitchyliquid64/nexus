@@ -304,6 +304,9 @@ func (s *Source) runLoop() {
 			case *slack.RTMError:
 				log.Printf("Slack Error: %s\n", ev.Error())
 
+			case *slack.ConnectionErrorEvent:
+				log.Printf("Slack Connection Error: %+v\n", ev)
+
 			default:
 				log.Printf("Unexpected: %v\n", reflect.TypeOf(msg.Data))
 			}
