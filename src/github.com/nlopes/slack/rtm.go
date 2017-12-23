@@ -16,7 +16,7 @@ func (api *Client) StartRTM() (info *Info, websocketURL string, err error) {
 	response := &infoResponseFull{}
 	err = post("rtm.start", url.Values{"token": {api.config.token}}, response, api.debug)
 	if err != nil {
-		return nil, "", fmt.Errorf("post: %s", err)
+		return nil, "", err
 	}
 	if !response.Ok {
 		return nil, "", response.Error
@@ -43,7 +43,7 @@ func (api *Client) ConnectRTM() (info *Info, websocketURL string, err error) {
 	response := &infoResponseFull{}
 	err = post("rtm.connect", url.Values{"token": {api.config.token}}, response, api.debug)
 	if err != nil {
-		return nil, "", fmt.Errorf("post: %s", err)
+		return nil, "", err
 	}
 	if !response.Ok {
 		return nil, "", response.Error
