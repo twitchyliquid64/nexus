@@ -309,8 +309,8 @@ func (s *Source) runLoop() {
 
 			case *slack.ConnectionErrorEvent:
 				log.Printf("Slack Connection Error: %+v\n", ev)
-				log.Printf("Doing a backoff sleep for 20 seconds.\n")
-				time.Sleep(20 * time.Second)
+				log.Printf("Doing a backoff sleep for 70 seconds.\n")
+				time.Sleep(70 * time.Second)
 
 			default:
 				log.Printf("Unexpected: %v\n", reflect.TypeOf(msg.Data))
