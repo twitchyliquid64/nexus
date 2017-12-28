@@ -67,7 +67,7 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
 
   $scope.date = function(file){
     if (file.Modified == "0001-01-01T00:00:00Z")return "";
-    return moment(file.Modified).format("dddd, MMMM Do YYYY, h:mm:ss a");
+    return moment(file.Modified).format("MM-DD-YYYY, h:mm:ss a");
   }
 
   $scope.download = function(f){

@@ -10,9 +10,10 @@ import (
 
 // ListResultItem represents a single file returned in a List request.
 type ListResultItem struct {
-	Name     string
-	ItemKind int
-	Modified time.Time
+	Name      string
+	ItemKind  int
+	Modified  time.Time
+	SizeBytes int64
 
 	// may be set for roots
 	SourceDetail int

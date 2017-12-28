@@ -95,9 +95,10 @@ func (s *S3) List(ctx context.Context, p string, userID int) ([]ListResultItem, 
 			fmt.Println(err)
 		}
 		out = append(out, ListResultItem{
-			Name:     line.Key,
-			ItemKind: KindFile,
-			Modified: t,
+			Name:      line.Key,
+			ItemKind:  KindFile,
+			Modified:  t,
+			SizeBytes: line.Size,
 		})
 	}
 	for _, commonPrefix := range listResp.CommonPrefixes {

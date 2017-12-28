@@ -57,7 +57,6 @@ var GetMessagesCIDDbTime = &average5Metric{Name: "getMessagesForConversation", C
 // InsertMessageDbTime represents the average time to insert a message into the database.
 var InsertMessageDbTime = &average5Metric{Name: "insertMessage", Category: "db"}
 
-
 // InsertLogDbTime represents the average time to insert a log row for an integration.
 var InsertLogDbTime = &average5Metric{Name: "insertLog", Category: "db"}
 
@@ -66,7 +65,6 @@ var GetLogsByRunnableDbTime = &average5Metric{Name: "getLogsForRunnable", Catego
 
 // GetFilteredLogsByRunnableDbTime represents the average time to filter query the database for a runnables log entries.
 var GetFilteredLogsByRunnableDbTime = &average5Metric{Name: "getLogsForRunID", Category: "db"}
-
 
 type metric interface {
 	Compute() string
