@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"nexus/data/datastore"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"strconv"
@@ -78,6 +79,9 @@ type DAO struct {
 
 // Update takes the DAO and updates the attributes of the given user. Keyed by UID.
 func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -96,6 +100,8 @@ func Update(ctx context.Context, usr *DAO, db *sql.DB) error {
 
 // GetByUID looks up the details of an account based on an accounts' UID.
 func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	defer metrics.GetUserUIDDbTime.Time(time.Now())
 
 	res, err := db.QueryContext(ctx, `
@@ -116,6 +122,9 @@ func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 
 // Get returns the details of a user
 func Get(ctx context.Context, username string, db *sql.DB) (*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users WHERE username = ?;
 	`, username)
@@ -134,6 +143,9 @@ func Get(ctx context.Context, username string, db *sql.DB) (*DAO, error) {
 
 // GetAll returns a full list of users in the system.
 func GetAll(ctx context.Context, db *sql.DB) ([]*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, username, display_name, created_at, can_admin_accounts, can_admin_data, can_admin_integrations, is_robot_account FROM users;`)
 	if err != nil {
 		return nil, err
@@ -153,6 +165,9 @@ func GetAll(ctx context.Context, db *sql.DB) ([]*DAO, error) {
 
 // CheckBasicAuth returns true if the given password matches the stored hash of the user.
 func CheckBasicAuth(ctx context.Context, username, password string, db *sql.DB) (bool, string, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, passhash_if_no_auth_methods FROM users WHERE username = ?;
 	`, username)
@@ -175,6 +190,9 @@ func CheckBasicAuth(ctx context.Context, username, password string, db *sql.DB) 
 
 // SetAuth sets the default authentication hash for a uid.
 func SetAuth(ctx context.Context, uid int, passwd string, accAdmin, dataAdmin, integrationAdmin bool, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(passwd+"yoloSalt"+strconv.Itoa(uid)), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -194,6 +212,9 @@ func SetAuth(ctx context.Context, uid int, passwd string, accAdmin, dataAdmin, i
 
 // Delete deletes a user by UID.
 func Delete(ctx context.Context, uid int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -209,6 +230,9 @@ func Delete(ctx context.Context, uid int, db *sql.DB) error {
 
 // Create takes the DAO makes a new user with that information.
 func Create(ctx context.Context, usr *DAO, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -229,6 +253,9 @@ func Create(ctx context.Context, usr *DAO, db *sql.DB) error {
 
 // CreateBasic creates a user in the datastore.
 func CreateBasic(ctx context.Context, username, displayName string, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

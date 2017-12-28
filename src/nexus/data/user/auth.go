@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"time"
 )
@@ -91,6 +92,9 @@ type Auth struct {
 
 // GetAuthForUser returns a full list of auth methods for the given userID.
 func GetAuthForUser(ctx context.Context, UID int, db *sql.DB) ([]*Auth, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, uid, kind, created_at, class, val1, val2, val3, score FROM user_auth WHERE uid=?;`, UID)
 	if err != nil {
 		return nil, err
@@ -110,6 +114,9 @@ func GetAuthForUser(ctx context.Context, UID int, db *sql.DB) ([]*Auth, error) {
 
 // GetAuth returns the details of an auth
 func GetAuth(ctx context.Context, id int, db *sql.DB) (*Auth, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, uid, kind, created_at, class, val1, val2, val3, score FROM user_auth WHERE rowid = ?;
 	`, id)
@@ -127,6 +134,9 @@ func GetAuth(ctx context.Context, id int, db *sql.DB) (*Auth, error) {
 
 // CreateAuth makes a new auth method.
 func CreateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -143,6 +153,9 @@ func CreateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
 
 // DeleteAuth removes an auth method.
 func DeleteAuth(ctx context.Context, id int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -158,6 +171,9 @@ func DeleteAuth(ctx context.Context, id int, db *sql.DB) error {
 
 // UpdateAuth updates an Auth object.
 func UpdateAuth(ctx context.Context, auth *Auth, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

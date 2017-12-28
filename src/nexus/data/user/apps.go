@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"strconv"
 	"time"
@@ -144,6 +145,9 @@ type ExtApp struct {
 
 // GetExtAppsForUser returns a full list of external apps for the given userID.
 func GetExtAppsForUser(ctx context.Context, UID int, db *sql.DB) ([]*ExtApp, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, uid, kind, created_at, val, name, icon, extra FROM ext_apps WHERE uid=?;`, UID)
 	if err != nil {
 		return nil, err
@@ -163,6 +167,9 @@ func GetExtAppsForUser(ctx context.Context, UID int, db *sql.DB) ([]*ExtApp, err
 
 // GetExtApp returns an ext_apps entry by its UID/rowid.
 func GetExtApp(ctx context.Context, UID int, db *sql.DB) (*ExtApp, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, uid, kind, created_at, val, name, icon, extra FROM ext_apps WHERE rowid=?;`, UID)
 	if err != nil {
 		return nil, err
@@ -178,6 +185,9 @@ func GetExtApp(ctx context.Context, UID int, db *sql.DB) (*ExtApp, error) {
 
 // CreateExtApp makes a new external app entry.
 func CreateExtApp(ctx context.Context, attr *ExtApp, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -194,6 +204,9 @@ func CreateExtApp(ctx context.Context, attr *ExtApp, db *sql.DB) error {
 
 // DeleteExtApp removes an external app by ID.
 func DeleteExtApp(ctx context.Context, id int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

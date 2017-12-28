@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"nexus/data/dlock"
 	"os"
 	"strings"
 	"time"
@@ -149,6 +150,9 @@ func doBackup(srcDBConn *gosqlite3.SQLiteConn) (string, error) {
 	}
 	f.Close()
 	fName := f.Name()
+
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 
 	destDB, err := sql.Open("sqlite3_conn_hook_backup", fName)
 	if err != nil {

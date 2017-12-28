@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"os"
@@ -163,6 +164,9 @@ type Source struct {
 
 // DeleteSource removes a source.
 func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -178,6 +182,9 @@ func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
 
 // AddSource creates a new messaging source.
 func AddSource(ctx context.Context, src Source, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	details, err := json.Marshal(src.Details)
 	if err != nil {
 		return err
@@ -201,7 +208,10 @@ func AddSource(ctx context.Context, src Source, db *sql.DB) error {
 
 // GetAllSourcesForUser is called to get all messaging sources for a given uid.
 func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	defer metrics.GetMessagingSourcesUIDDbTime.Time(time.Now())
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE owner_id = ?;
 	`, uid)
@@ -230,6 +240,9 @@ func GetAllSourcesForUser(ctx context.Context, uid int, db *sql.DB) ([]*Source, 
 
 // GetAllSources is called to get all messaging sources.
 func GetAllSources(ctx context.Context, db *sql.DB) ([]*Source, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source;`)
 	if err != nil {
 		return nil, err
@@ -256,6 +269,9 @@ func GetAllSources(ctx context.Context, db *sql.DB) ([]*Source, error) {
 
 // GetSourceByUID returns a source with the given UID.
 func GetSourceByUID(ctx context.Context, uid int, db *sql.DB) (*Source, string, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, owner_id, kind, remote, created_at, details_json FROM messaging_source WHERE rowid = ?;
 	`, uid)

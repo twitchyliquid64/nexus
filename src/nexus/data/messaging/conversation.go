@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"sort"
@@ -115,6 +116,9 @@ func (a ByRecentMsg) Less(i, j int) bool { return a[i].LatestMsgAt.After(a[j].La
 
 // UpdateConversationMetadata updates JUST the conversation metadata field of a conversation by ID.
 func UpdateConversationMetadata(ctx context.Context, c *Conversation, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -132,6 +136,9 @@ func UpdateConversationMetadata(ctx context.Context, c *Conversation, db *sql.DB
 
 // AddConversation creates a new conversation.
 func AddConversation(ctx context.Context, c Conversation, db *sql.DB) (int, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
@@ -155,6 +162,9 @@ func AddConversation(ctx context.Context, c Conversation, db *sql.DB) (int, erro
 
 // GetConversation returns a convo based on it's unique ID and messaging source ID.
 func GetConversation(ctx context.Context, uniqueID string, sourceUID int, db *sql.DB) (*Conversation, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, source_uid, created_at, unique_identifier, kind, metadata FROM messaging_conversation WHERE unique_identifier = ? AND source_uid = ?;
 	`, uniqueID, sourceUID)
@@ -173,6 +183,9 @@ func GetConversation(ctx context.Context, uniqueID string, sourceUID int, db *sq
 
 // GetConversationByCID returns a convo based on it's CID.
 func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversation, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, source_uid, created_at, unique_identifier, kind, metadata FROM messaging_conversation WHERE rowid = ?;
 	`, CID)
@@ -191,6 +204,8 @@ func GetConversationByCID(ctx context.Context, CID int, db *sql.DB) (*Conversati
 
 // GetConversationsForUser returns a list of convos for a given user.
 func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Conversation, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	defer metrics.GetConvosUIDDbTime.Time(time.Now())
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, source_uid, created_at, unique_identifier, kind, metadata FROM messaging_conversation
@@ -220,6 +235,8 @@ func GetConversationsForUser(ctx context.Context, userID int, db *sql.DB) ([]*Co
 
 // GetConversationsForSource returns a list of convos for a given source.
 func GetConversationsForSource(ctx context.Context, sourceID int, db *sql.DB) ([]*Conversation, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, name, source_uid, created_at, unique_identifier, kind, metadata FROM messaging_conversation
 		WHERE source_uid  = ?;

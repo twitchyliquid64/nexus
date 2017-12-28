@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"time"
@@ -71,6 +72,8 @@ type Message struct {
 
 // AddMessage records a message against a conversation
 func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 	defer metrics.InsertMessageDbTime.Time(time.Now())
 	tx, err := db.Begin()
 	if err != nil {
@@ -95,6 +98,8 @@ func AddMessage(ctx context.Context, msg *Message, db *sql.DB) (int, error) {
 
 // GetMessagesForConversation returns a list of messages for a given conversation.
 func GetMessagesForConversation(ctx context.Context, convoID int, db *sql.DB) ([]*Message, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	defer metrics.GetMessagesCIDDbTime.Time(time.Now())
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, kind, content, created_at, unique_identifier, identity FROM messaging_messages

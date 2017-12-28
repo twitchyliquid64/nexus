@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"strconv"
@@ -170,6 +171,9 @@ type DAO struct {
 
 // GetAllForUser is called to get all sessions for a given uid.
 func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, sid, created_at, can_access_web, can_access_sys_api, authed_via, revoked, auth_data
 		FROM sessions
@@ -195,6 +199,9 @@ func GetAllForUser(ctx context.Context, uid int, db *sql.DB) ([]*DAO, error) {
 
 // GetByUID is called to get the details of a session by UID.
 func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via, sid
 		FROM sessions
@@ -214,6 +221,9 @@ func GetByUID(ctx context.Context, uid int, db *sql.DB) (*DAO, error) {
 
 // Get is called to get the details of a session. Returns an error if the session does not exist or is revoked.
 func Get(ctx context.Context, sid string, getDetails bool, db *sql.DB) (*DAO, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	defer metrics.GetSessionSIDDbTime.Time(time.Now())
 	query := `SELECT rowid, uid, created_at, can_access_web, can_access_sys_api, authed_via FROM sessions WHERE sid = ? AND revoked = 0;`
 	if getDetails {
@@ -239,6 +249,9 @@ func Get(ctx context.Context, sid string, getDetails bool, db *sql.DB) (*DAO, er
 
 // Create creates a session in the datastore.
 func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia AuthKind, details string, db *sql.DB) (string, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	sid, err := GenerateRandomString(32)
 	if err != nil {
 		return "", err
@@ -262,6 +275,9 @@ func Create(ctx context.Context, uid int, allowWeb, allowAPI bool, authedVia Aut
 
 // Revoke sets REVOKE=TRUE for a given session.
 func Revoke(ctx context.Context, sid string, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -279,6 +295,9 @@ func Revoke(ctx context.Context, sid string, db *sql.DB) error {
 
 // RevokeByAge revokes sessions past a certain age
 func RevokeByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
@@ -301,6 +320,9 @@ func RevokeByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
 
 // DeleteRevokedByAge deletes revoked sessions past a certain age
 func DeleteRevokedByAge(ctx context.Context, days int, db *sql.DB) (int64, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
@@ -323,6 +345,9 @@ func DeleteRevokedByAge(ctx context.Context, days int, db *sql.DB) (int64, error
 
 // Delete deletes a session with a particular SID
 func Delete(ctx context.Context, sid string, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

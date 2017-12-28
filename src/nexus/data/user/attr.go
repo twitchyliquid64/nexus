@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"time"
 )
@@ -71,6 +72,9 @@ func (a *Attr) KindStr() string {
 
 // GetAttrForUser returns a full list of attributes for the given userID.
 func GetAttrForUser(ctx context.Context, UID int, db *sql.DB) ([]*Attr, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `SELECT rowid, uid, kind, created_at, val, name FROM user_attr WHERE uid=?;`, UID)
 	if err != nil {
 		return nil, err
@@ -90,6 +94,9 @@ func GetAttrForUser(ctx context.Context, UID int, db *sql.DB) ([]*Attr, error) {
 
 // CreateAttr makes a new attribute.
 func CreateAttr(ctx context.Context, attr *Attr, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -106,6 +113,9 @@ func CreateAttr(ctx context.Context, attr *Attr, db *sql.DB) error {
 
 // UpdateAttr takes an attribute and updates its Name/kind/Val. Keyed by UID.
 func UpdateAttr(ctx context.Context, attr *Attr, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -123,6 +133,9 @@ func UpdateAttr(ctx context.Context, attr *Attr, db *sql.DB) error {
 
 // DeleteAttr removes an attribute.
 func DeleteAttr(ctx context.Context, id int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

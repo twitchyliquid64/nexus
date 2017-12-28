@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"nexus/data/dlock"
 	"reflect"
 	"strconv"
 	"time"
@@ -24,6 +25,9 @@ func findColumnInfo(cols []*Column, name string) *Column {
 
 // InsertRow inserts a row into the named database. Invoked by integrations.
 func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db *sql.DB) (int64, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	cols, err := GetColumns(ctx, dsID, db)
 	if err != nil {
 		return 0, err
@@ -81,6 +85,9 @@ func InsertRow(ctx context.Context, dsID int, rowData map[string]interface{}, db
 // DoStreamingInsert takes input as a CSV and inserts it to a database.
 // TODO: Refactor
 func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	insertCols := make([]*Column, len(colIDs))
 	cols, err := GetColumns(ctx, dsID, db)
 	if err != nil {
@@ -147,6 +154,9 @@ func DoStreamingInsert(ctx context.Context, data io.Reader, dsID int, colIDs []i
 
 // DeleteRow delets a row with the corresponding rowID.
 func DeleteRow(ctx context.Context, dsID, rowID int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	queryStr := "DELETE FROM ds_" + strconv.Itoa(dsID) + " WHERE rowid = ?"
 	tx, err := db.Begin()
 	if err != nil {
@@ -173,6 +183,9 @@ func DeleteRow(ctx context.Context, dsID, rowID int, db *sql.DB) error {
 
 // EditRow edits a row with the corresponding rowID.
 func EditRow(ctx context.Context, dsID, rowID int, rowData map[string]interface{}, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	cols, err := GetColumns(ctx, dsID, db)
 	if err != nil {
 		return err
@@ -218,6 +231,9 @@ func EditRow(ctx context.Context, dsID, rowID int, rowData map[string]interface{
 
 // DoQuery takes a query object and returns a slice of results.
 func DoQuery(ctx context.Context, query Query, db *sql.DB) ([]map[string]interface{}, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	cols, err := GetColumns(ctx, query.UID, db)
 	if err != nil {
 		return nil, err
@@ -257,6 +273,9 @@ func DoQuery(ctx context.Context, query Query, db *sql.DB) ([]map[string]interfa
 
 // DoStreamingQuery writes the result of a query in CSV form.
 func DoStreamingQuery(ctx context.Context, response io.Writer, query Query, db *sql.DB) error {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	cols, err := GetColumns(ctx, query.UID, db)
 	if err != nil {
 		return err
@@ -349,6 +368,9 @@ func buildResultsetScanContainers(cols []*Column) (pointers []interface{}) {
 
 // DoDelete implements all the logic to delete a datastore.
 func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	cols, err := GetColumns(ctx, ds.UID, db)
 	if err != nil {
 		return err
@@ -389,6 +411,9 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 
 // DoCreate implements all the logic to create a datastore.
 func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

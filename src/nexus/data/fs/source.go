@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"os"
@@ -177,6 +178,9 @@ type Source struct {
 
 // DeleteSource removes a source.
 func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -192,6 +196,9 @@ func DeleteSource(ctx context.Context, id int, db *sql.DB) error {
 
 // GetSourceByUID returns a source with the given UID.
 func GetSourceByUID(ctx context.Context, uid int, db *sql.DB) (*Source, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, owner_uid, created_at, prefix, kind, value1, value2, value3 FROM fs_sources WHERE rowid = ?;
 	`, uid)
@@ -210,6 +217,9 @@ func GetSourceByUID(ctx context.Context, uid int, db *sql.DB) (*Source, error) {
 
 // GetSource returns a source with the given prefix and owner.
 func GetSource(ctx context.Context, ownerUID int, prefix string, db *sql.DB) (*Source, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, owner_uid, created_at, prefix, kind, value1, value2, value3 FROM fs_sources WHERE owner_uid = ? AND prefix = ?;
 	`, ownerUID, prefix)
@@ -228,6 +238,8 @@ func GetSource(ctx context.Context, ownerUID int, prefix string, db *sql.DB) (*S
 
 // GetSourcesForUser returns sources for a given user.
 func GetSourcesForUser(ctx context.Context, ownerUID int, db *sql.DB) ([]*Source, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
 	defer metrics.GetSourcesUIDDbTime.Time(time.Now())
 
 	res, err := db.QueryContext(ctx, `
@@ -251,6 +263,9 @@ func GetSourcesForUser(ctx context.Context, ownerUID int, db *sql.DB) ([]*Source
 
 // CreateSource creates a source.
 func CreateSource(ctx context.Context, source *Source, db *sql.DB) (int, error) {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err

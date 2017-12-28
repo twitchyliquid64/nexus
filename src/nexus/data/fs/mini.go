@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"os"
 	"time"
@@ -98,6 +99,9 @@ func (f *File) GetReader(ctx context.Context, db *sql.DB) (io.Reader, error) {
 
 // MiniFSGetFile by a user's UID and a file path.
 func MiniFSGetFile(ctx context.Context, ownerUID int, path string, db *sql.DB) (*File, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, owner_uid, modified_at, path, access_level, kind FROM fs_minifiles WHERE path = ? AND owner_uid= ?;
 	`, path, ownerUID)
@@ -116,6 +120,9 @@ func MiniFSGetFile(ctx context.Context, ownerUID int, path string, db *sql.DB) (
 
 // MiniFSFileExists returns true if the given file exists.
 func MiniFSFileExists(ctx context.Context, tx *sql.Tx, path string, ownerUID int, db *sql.DB) (bool, int, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := tx.QueryContext(ctx, `
     SELECT rowid FROM fs_minifiles WHERE path = ? AND owner_uid = ?;
   `, path, ownerUID)
@@ -133,6 +140,9 @@ func MiniFSFileExists(ctx context.Context, tx *sql.Tx, path string, ownerUID int
 
 // MiniFSDeleteFile deletes a file.
 func MiniFSDeleteFile(ctx context.Context, f *File, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -159,6 +169,7 @@ func MiniFSDeleteFile(ctx context.Context, f *File, db *sql.DB) error {
 
 // MiniFSSaveFile saves a file in miniFS. DO NOT use for ownership transfers or renames.
 func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
+
 	var err error
 	tx, err := db.Begin()
 	if err != nil {
@@ -172,6 +183,9 @@ func MiniFSSaveFile(ctx context.Context, f *File, db *sql.DB) (int, error) {
 			return 0, err
 		}
 	}
+
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 
 	if f.UID != 0 { //either we found it or we already knew the UID
 		_, errUpdate := tx.Exec(`
