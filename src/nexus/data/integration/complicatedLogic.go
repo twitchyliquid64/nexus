@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"database/sql"
+	"nexus/data/dlock"
 	"time"
 )
 
@@ -13,6 +14,9 @@ func DoLogsCleanup(ctx context.Context, db *sql.DB) (int64, error) {
 		return 0, err
 	}
 	var numAffected int64
+
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -38,6 +42,9 @@ func DoLogsCleanup(ctx context.Context, db *sql.DB) (int64, error) {
 
 // DoCreateRunnable implements all the logic to create a runnable and its triggers.
 func DoCreateRunnable(ctx context.Context, ds *Runnable, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -68,6 +75,9 @@ func DoEditRunnable(ctx context.Context, r *Runnable, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -120,6 +130,9 @@ func inTriggerSet(triggers []*Trigger, uid int) bool {
 
 // DoDeleteRunnable implements all the logic to delete a runnable and its triggers.
 func DoDeleteRunnable(ctx context.Context, uid int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err

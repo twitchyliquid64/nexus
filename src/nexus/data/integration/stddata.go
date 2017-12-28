@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"time"
 )
@@ -55,6 +56,9 @@ type StdDataRow struct {
 
 // GetStdData returns a value for a given key
 func GetStdData(ctx context.Context, runUID int, key string, db *sql.DB) (*StdDataRow, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, integration_parent, modified_at, key, value FROM integration_stddata WHERE integration_parent = ? AND key = ?;
 	`, runUID, key)
@@ -77,6 +81,9 @@ func WriteStdData(ctx context.Context, runUID int, key, value string, db *sql.DB
 	if errFetch != nil && errFetch != ErrNoStdRow {
 		return errFetch
 	}
+
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
 
 	tx, err := db.Begin()
 	if err != nil {

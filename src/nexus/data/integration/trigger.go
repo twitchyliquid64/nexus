@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"nexus/data/dlock"
 	util "nexus/data/util"
 	"time"
 )
@@ -59,6 +60,9 @@ type Trigger struct {
 
 // GetTriggerByUID returns a specific Trigger DAO.
 func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE rowid = ?;
 	`, uid)
@@ -77,6 +81,9 @@ func GetTriggerByUID(ctx context.Context, uid int, db *sql.DB) (*Trigger, error)
 
 // GetTriggersForRunnable is called to get all triggers for a runnable.
 func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([]*Trigger, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger WHERE integration_parent = ?;
 	`, runnableUID)
@@ -98,6 +105,9 @@ func GetTriggersForRunnable(ctx context.Context, runnableUID int, db *sql.DB) ([
 
 // GetAllTriggers is called to get all triggers.
 func GetAllTriggers(ctx context.Context, db *sql.DB) ([]*Trigger, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT rowid, integration_parent, owner_uid, created_at, name, kind, val1, val2 FROM integration_trigger;
 	`)

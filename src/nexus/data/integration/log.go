@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"database/sql"
+	"nexus/data/dlock"
 	"nexus/data/util"
 	"nexus/metrics"
 	"strconv"
@@ -85,6 +86,9 @@ type Log struct {
 
 // GetRecentRunsForRunnable returns the unique runIDs for a given runnable.
 func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, db *sql.DB) ([]string, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	res, err := db.QueryContext(ctx, `
 		SELECT DISTINCT run_id FROM integration_log WHERE integration_parent = ? AND created_at > ? ORDER BY created_at DESC LIMIT 85;
 	`, runnableUID, newerThan)
@@ -107,6 +111,9 @@ func GetRecentRunsForRunnable(ctx context.Context, runnableUID int, newerThan ti
 // GetLogsForRunnable is called to get all logs for a runnable.
 func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Time, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
 	defer metrics.GetLogsByRunnableDbTime.Time(time.Now())
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	query := `
 	SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log WHERE integration_parent = ? AND created_at > ?
 	`
@@ -143,6 +150,9 @@ func GetLogsForRunnable(ctx context.Context, runnableUID int, newerThan time.Tim
 // GetLogsFilteredByRunnable filters to a specific run.
 func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan time.Time, runID string, offset, limit int, info, prob, sys bool, db *sql.DB) ([]*Log, error) {
 	defer metrics.GetFilteredLogsByRunnableDbTime.Time(time.Now())
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
 	query := `
 		SELECT rowid, integration_parent, run_id, created_at, kind, level, datatype, value FROM integration_log
 		WHERE run_id = ? AND created_at > ? AND integration_parent = ?
@@ -180,6 +190,9 @@ func GetLogsFilteredByRunnable(ctx context.Context, runnableUID int, newerThan t
 // WriteLog commits a log entry.
 func WriteLog(ctx context.Context, log *Log, db *sql.DB) error {
 	defer metrics.InsertLogDbTime.Time(time.Now())
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
