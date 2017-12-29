@@ -19,6 +19,7 @@ import (
 var (
 	lastRun = time.Time{}
 
+	dbDumpLastSize       float64
 	dbDumpInProgress     = false
 	dbDumpPagesRemaining = 0
 	dbDumpPagesTotal     = 0
@@ -41,6 +42,7 @@ func GetBackupStatistics() map[string]interface{} {
 		"Last backup":        dbLastBackup,
 		"Dump time":          dbDumpDuration,
 		"Upload time":        dbUploadDuration,
+		"Last backup size":   dbDumpLastSize,
 	}
 }
 
@@ -144,6 +146,10 @@ func backupRoutine() {
 		dbLastBackup = time.Now()
 
 		if backupFile != "" {
+			if s, err2 := os.Stat(backupFile); err2 == nil {
+				dbDumpLastSize = float64(s.Size()/1024) / 1024
+			}
+
 			err = os.Remove(backupFile)
 			if err != nil {
 				log.Printf("[backup] Failed to delete backup file: %s", err)

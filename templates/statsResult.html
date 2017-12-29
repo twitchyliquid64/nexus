@@ -75,6 +75,10 @@
             <td>{!{ index .BackupInfo `Last backup` }!}</td>
           </tr>
           <tr>
+            <td>Last backup size</td>{!{ $s := index .BackupInfo `Last backup size` }!}
+            <td>{!{printf `%.1f MB` $s}!}</td>
+          </tr>
+          <tr>
             <td>Dump time</td>
             <td>{!{ index .BackupInfo `Dump time` }!}</td>
           </tr>

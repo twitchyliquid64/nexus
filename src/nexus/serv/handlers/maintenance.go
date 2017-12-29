@@ -161,9 +161,7 @@ func (h *MaintenanceHandler) BackupNowHandler(response http.ResponseWriter, requ
 	go func() {
 		data.BackupNow()
 	}()
-	for !data.GetBackupStatistics()["Dump in progress"].(bool) {
-		time.Sleep(time.Second)
-	}
+	time.Sleep(time.Second)
 	for data.GetBackupStatistics()["Dump in progress"].(bool) {
 		time.Sleep(time.Second)
 	}
