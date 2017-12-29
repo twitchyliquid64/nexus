@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -105,7 +106,14 @@ func backupUpload(fPath string) error {
 		return err
 	}
 	defer d.Close()
-	w, err := s3Access.Bucket(os.Getenv("AWS_BACKUP_BUCKET_NAME")).PutWriter(os.Getenv("AWS_BACKUP_PATH"), nil, uploadConfig)
+
+	backupPath := os.Getenv("AWS_BACKUP_PATH")
+	backupPath = strings.Replace(backupPath, "{{DAY}}", fmt.Sprintf("%02d", time.Now().Day()), -1)
+	backupPath = strings.Replace(backupPath, "{{MONTH}}", fmt.Sprintf("%02d", time.Now().Month()), -1)
+	backupPath = strings.Replace(backupPath, "{{YEAR}}", fmt.Sprintf("%02d", time.Now().Year()), -1)
+	backupPath = strings.Replace(backupPath, "{{YEARDAY}}", fmt.Sprintf("%03d", time.Now().YearDay()), -1)
+
+	w, err := s3Access.Bucket(os.Getenv("AWS_BACKUP_BUCKET_NAME")).PutWriter(backupPath, nil, uploadConfig)
 	if err != nil {
 		return err
 	}
