@@ -1,7 +1,9 @@
 package data
 
 import (
+	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +16,7 @@ import (
 
 	gosqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
 	"github.com/rlmcpherson/s3gof3r"
 )
 
@@ -119,19 +122,22 @@ func backupUpload(fPath string) error {
 	}
 	defer d.Close()
 
-	backupPath := os.Getenv("AWS_BACKUP_PATH")
-	backupPath = strings.Replace(backupPath, "{{DAY}}", fmt.Sprintf("%02d", time.Now().Day()), -1)
-	backupPath = strings.Replace(backupPath, "{{MONTH}}", fmt.Sprintf("%02d", time.Now().Month()), -1)
-	backupPath = strings.Replace(backupPath, "{{YEAR}}", fmt.Sprintf("%02d", time.Now().Year()), -1)
-	backupPath = strings.Replace(backupPath, "{{YEARDAY}}", fmt.Sprintf("%03d", time.Now().YearDay()), -1)
-
-	w, err := s3Access.Bucket(os.Getenv("AWS_BACKUP_BUCKET_NAME")).PutWriter(backupPath, nil, uploadConfig)
+	w, err := s3Access.Bucket(os.Getenv("AWS_BACKUP_BUCKET_NAME")).PutWriter(computeBackupPath(), nil, uploadConfig)
 	if err != nil {
 		return err
 	}
 	defer w.Close()
 	_, err = io.Copy(w, d)
 	return err
+}
+
+func computeBackupPath() string {
+	backupPath := os.Getenv("AWS_BACKUP_PATH")
+	backupPath = strings.Replace(backupPath, "{{DAY}}", fmt.Sprintf("%02d", time.Now().Day()), -1)
+	backupPath = strings.Replace(backupPath, "{{MONTH}}", fmt.Sprintf("%02d", time.Now().Month()), -1)
+	backupPath = strings.Replace(backupPath, "{{YEAR}}", fmt.Sprintf("%02d", time.Now().Year()), -1)
+	backupPath = strings.Replace(backupPath, "{{YEARDAY}}", fmt.Sprintf("%03d", time.Now().YearDay()), -1)
+	return backupPath
 }
 
 func backupRoutine() {
@@ -169,10 +175,10 @@ func backupRoutine() {
 		dbLastBackup = time.Now()
 
 		if backupFile != "" {
-			checkBackup(backupFile)
 			if s, err2 := os.Stat(backupFile); err2 == nil {
 				dbDumpLastSize = float64(s.Size()/1024) / 1024
 			}
+			checkBackup(backupFile)
 
 			err = os.Remove(backupFile)
 			if err != nil {
@@ -199,8 +205,8 @@ func checkBackup(path string) {
 	}
 	r.Next()
 	var tableCount int
-	if err := r.Scan(&tableCount); err != nil {
-		dbVerificationState = err
+	if err2 := r.Scan(&tableCount); err2 != nil {
+		dbVerificationState = err2
 		return
 	}
 	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "tables_count", Detail: fmt.Sprintf("%d tables default, %d tables in backup", len(tables), tableCount)})
@@ -211,9 +217,9 @@ func checkBackup(path string) {
 
 	// check count of rows in some tables are within 5% of each other
 	for _, table := range tablesToVerify {
-		backupCount, liveCount, err := countRowsInTable(db, table)
-		if err != nil {
-			dbVerificationState = err
+		backupCount, liveCount, err2 := countRowsInTable(db, table)
+		if err2 != nil {
+			dbVerificationState = err2
 			return
 		}
 		ratio := float64(backupCount) / float64(liveCount)
@@ -223,6 +229,60 @@ func checkBackup(path string) {
 			dbVerificationResults[len(dbVerificationResults)-1].Result = dbVerificationState
 		}
 	}
+
+	// check the size of the object in S3
+	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "remote read"})
+	remoteSize, remoteHash, err := getRemoteBackupDetails()
+	if err != nil {
+		dbVerificationState = err
+		dbVerificationResults[len(dbVerificationResults)-1].Result = err
+		return
+	}
+	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "size match", Detail: fmt.Sprintf("%.1fMB", float64(remoteSize/1024)/1024)})
+	if (float64(remoteSize/1024) / 1024) != dbDumpLastSize {
+		dbVerificationState = fmt.Errorf("remote backup size mismatch")
+		dbVerificationResults[len(dbVerificationResults)-1].Result = err
+		return
+	}
+	// check the hash of the object in S3
+	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "hash match"})
+	hash, err := hashFileMD5(path)
+	if err != nil {
+		dbVerificationState = err
+		dbVerificationResults[len(dbVerificationResults)-1].Result = err
+		return
+	}
+	if hash != remoteHash {
+		dbVerificationState = fmt.Errorf("remote backup hash does not match")
+		dbVerificationResults[len(dbVerificationResults)-1].Result = err
+	}
+}
+
+func getRemoteBackupDetails() (int64, string, error) {
+	auth, err := aws.EnvAuth()
+	if err != nil {
+		return 0, "", err
+	}
+	key, err := s3.New(auth, aws.Regions[os.Getenv("AWS_REGION")]).Bucket(os.Getenv("AWS_BACKUP_BUCKET_NAME")).GetKey(computeBackupPath())
+	if err != nil {
+		return 0, "", err
+	}
+	return key.Size, key.ETag, nil
+}
+
+func hashFileMD5(filePath string) (string, error) {
+	// credit: cleaned up version of http://www.mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hash.Sum(nil)[:16]), nil
 }
 
 func countRowsInTable(backupDb *sql.DB, tableName string) (int, int, error) {
