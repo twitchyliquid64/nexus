@@ -88,7 +88,12 @@
           </tr>
           <tr>
             <td>Last backup time</td>
-            <td>{!{ index .BackupInfo `Last backup` }!}</td>
+            {!{ $t := index .BackupInfo `Last backup` }!}
+            {!{if lt $t.Unix 10000}!}
+              <td><span style="color:#AA0000;font-weight:bold;">Never run</span></td>
+            {!{else}!}
+              <td>{!{ $t.Format `Jan _2 3:04:05PM` }!}</td>
+            {!{end}!}
           </tr>
           <tr>
             <td>Last backup size</td>{!{ $s := index .BackupInfo `Last backup size` }!}
