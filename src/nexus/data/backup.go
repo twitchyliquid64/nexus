@@ -20,7 +20,9 @@ import (
 var (
 	lastRun = time.Time{}
 
-	dbDumpLastSize       float64
+	dbVerificationState error
+	dbDumpLastSize      float64
+
 	dbDumpInProgress     = false
 	dbDumpPagesRemaining = 0
 	dbDumpPagesTotal     = 0
@@ -44,6 +46,7 @@ func GetBackupStatistics() map[string]interface{} {
 		"Dump time":          dbDumpDuration,
 		"Upload time":        dbUploadDuration,
 		"Last backup size":   dbDumpLastSize,
+		"Verification error": dbVerificationState,
 	}
 }
 
@@ -154,6 +157,7 @@ func backupRoutine() {
 		dbLastBackup = time.Now()
 
 		if backupFile != "" {
+			checkBackup(backupFile)
 			if s, err2 := os.Stat(backupFile); err2 == nil {
 				dbDumpLastSize = float64(s.Size()/1024) / 1024
 			}
@@ -163,6 +167,32 @@ func backupRoutine() {
 				log.Printf("[backup] Failed to delete backup file: %s", err)
 			}
 		}
+	}
+}
+
+func checkBackup(path string) {
+	db, err := sql.Open("sqlite3", path)
+	if err != nil {
+		dbVerificationState = err
+		return
+	}
+	defer db.Close()
+
+	// first check the number of tables at least meets the default tables
+	r, err := db.Query("SELECT COUNT(*) FROM sqlite_master WHERE type in ('table', 'view') AND name not like 'sqlite?_%' escape '?'")
+	if err != nil {
+		dbVerificationState = err
+		return
+	}
+	r.Next()
+	var tableCount int
+	if err := r.Scan(&tableCount); err != nil {
+		dbVerificationState = err
+		return
+	}
+	if tableCount < len(tables) {
+		dbVerificationState = fmt.Errorf("Table count mismatch! Expected at least %d, got %d", len(tables), tableCount)
+		return
 	}
 }
 
