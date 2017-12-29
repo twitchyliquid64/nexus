@@ -70,7 +70,7 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 	// used to provide exponential backoff wait time with jitter before trying
 	// to connect to slack again
 	boff := &backoff{
-		Min:    61 * time.Second,
+		Min:    100 * time.Millisecond,
 		Max:    5 * time.Minute,
 		Factor: 2,
 		Jitter: true,
@@ -100,20 +100,10 @@ func (rtm *RTM) connect(connectionCount int, useRTMStart bool) (*Info, *websocke
 			ErrorObj: err,
 		}}
 		// get time we should wait before attempting to connect again
-
-		rtm.waitingReconnect = true
-		if oErr, ok := err.(*OverloadError); ok && oErr.RetryAfter.Unix() != 0 { // check if we should slow down
-			rtm.Debugf("429 recieved: waiting till %v", oErr.RetryAfter)
-			for oErr.RetryAfter.After(time.Now()) {
-				time.Sleep(time.Second)
-			}
-		} else {
-			dur := boff.Duration()
-			rtm.Debugf("reconnection %d failed: %s", boff.attempts+1, err)
-			rtm.Debugln(" -> reconnecting in", dur)
-			time.Sleep(dur)
-		}
-		rtm.waitingReconnect = false
+		dur := boff.Duration()
+		rtm.Debugf("reconnection %d failed: %s", boff.attempts+1, err)
+		rtm.Debugln(" -> reconnecting in", dur)
+		time.Sleep(dur)
 	}
 }
 
@@ -174,12 +164,10 @@ func (rtm *RTM) handleEvents(keepRunning chan bool, interval time.Duration) {
 			return
 			// send pings on ticker interval
 		case <-ticker.C:
-			if !rtm.waitingReconnect {
-				err := rtm.ping()
-				if err != nil {
-					_ = rtm.killConnection(keepRunning, false)
-					return
-				}
+			err := rtm.ping()
+			if err != nil {
+				_ = rtm.killConnection(keepRunning, false)
+				return
 			}
 		case <-rtm.forcePing:
 			err := rtm.ping()
@@ -314,6 +302,8 @@ func (rtm *RTM) handleRawEvent(rawEvent json.RawMessage) {
 		rtm.IncomingEvents <- RTMEvent{"hello", &HelloEvent{}}
 	case "pong":
 		rtm.handlePong(rawEvent)
+	case "desktop_notification":
+		rtm.Debugln("Received desktop notification, ignoring")
 	default:
 		rtm.handleEvent(event.Type, rawEvent)
 	}
