@@ -183,6 +183,7 @@ func backupRoutine() {
 }
 
 func checkBackup(path string) {
+	dbVerificationResults = nil
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		dbVerificationState = err
@@ -202,13 +203,13 @@ func checkBackup(path string) {
 		dbVerificationState = err
 		return
 	}
+	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "tables_count", Detail: fmt.Sprintf("%d tables default, %d tables in backup", len(tables), tableCount)})
 	if tableCount < len(tables) {
 		dbVerificationState = fmt.Errorf("Table count mismatch! Expected at least %d, got %d", len(tables), tableCount)
 		return
 	}
 
 	// check count of rows in some tables are within 5% of each other
-	dbVerificationResults = nil
 	for _, table := range tablesToVerify {
 		backupCount, liveCount, err := countRowsInTable(db, table)
 		if err != nil {

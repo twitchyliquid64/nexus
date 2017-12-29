@@ -11,6 +11,22 @@
 
     <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/materialize.min.js"></script>
+
+    <style>
+    .sect {
+      display: inline-block;
+      height: 22px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(0,0,0,0.6);
+      line-height: 22px;
+      padding: 0 12px;
+      border-radius: 3px;
+      background-color: #e4e4e4;
+      margin-bottom: 5px;
+      margin-right: 5px;
+    }
+    </style>
 </head>
 <body>
   <nav class="light-blue darken-2" role="navigation">
@@ -97,7 +113,7 @@
                 <span style="color:#00AA00;font-weight:bold;">OK</span>
               {!{end}!}<br><br>
               {!{range $d}!}
-                {!{.Name}!} <span style="font-style: italic;">{!{.Detail}!}</span>
+                <span class="sect">{!{.Name}!}</span> <span style="font-style: italic;">{!{.Detail}!}</span>
                 {!{if .Result}!}
                   <span style="color:#AA0000;font-weight:bold;">ERR: {!{.Result}!}</span>
                 {!{else}!}
