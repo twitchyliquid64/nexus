@@ -17,11 +17,19 @@ import (
 	"github.com/rlmcpherson/s3gof3r"
 )
 
+type verificationInfo struct {
+	Name   string
+	Detail string
+	Result error
+}
+
 var (
 	lastRun = time.Time{}
 
-	dbVerificationState error
-	dbDumpLastSize      float64
+	tablesToVerify        = []string{"fs_minifiles", "messaging_messages", "users", "integration_runnable"}
+	dbVerificationState   error
+	dbDumpLastSize        float64
+	dbVerificationResults []verificationInfo
 
 	dbDumpInProgress     = false
 	dbDumpPagesRemaining = 0
@@ -39,14 +47,15 @@ var (
 // GetBackupStatistics returns information to be displayed in the stats page.
 func GetBackupStatistics() map[string]interface{} {
 	return map[string]interface{}{
-		"Dump in progress":   dbDumpInProgress,
-		"Upload in progress": dbUploadInProgress,
-		"Backup interval":    dbConfiguredBackupInterval,
-		"Last backup":        dbLastBackup,
-		"Dump time":          dbDumpDuration,
-		"Upload time":        dbUploadDuration,
-		"Last backup size":   dbDumpLastSize,
-		"Verification error": dbVerificationState,
+		"Dump in progress":     dbDumpInProgress,
+		"Upload in progress":   dbUploadInProgress,
+		"Backup interval":      dbConfiguredBackupInterval,
+		"Last backup":          dbLastBackup,
+		"Dump time":            dbDumpDuration,
+		"Upload time":          dbUploadDuration,
+		"Last backup size":     dbDumpLastSize,
+		"Verification error":   dbVerificationState,
+		"Verification details": dbVerificationResults,
 	}
 }
 
@@ -136,11 +145,13 @@ func backupRoutine() {
 		log.Println("[backup] Starting backup.")
 
 		if len(sqlite3conn) == 0 {
+			dbVerificationState = fmt.Errorf("precondition failed: check db initialization")
 			log.Println("[backup] No sqlite3conn found, is the db initialized?")
 			continue
 		}
 		backupFile, err := doBackup(sqlite3conn[0])
 		if err != nil {
+			dbVerificationState = fmt.Errorf("backup failed: %v", err)
 			log.Printf("[backup] Failed with error: %s", err)
 			if backupFile != "" {
 				os.Remove(backupFile)
@@ -151,6 +162,7 @@ func backupRoutine() {
 
 		err = backupUpload(backupFile)
 		if err != nil {
+			dbVerificationState = fmt.Errorf("upload failed: %v", err)
 			log.Printf("[backup] Backup update to %q failed: %v", backupFile, err)
 		}
 		log.Printf("[backup] Backup upload finished")
@@ -196,16 +208,18 @@ func checkBackup(path string) {
 	}
 
 	// check count of rows in some tables are within 5% of each other
-	for _, table := range []string{"fs_minifiles", "messaging_messages", "users", "integration_runnable"} {
+	dbVerificationResults = nil
+	for _, table := range tablesToVerify {
 		backupCount, liveCount, err := countRowsInTable(db, table)
 		if err != nil {
 			dbVerificationState = err
 			return
 		}
 		ratio := float64(backupCount) / float64(liveCount)
+		dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: table, Detail: fmt.Sprintf("%d rows live, %d rows in backup", liveCount, backupCount)})
 		if ratio > 1.05 || ratio < 0.95 {
 			dbVerificationState = fmt.Errorf("table %q has >5 percent row count mismatch (ratio = %2f, %d != %d)", table, ratio, backupCount, liveCount)
-			return
+			dbVerificationResults[len(dbVerificationResults)-1].Result = dbVerificationState
 		}
 	}
 }

@@ -87,16 +87,25 @@
             <td>{!{ index .BackupInfo `Upload time` }!}</td>
           </tr>
           <tr>
-            <td>Verification status of last backup</td>{!{ $s := index .BackupInfo `Verification error` }!}
-            {!{if $s}!}
-              <td>
-                <span style="color:#AA0000;font-weight:bold;">FAILED: {!{ $s }!}</span>
-              </td>
-            {!{else}!}
+            <td>Verification status of last backup</td>
+            {!{ $s := index .BackupInfo `Verification error` }!}
+            {!{ $d := index .BackupInfo `Verification details` }!}
             <td>
-              <span style="color:#00AA00;font-weight:bold;">OK</span>
+              {!{if $s}!}
+                <span style="color:#AA0000;font-weight:bold;">FAILED: {!{ $s }!}</span>
+              {!{else}!}
+                <span style="color:#00AA00;font-weight:bold;">OK</span>
+              {!{end}!}<br><br>
+              {!{range $d}!}
+                {!{.Name}!} <span style="font-style: italic;">{!{.Detail}!}</span>
+                {!{if .Result}!}
+                  <span style="color:#AA0000;font-weight:bold;">ERR: {!{.Result}!}</span>
+                {!{else}!}
+                  <span style="color:#00AA00;font-weight:bold;">OK</span>
+                {!{end}!}
+                <br>
+              {!{end}!}
             </td>
-            {!{end}!}
           </tr>
         </tbody>
       </table>
