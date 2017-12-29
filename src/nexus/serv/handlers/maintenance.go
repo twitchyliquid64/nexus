@@ -43,6 +43,7 @@ func (h *MaintenanceHandler) BindMux(ctx context.Context, mux *http.ServeMux, db
 
 	mux.HandleFunc("/admin/cleanup", h.CleanupHandler)
 	mux.HandleFunc("/admin/stats", h.StatsHandler)
+	mux.HandleFunc("/admin/dobackup", h.BackupNowHandler)
 	return nil
 }
 
@@ -138,4 +139,38 @@ func (h *MaintenanceHandler) CleanupHandler(response http.ResponseWriter, reques
 
 	util.ApplyStrictTransportSecurity(request, response)
 	util.LogIfErr("CleanupHandler(): %v", util.RenderPage(path.Join(h.TemplatePath, "templates/maintenanceResult.html"), templateData, response))
+}
+
+// BackupNowHandler handles a HTTP request to /admin/dobackup.
+func (h *MaintenanceHandler) BackupNowHandler(response http.ResponseWriter, request *http.Request) {
+	_, u, err := util.AuthInfo(request, h.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	if !u.AdminPerms.Accounts {
+		http.Error(response, "Not authorized", 403)
+		return
+	}
+
+	go func() {
+		data.BackupNow()
+	}()
+	for !data.GetBackupStatistics()["Dump in progress"].(bool) {
+		time.Sleep(time.Second)
+	}
+	for data.GetBackupStatistics()["Dump in progress"].(bool) {
+		time.Sleep(time.Second)
+	}
+	for data.GetBackupStatistics()["Upload in progress"].(bool) {
+		time.Sleep(time.Second)
+	}
+
+	util.ApplyStrictTransportSecurity(request, response)
+	http.Redirect(response, request, "/admin/stats", http.StatusTemporaryRedirect)
 }

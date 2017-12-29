@@ -28,6 +28,8 @@ var (
 
 	dbConfiguredBackupInterval time.Duration
 	dbLastBackup               time.Time
+
+	startBackupTriggerChan chan bool
 )
 
 // GetBackupStatistics returns information to be displayed in the stats page.
@@ -44,8 +46,15 @@ func GetBackupStatistics() map[string]interface{} {
 
 // StartBackups is called to initialise periodic backups
 func StartBackups(backupInterval time.Duration) {
+	startBackupTriggerChan = make(chan bool)
 	dbConfiguredBackupInterval = backupInterval
-	go backupRoutine(backupInterval)
+	go func() {
+		for {
+			time.Sleep(backupInterval)
+			startBackupTriggerChan <- true
+		}
+	}()
+	go backupRoutine()
 }
 
 func getS3Handle() (*s3gof3r.S3, error) {
@@ -63,6 +72,11 @@ func getS3Handle() (*s3gof3r.S3, error) {
 		return nil, errors.New("no backup path specified in env 'AWS_BACKUP_PATH'")
 	}
 	return s3gof3r.New(strings.Replace(aws.Regions[os.Getenv("AWS_REGION")].S3Endpoint, "https://", "", -1), keys), nil
+}
+
+// BackupNow triggers the backup routine to start immediately.
+func BackupNow() {
+	startBackupTriggerChan <- true
 }
 
 func backupUpload(fPath string) error {
@@ -98,43 +112,41 @@ func backupUpload(fPath string) error {
 	return err
 }
 
-func backupRoutine(backupInterval time.Duration) {
+func backupRoutine() {
 	lastRun = time.Now()
 	for {
-		time.Sleep(time.Second * 10)
-		if lastRun.Add(backupInterval).Before(time.Now()) {
-			if dbDumpInProgress || dbUploadInProgress {
-				continue
-			}
-			lastRun = time.Now()
-			log.Println("[backup] Starting backup.")
+		<-startBackupTriggerChan // wait till we have the signal to start.
+		if dbDumpInProgress || dbUploadInProgress {
+			continue
+		}
+		lastRun = time.Now()
+		log.Println("[backup] Starting backup.")
 
-			if len(sqlite3conn) == 0 {
-				log.Println("[backup] No sqlite3conn found, is the db initialized?")
-				continue
-			}
-			backupFile, err := doBackup(sqlite3conn[0])
-			if err != nil {
-				log.Printf("[backup] Failed with error: %s", err)
-				if backupFile != "" {
-					os.Remove(backupFile)
-				}
-				continue
-			}
-			log.Printf("[backup] Backup dump to %q finished", backupFile)
-
-			err = backupUpload(backupFile)
-			if err != nil {
-				log.Printf("[backup] Backup update to %q failed: %v", backupFile, err)
-			}
-			log.Printf("[backup] Backup upload finished")
-			dbLastBackup = time.Now()
-
+		if len(sqlite3conn) == 0 {
+			log.Println("[backup] No sqlite3conn found, is the db initialized?")
+			continue
+		}
+		backupFile, err := doBackup(sqlite3conn[0])
+		if err != nil {
+			log.Printf("[backup] Failed with error: %s", err)
 			if backupFile != "" {
-				err = os.Remove(backupFile)
-				if err != nil {
-					log.Printf("[backup] Failed to delete backup file: %s", err)
-				}
+				os.Remove(backupFile)
+			}
+			continue
+		}
+		log.Printf("[backup] Backup dump to %q finished", backupFile)
+
+		err = backupUpload(backupFile)
+		if err != nil {
+			log.Printf("[backup] Backup update to %q failed: %v", backupFile, err)
+		}
+		log.Printf("[backup] Backup upload finished")
+		dbLastBackup = time.Now()
+
+		if backupFile != "" {
+			err = os.Remove(backupFile)
+			if err != nil {
+				log.Printf("[backup] Failed to delete backup file: %s", err)
 			}
 		}
 	}
