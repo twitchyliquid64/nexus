@@ -232,7 +232,7 @@ func checkBackup(path string) {
 
 	// check the size of the object in S3
 	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "remote read"})
-	remoteSize, remoteHash, err := getRemoteBackupDetails()
+	remoteSize, _, err := getRemoteBackupDetails()
 	if err != nil {
 		dbVerificationState = err
 		dbVerificationResults[len(dbVerificationResults)-1].Result = err
@@ -243,18 +243,6 @@ func checkBackup(path string) {
 		dbVerificationState = fmt.Errorf("remote backup size mismatch")
 		dbVerificationResults[len(dbVerificationResults)-1].Result = err
 		return
-	}
-	// check the hash of the object in S3
-	dbVerificationResults = append(dbVerificationResults, verificationInfo{Name: "hash match"})
-	hash, err := hashFileMD5(path)
-	if err != nil {
-		dbVerificationState = err
-		dbVerificationResults[len(dbVerificationResults)-1].Result = err
-		return
-	}
-	if hash != remoteHash {
-		dbVerificationState = fmt.Errorf("remote backup hash does not match")
-		dbVerificationResults[len(dbVerificationResults)-1].Result = err
 	}
 }
 
