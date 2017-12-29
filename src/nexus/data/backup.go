@@ -194,6 +194,46 @@ func checkBackup(path string) {
 		dbVerificationState = fmt.Errorf("Table count mismatch! Expected at least %d, got %d", len(tables), tableCount)
 		return
 	}
+
+	// check count of rows in some tables are within 5% of each other
+	for _, table := range []string{"fs_minifiles", "messaging_messages", "users", "integration_runnable"} {
+		backupCount, liveCount, err := countRowsInTable(db, table)
+		if err != nil {
+			dbVerificationState = err
+			return
+		}
+		ratio := float64(backupCount) / float64(liveCount)
+		if ratio > 1.05 || ratio < 0.95 {
+			dbVerificationState = fmt.Errorf("table %q has >5 percent row count mismatch (ratio = %2f, %d != %d)", table, ratio, backupCount, liveCount)
+			return
+		}
+	}
+}
+
+func countRowsInTable(backupDb *sql.DB, tableName string) (int, int, error) {
+	r, err := backupDb.Query("SELECT COUNT(*) FROM " + tableName)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer r.Close()
+	r.Next()
+	var backupCount int
+	if err = r.Scan(&backupCount); err != nil {
+		return 0, 0, err
+	}
+
+	r2, err := dbForBackups.Query("SELECT COUNT(*) FROM " + tableName)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer r2.Close()
+	r2.Next()
+	var homeCount int
+	if err = r2.Scan(&homeCount); err != nil {
+		return 0, 0, err
+	}
+
+	return backupCount, homeCount, nil
 }
 
 func doBackup(srcDBConn *gosqlite3.SQLiteConn) (string, error) {

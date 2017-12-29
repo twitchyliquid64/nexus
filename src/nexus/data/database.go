@@ -46,6 +46,7 @@ var tables = []DatabaseTable{
 
 var sqlite3conn = []*sqlite3.SQLiteConn{}
 var sqlite3backupconn = []*sqlite3.SQLiteConn{}
+var dbForBackups *sql.DB
 
 // DatabaseTable represents the manager object for a database table.
 type DatabaseTable interface {
@@ -84,6 +85,7 @@ func Init(ctx context.Context, connString string) (*sql.DB, error) {
 		}
 	}
 
+	dbForBackups = db
 	return db, nil
 }
 
@@ -116,6 +118,7 @@ func Vacuum(db *sql.DB) error {
 	return err
 }
 
+// TableStat describes the statistics of a table.
 type TableStat struct {
 	Count int
 }
