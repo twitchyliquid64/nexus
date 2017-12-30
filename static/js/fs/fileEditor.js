@@ -72,6 +72,9 @@ app.controller('FileEditorController', ["$scope", "$rootScope", "$http", functio
     if (endsWith($scope.path, '.json')){
       $scope.selectedMode = 'json';
     }
+    if (endsWith($scope.path, '.hcl')){
+      $scope.selectedMode = 'hcl';
+    }
     $scope.showDashDoc = $scope.path.match('/minifs/dashboard/(list|card|todo|log)-([0-9]+)-(.*)\\.json$');
     $scope.loadData();
   });
