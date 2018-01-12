@@ -7,12 +7,16 @@ app.controller('FilePreviewController', ["$scope", "$rootScope", "$http", functi
     $scope.path = args.path;
     $scope.imgsrc = null;
     $scope.mpgsrc = null;
+    $scope.pdfsrc = null;
     $scope.file = args.file;
     if (args.file.Name.endsWith(".png") || args.file.Name.endsWith(".jpg") || args.file.Name.endsWith(".gif")){
       $scope.imgsrc = '/web/v1/fs/download' + encodeURIComponent($scope.path);
     }
     if (args.file.Name.endsWith(".mp3")){
       $scope.mpgsrc = '/web/v1/fs/download' + encodeURIComponent($scope.path);
+    }
+    if (args.file.Name.endsWith(".pdf")){
+      $scope.pdfsrc = '/web/v1/fs/download' + encodeURIComponent($scope.path) + '?composition=inline';
     }
   });
 
@@ -25,6 +29,7 @@ app.controller('FilePreviewController', ["$scope", "$rootScope", "$http", functi
     if (args.page != 'files-preview'){
       $scope.imgsrc = null;
       $scope.mpgsrc = null;
+      $scope.pdfsrc = null;
     }
   });
 }]);

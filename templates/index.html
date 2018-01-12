@@ -162,6 +162,7 @@
         <audio ng-if="mpgsrc" controls="controls" preload="none">
           <source type="audio/mpeg" src="{{mpgsrc}}"/>
         </audio>
+        <embed ng-if="pdfsrc" ng-src="{{pdfsrc}}" width="100%" height="73%" type='application/pdf'>
       </div>
     </div>
   </div>
