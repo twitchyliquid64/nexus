@@ -53,6 +53,9 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
         if (file.Name.endsWith(".mp3") || file.Name.endsWith(".ogg")){
           return "music_note";
         }
+        if (file.Name.endsWith(".pdf")){
+          return "description";
+        }
         if (file.Name.endsWith(".js") || file.Name.endsWith(".html")
             || file.Name.endsWith(".json") || file.Name.endsWith(".py")
             || file.Name.endsWith(".txt") || file.Name.endsWith(".go")){
@@ -82,6 +85,8 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
           file: f,
         });
         $scope.changePage('files-preview')
+      } else if (f.Name.endsWith(".pdf")){
+        window.open('/web/v1/fs/download/' + $scope.path.split('/')[1] + '/' + f.Name + '?composition=inline');
       } else {
         $rootScope.$broadcast('files-editor', {
           path: '/' + $scope.path.split('/')[1] + '/' + f.Name,

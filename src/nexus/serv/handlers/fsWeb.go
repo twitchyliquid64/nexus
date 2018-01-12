@@ -203,7 +203,10 @@ func (h *FSHandler) DownloadHandler(response http.ResponseWriter, request *http.
 	// TODO: Get metadata first to check if exists / get filename.
 	// Dont set the headers if we get an error there.
 
-	response.Header().Set("Content-Disposition", "attachment;")
+	if request.URL.Query().Get("composition") != "inline" {
+		response.Header().Set("Content-Disposition", "attachment;")
+	}
+
 	path := request.URL.Path[len("/web/v1/fs/download"):]
 	err = fs.Contents(request.Context(), path, usr.UID, response)
 	if err != nil {
