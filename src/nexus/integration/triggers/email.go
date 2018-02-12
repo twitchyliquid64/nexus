@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"nexus/data/integration"
+	"strings"
 	"sync"
 
 	"github.com/jhillyerd/enmime"
@@ -72,8 +73,11 @@ func (t *EmailTriggers) HandleMail(msg []byte, meta *smtpd.MsgMetadata) error {
 
 	for _, trigger := range t.triggers {
 		for e := meta.Recipients.Front(); e != nil; e = e.Next() {
-			rd := e.Value.(smtpd.RecipientDetails)
-			if trigger.Val1 == rd.Local {
+			rd := e.Value.(string)
+			if i := strings.Index(rd, "@"); i > 0 {
+				rd = rd[:i]
+			}
+			if trigger.Val1 == rd {
 				env, err := enmime.ReadEnvelope(bytes.NewBuffer(msg))
 				if err != nil {
 					log.Printf("[EMAIL][%d]Envelope error: %v\n", trigger.UID, err)
@@ -82,9 +86,8 @@ func (t *EmailTriggers) HandleMail(msg []byte, meta *smtpd.MsgMetadata) error {
 
 				vm := otto.New()
 				messageObj, _ := vm.Object(`message = {}`)
-				messageObj.Set("address", rd.Local)
+				messageObj.Set("address", rd)
 				messageObj.Set("raw", msg)
-				messageObj.Set("address", rd.Local)
 				messageObj.Set("was_tls", meta.TLS)
 				messageObj.Set("from", meta.From)
 				messageObj.Set("domain", meta.Domain)
