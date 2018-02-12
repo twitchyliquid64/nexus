@@ -94,6 +94,7 @@ func (t *EmailTriggers) HandleMail(msg []byte, meta *smtpd.MsgMetadata) error {
 				messageObj.Set("remote", meta.Remote)
 				messageObj.Set("text", env.Text)
 				messageObj.Set("html", env.HTML)
+				messageObj.Set("subject", env.GetHeader("Subject"))
 				messageObj.Set("get_header", env.GetHeader)
 				vm.Set("message", messageObj)
 				_, err = t.Start(trigger.ParentUID, trigger.UID, "EMAIL", vm)
