@@ -1041,6 +1041,8 @@ app.controller('EditorController', ["$scope", "$rootScope", "$http", function ($
         return 'http';
       case 'PUBSUB':
         return 'settings_remote';
+      case 'EMAIL':
+        return 'email';
     }
     return '?'
   }

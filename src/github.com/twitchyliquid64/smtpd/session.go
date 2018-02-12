@@ -66,9 +66,10 @@ var commands = map[string]bool{
 	"TURN": true,
 }
 
-// recipientDetails for message delivery
-type recipientDetails struct {
+// RecipientDetails for message delivery
+type RecipientDetails struct {
 	address, localPart, domainPart string
+	Local string
 }
 
 // Session holds the state of an SMTP session
@@ -343,7 +344,7 @@ func (ss *Session) mailHandler(cmd string, arg string) {
 
 // DATA
 func (ss *Session) dataHandler() {
-	recipients := make([]recipientDetails, 0, ss.recipients.Len())
+	recipients := make([]RecipientDetails, 0, ss.recipients.Len())
 	// Get a Mailbox and a new Message for each recipient
 	msgSize := 0
 	for e := ss.recipients.Front(); e != nil; e = e.Next() {
@@ -363,7 +364,7 @@ func (ss *Session) dataHandler() {
 			ss.reset()
 			return
 		}
-		recipients = append(recipients, recipientDetails{recip, local, domain})
+		recipients = append(recipients, RecipientDetails{recip, local, domain, local})
 
 	}
 
@@ -420,7 +421,7 @@ func (ss *Session) dataHandler() {
 	} // end for
 }
 
-func (ss *Session) deliverMessage(r recipientDetails, msgBuf [][]byte) (ok bool) {
+func (ss *Session) deliverMessage(r RecipientDetails, msgBuf [][]byte) (ok bool) {
 	var msg bytes.Buffer
 
 	// Generate Received header

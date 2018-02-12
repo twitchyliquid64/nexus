@@ -88,7 +88,7 @@
             $scope.nameVldn = validationClass($scope.integration.Name, false);
             for (var i = 0; i < $scope.triggers.length; i++) {
               if (!$scope.triggers[i].Name)return false;
-              if ($scope.triggers[i].Kind == "CRON" || $scope.triggers[i].Kind == "HTTP" || $scope.triggers[i].Kind == "PUBSUB") {
+              if ($scope.triggers[i].Kind == "CRON" || $scope.triggers[i].Kind == "HTTP" || $scope.triggers[i].Kind == "PUBSUB"|| $scope.triggers[i].Kind == "EMAIL") {
                 if (!$scope.triggers[i].Val1)return false;
               }
               if ($scope.triggers[i].Kind == "PUBSUB" && !$scope.triggers[i].Val2)

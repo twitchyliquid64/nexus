@@ -69,7 +69,7 @@ func (t *CronTriggers) New(trigger *integration.Trigger) error {
 
 	for _, existingTrig := range t.triggers {
 		if existingTrig.UID == trigger.UID {
-			return errors.New("Trigger already registered")
+			return errors.New("trigger already registered")
 		}
 	}
 	t.triggers = append(t.triggers, trigger)

@@ -10,6 +10,7 @@ import (
 	"nexus/data"
 	"nexus/fs"
 	"nexus/integration"
+	"nexus/mail"
 	"nexus/messaging"
 	"os"
 	"os/signal"
@@ -24,13 +25,17 @@ func die(msg string) {
 	log.Fatal(msg)
 }
 
-var dbFlag = flag.String("db", "dev.db", "path to the database file")
-var listenerFlag = flag.String("listener", "localhost:8080", "Address to listen on")
-var tlsCacheFileFlag = flag.String("key-cache", "", "Path to store SSL secrets")
-var allowedDomains = flag.String("domains", "", "Comma-separated list of domains which are allowed to work")
-var backupDuration = flag.Duration("backup-duration", 0, "(optional) Time between full backup runs")
-var federationCert = flag.String("federation-cert", "", "Path to certificate to use to verify federation requests")
-var federationEnabled = flag.Bool("federation-enabled", false, "Whether federation requests will be serviced or ignored")
+var (
+	dbFlag            = flag.String("db", "dev.db", "path to the database file")
+	listenerFlag      = flag.String("listener", "localhost:8080", "Address to listen on")
+	tlsCacheFileFlag  = flag.String("key-cache", "", "Path to store SSL secrets")
+	allowedDomains    = flag.String("domains", "", "Comma-separated list of domains which are allowed to work")
+	backupDuration    = flag.Duration("backup-duration", 0, "(optional) Time between full backup runs")
+	federationCert    = flag.String("federation-cert", "", "Path to certificate to use to verify federation requests")
+	federationEnabled = flag.Bool("federation-enabled", false, "Whether federation requests will be serviced or ignored")
+	mailDomain        = flag.String("mail-domain", "", "Domain to run a mail server on")
+)
+
 var letsEncryptManager letsencrypt.Manager
 
 func main() {
@@ -46,6 +51,12 @@ func main() {
 
 	if *backupDuration > 0 {
 		data.StartBackups(*backupDuration)
+	}
+
+	if *mailDomain != "" {
+		if err2 := mail.Init(ctx, *mailDomain, db); err2 != nil {
+			die(err2.Error())
+		}
 	}
 
 	err = messaging.Init(ctx, db)

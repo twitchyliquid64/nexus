@@ -32,6 +32,7 @@
         <a class="btn-floating" ng-click="newTrigger('CRON')"><i class="material-icons">timer</i></a>
         <a class="btn-floating" ng-click="newTrigger('HTTP')"><i class="material-icons">http</i></a>
         <a class="btn-floating" ng-click="newTrigger('PUBSUB')"><i class="material-icons">settings_remote</i></a>
+        <a class="btn-floating" ng-click="newTrigger('EMAIL')"><i class="material-icons">mail</i></a>
       </div>
       <div class="row" style="margin-bottom: 2px;" ng-repeat="trigger in triggers"> <!-- Columns Actual -->
         <div class="input-field col s4">
@@ -53,6 +54,10 @@
         <div class="input-field col s2" ng-if="trigger.Kind=='PUBSUB'">
           <input id="int_c_credpath_{{$index}}" ng-model="trigger.Val2" type="text">
           <label for="int_c_credpath_{{$index}}">Cred path</label>
+        </div>
+        <div class="input-field col s5" ng-if="trigger.Kind=='EMAIL'">
+          <input id="int_c_cronspec_{{$index}}" ng-model="trigger.Val1" type="text">
+          <label for="int_c_cronspec_{{$index}}">Mailbox name</label>
         </div>
         <div class="col s3 input-field" style="height: 3rem;">
           <a class="btn-floating red" ng-click="deleteTrigger($index)"><i class="material-icons left">delete</i></a>

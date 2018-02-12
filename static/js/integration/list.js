@@ -75,6 +75,9 @@ app.controller('IntegrationsController', ["$scope", "$rootScope", "$http", funct
         case 'PUBSUB':
           out['settings_remote'] = true;
           break;
+        case 'EMAIL':
+          out['email'] = true;
+          break;
       }
 
     }
