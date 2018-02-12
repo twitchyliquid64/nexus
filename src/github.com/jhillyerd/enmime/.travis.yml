@@ -1,0 +1,13 @@
+language: go
+sudo: false
+
+before_script:
+  - go get github.com/golang/lint/golint
+  - go get github.com/mattn/goveralls
+
+after_success:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
+
+go:
+  - 1.9.x
+  - tip
