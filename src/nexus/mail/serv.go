@@ -26,6 +26,6 @@ func (s *integrationServ) Commit(msg []byte, meta *smtpd.MsgMetadata) error {
 // Init starts a SMTP server handling the specified domain.
 func Init(ctx context.Context, domain string, db *sql.DB) error {
 	s := smtpd.NewServer(":25", domain, make(chan bool), &integrationServ{})
-	s.Start(ctx)
+	go s.Start(ctx)
 	return nil
 }
