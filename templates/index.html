@@ -403,7 +403,7 @@
         <thead>
           <tr>
               <th>UID</th>
-              <th ng-repeat="col in datastore.Cols">{{col.Name}}</th>
+              <th ng-repeat="col in datastore.Cols track by $index">{{col.Name}}</th>
           </tr>
         </thead>
 
