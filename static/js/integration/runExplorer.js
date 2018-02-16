@@ -143,7 +143,10 @@ app.controller('IntegrationRunExplorer', ["$scope", "$rootScope", "$http", funct
       $scope.ws.close();
       $scope.ws = null;
     }
-    $scope.updateEntries();
+    if (run == '!!')
+      $scope.update();
+    else
+      $scope.updateEntries();
     if (run != '!!')
       $scope.setupWS(run);
   }
