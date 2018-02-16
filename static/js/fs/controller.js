@@ -181,6 +181,14 @@ app.controller('FSController', ["$scope", "$rootScope", "$http", function ($scop
       ]
     });
   }
+
+  $scope.openActions = function(f) {
+    $rootScope.$broadcast('fs-actions-modal', {
+      path: '/' + $scope.path.split('/')[1] + '/' + f.Name,
+      f: f,
+    });
+  }
+
   $rootScope.$on('files-navigate', function(event, args) {
     $scope.path = args.path;
     $scope.didJustNavigate = true;

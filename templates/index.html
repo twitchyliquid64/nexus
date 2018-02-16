@@ -47,6 +47,7 @@
     <script type="text/javascript" src="/static/js/fs/controller.js"></script>
     <script type="text/javascript" src="/static/js/fs/fileEditor.js"></script>
     <script type="text/javascript" src="/static/js/fs/uploadModal.js"></script>
+    <script type="text/javascript" src="/static/js/fs/actionsModal.js"></script>
     <script type="text/javascript" src="/static/js/fs/filePreview.js"></script>
 
     <script type="text/javascript" src="/static/ace/ace.js" charset="utf-8"></script>
@@ -129,6 +130,8 @@
             <td>
               <a class="btn-floating" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
               <a class="btn-floating" ng-click="download(file)" ng-if="file.ItemKind==2"><i class="material-icons">file_download</i></a>
+              <a class="btn-floating" ng-click="openActions(file)" ng-if="file.ItemKind!=1"><i class="material-icons">list</i></a>
+
             </td>
           </tr>
         </tbody>
@@ -146,6 +149,7 @@
     </div>
 
     <upload-modal></upload-modal>
+    <fs-actions-modal></fs-actions-modal>
   </div>
 
   <div ng-show="page == 'files-preview'" class="container">

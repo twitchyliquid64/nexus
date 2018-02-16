@@ -1,0 +1,47 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='fsActionsModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="fsActionsModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4>Actions</h4>
+    <div class="progress" ng-show="loading">
+        <div class="indeterminate"></div>
+    </div>
+
+    <blockquote ng-if="error">Error: {{error.reason}}</blockquote>
+
+    <div class="section" ng-repeat="action in actions">
+      <div ng-if="action.kind == 'button'">
+        <a href="#!" style="width: 100%;" class="modal-action waves-effect waves-light btn" ng-click="run(action)"><span>{{action.name}}</span></a>
+        <div ng-if="action.results" class="section">
+          <div ng-if="action.output_type == 'url'">
+            <span style="font-size: 10;word-break: break-all;">{{action.results[0]}}</span>
+            <a ng-href="action.results[0]">(link)</a>
+            <br>
+          </div>
+        </div>
+      </div>
+      <div class="row valign-wrapper" ng-if="action.kind != 'button'">
+        <div class="col s3">
+          <b>{{action.name}}</b>
+        </div>
+        <div class="col s9">
+          <div ng-if="action.kind == '1_string'" class="row valign-wrapper">
+            <div class="input-field col s9">
+              <input type="text" ng-model="data[action.ID]['1_string']">
+            </div>
+            <div class="input-field col s3">
+              <a href="#!" style="width: 100%;" class="modal-action waves-effect waves-light btn-flat" ng-click="run(action)"><span>Do</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="modal-footer">
+    <div style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
+      <span>Actions for <i>{{path}}</i></span>
+    </div>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="close()"><span>Back</span></a>
+  </div>
+</div>

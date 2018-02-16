@@ -27,6 +27,8 @@ func (h *FSHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB)
 	mux.HandleFunc("/web/v1/fs/newFolder", h.NewFolderHandler)
 	mux.HandleFunc("/web/v1/fs/download/", h.DownloadHandler)
 	mux.HandleFunc("/web/v1/fs/upload", h.UploadHandler)
+	mux.HandleFunc("/web/v1/fs/actions", h.GetActionsHandler)
+	mux.HandleFunc("/web/v1/fs/runAction", h.RunActionHandler)
 	return nil
 }
 
@@ -214,4 +216,70 @@ func (h *FSHandler) DownloadHandler(response http.ResponseWriter, request *http.
 		h.error(response, request, "Contents() failed", err, nil)
 		return
 	}
+}
+
+// GetActionsHandler handles requests to list the actions available on a file.
+func (h *FSHandler) GetActionsHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		Path string `json:"path"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if err != nil {
+		h.error(response, request, "Request decode failed", err, nil)
+		return
+	}
+
+	actions, err := fs.Actions(request.Context(), details.Path, usr.UID)
+	if err != nil {
+		h.error(response, request, "Actions() failed", err, nil)
+		return
+	}
+
+	b, errMarshal := json.Marshal(actions)
+	if errMarshal != nil {
+		h.error(response, request, "Result marshal failed", errMarshal, nil)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
+}
+
+// RunActionHandler handles requests to run an action on a path.
+func (h *FSHandler) RunActionHandler(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var details struct {
+		Path    string            `json:"path"`
+		ID      string            `json:"id"`
+		Payload map[string]string `json:"payload"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&details)
+	if err != nil {
+		h.error(response, request, "Request decode failed", err, nil)
+		return
+	}
+
+	results, err := fs.RunAction(request.Context(), details.Path, usr.UID, details.ID, details.Payload)
+	if err != nil {
+		h.error(response, request, err.Error(), err, nil)
+		return
+	}
+
+	b, errMarshal := json.Marshal(results)
+	if errMarshal != nil {
+		h.error(response, request, "Result marshal failed", errMarshal, nil)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
 }

@@ -16,7 +16,6 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/mitchellh/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,6 +26,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mitchellh/goamz/aws"
 )
 
 const debug = false

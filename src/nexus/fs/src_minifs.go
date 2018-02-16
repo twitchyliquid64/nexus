@@ -206,10 +206,21 @@ func (_ *miniFS) NewFolder(ctx context.Context, p string, userID int) error {
 	return err
 }
 
+// Upload implements Source.
 func (s *miniFS) Upload(ctx context.Context, p string, userID int, data io.Reader) error {
 	d, err := ioutil.ReadAll(data)
 	if err != nil {
 		return err
 	}
 	return s.Save(ctx, p, userID, d)
+}
+
+// ListActions implements Source.
+func (s *miniFS) ListActions(ctx context.Context, p string, userID int) ([]Action, error) {
+	return nil, nil
+}
+
+// RunAction implements Source.
+func (s *miniFS) RunAction(ctx context.Context, p string, userID int, action string, payload map[string]string) ([]interface{}, error) {
+	return nil, errors.New("no such action")
 }

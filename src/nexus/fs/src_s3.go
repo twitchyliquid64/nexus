@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -133,4 +134,47 @@ func (s *S3) Upload(ctx context.Context, p string, userID int, data io.Reader) e
 // SignedURL returns a temporary URL through which the file can be accessed anonymously.
 func (s *S3) SignedURL(ctx context.Context, p string, expires time.Time, userID int) string {
 	return s.getGoAMZ().SignedURL(p, expires)
+}
+
+// Copy duplicates a file within its bucket.
+func (s *S3) Copy(ctx context.Context, destination, source string, userID int) error {
+	return s.getGoAMZ().PutReaderHeader(destination, http.NoBody, 0, map[string][]string{
+		"x-amz-copy-source": []string{url.PathEscape(path.Join("/"+s.BucketName, source))},
+		//"Transfer-Encoding": []string{""},
+		"Content-Length": []string{"0"},
+	}, s3lib.Private)
+}
+
+// ListActions implements Source.
+func (s *S3) ListActions(ctx context.Context, p string, userID int) ([]Action, error) {
+	return []Action{
+		{
+			Kind:       ActionKindButton,
+			ID:         "gen_1hr_url",
+			Name:       "Generate fetch URL (1 hr)",
+			OutputType: OutputTypeURL,
+		},
+		{
+			Kind:       ActionKindUnaryStringInput,
+			ID:         "copy",
+			Name:       "Make a copy (relative path)",
+			OutputType: OutputTypeNone,
+		},
+	}, nil
+}
+
+// RunAction implements Source.
+func (s *S3) RunAction(ctx context.Context, p string, userID int, action string, payload map[string]string) ([]interface{}, error) {
+	switch action {
+	case "gen_1hr_url":
+		return []interface{}{
+			s.SignedURL(ctx, p, time.Now().Add(time.Hour), userID),
+		}, nil
+	case "copy":
+		if _, ok := payload["1_string"]; !ok {
+			return nil, errors.New("expected parameter: 1_string")
+		}
+		return nil, s.Copy(ctx, path.Join(path.Base(p), payload["1_string"]), p, userID)
+	}
+	return nil, errors.New("no such action")
 }

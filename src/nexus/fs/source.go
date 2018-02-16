@@ -17,6 +17,8 @@ type Source interface {
 	NewFolder(ctx context.Context, p string, userID int) error
 	Contents(ctx context.Context, p string, userID int, writer io.Writer) error
 	Upload(ctx context.Context, p string, userID int, data io.Reader) error
+	ListActions(ctx context.Context, p string, userID int) ([]Action, error)
+	RunAction(ctx context.Context, p string, userID int, action string, payload map[string]string) ([]interface{}, error)
 }
 
 // ExpandSource converts a *fs.Source to a Source.
