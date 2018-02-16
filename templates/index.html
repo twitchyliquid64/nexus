@@ -130,7 +130,7 @@
             <td>
               <a class="btn-floating" ng-click="delete(file)" ng-if="file.ItemKind!=1"><i class="material-icons">delete</i></a>
               <a class="btn-floating" ng-click="download(file)" ng-if="file.ItemKind==2"><i class="material-icons">file_download</i></a>
-              <a class="btn-floating" ng-click="openActions(file)" ng-if="file.ItemKind!=1"><i class="material-icons">list</i></a>
+              <a class="btn-floating" ng-click="openActions(file)" ng-if="file.ItemKind==2"><i class="material-icons">donut_large</i></a>
 
             </td>
           </tr>
