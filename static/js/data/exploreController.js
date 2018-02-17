@@ -33,6 +33,29 @@ app.controller('DataExplorerController', ["$scope", "$rootScope", "$http", funct
     $scope.update();
   }
 
+  $scope.deleteRow = function(rowID) {
+    $rootScope.$broadcast('check-confirmation', {
+      title: 'Confirm Deletion',
+      content: 'Are you sure you want to delete the row with rowID = ' + rowID + '?',
+      actions: [
+        {text: 'No'},
+        {text: 'Yes', onAction: function(){
+            $scope.loading = true;
+            $http({
+              method: 'POST',
+              url: '/web/v1/data/deleteRow',
+              data: {UID: $scope.datastore.UID, rowid: parseInt(rowID)}
+            }).then(function successCallback(response) {
+              $scope.update();
+            }, function errorCallback(response) {
+              $scope.loading = false;
+              $scope.error = response;
+            });
+        }},
+      ]
+    });
+  }
+
   $rootScope.$on('data-explore', function(event, args) {
     $scope.datastore = args.ds;
     $scope.filters = [];
@@ -133,6 +156,9 @@ function CSVToArray( strData, strDelimiter ){
         // it to the data array.
         arrData[ arrData.length - 1 ].push( strMatchedValue );
     }
+
+    if (arrData[arrData.length-1].length == 1 && arrData[arrData.length-1][0] == '')
+      arrData.pop();
 
     // Return the parsed data.
     return( arrData );

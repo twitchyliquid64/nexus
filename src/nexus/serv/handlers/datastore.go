@@ -27,6 +27,7 @@ func (h *DatastoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *
 	mux.HandleFunc("/web/v1/data/new", h.HandleNewV1)
 	mux.HandleFunc("/web/v1/data/edit", h.HandleEditV1)
 	mux.HandleFunc("/web/v1/data/delete", h.HandleDeleteV1)
+	mux.HandleFunc("/web/v1/data/deleteRow", h.HandleDeleteRowV1)
 
 	mux.HandleFunc("/web/v1/data/query", h.HandleQueryV1)
 	mux.HandleFunc("/api/v1/data/query", h.HandleQueryV1)
@@ -206,4 +207,43 @@ func (h *DatastoreHandler) HandleListV1(response http.ResponseWriter, request *h
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(b)
+}
+
+// HandleDeleteRowV1 handles a HTTP request to delete a row in a datastore.
+func (h *DatastoreHandler) HandleDeleteRowV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var req struct {
+		DatastoreID int `json:"uid"`
+		RowID       int `json:"rowid"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&req)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+
+	storedDS, err := datastore.GetDatastore(request.Context(), req.DatastoreID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
+	}
+
+	err = datastore.DeleteRow(request.Context(), storedDS.UID, req.RowID, h.DB)
+	if util.InternalHandlerError("datastore.DeleteRow()", response, request, err) {
+		return
+	}
+
 }
