@@ -10,6 +10,7 @@ import (
 	"nexus/data/user"
 	nexus_apps "nexus/serv/apps"
 	"nexus/serv/apps/mc"
+	"nexus/serv/apps/terminal"
 	"nexus/serv/util"
 )
 
@@ -26,6 +27,7 @@ var apps = []app{
 	&nexus_apps.YtdlApp{},
 	&nexus_apps.MediaApp{},
 	&mc.ReconApp{},
+	&terminal.TerminalApp{},
 }
 
 // appsInternalHandler is a special-case handler to serve the list of apps a user can access.
