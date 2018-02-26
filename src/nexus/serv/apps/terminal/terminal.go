@@ -38,9 +38,9 @@ func (a *TerminalApp) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.D
 	a.DB = db
 
 	mux.HandleFunc("/app/terminal", a.Render)
+	mux.HandleFunc("/app/terminal/query", a.HandleQuery)
 	return nil
 }
-
 
 // Render generates page content.
 func (a *TerminalApp) Render(response http.ResponseWriter, request *http.Request) {
@@ -57,6 +57,30 @@ func (a *TerminalApp) Render(response http.ResponseWriter, request *http.Request
 	util.LogIfErr("TerminalApp.Render(): %v", util.RenderPage(path.Join(a.TemplatePath, "templates/apps/terminal/main.html"), nil, response))
 }
 
+// HandleQuery is invoked to run a query.
+func (a *TerminalApp) HandleQuery(response http.ResponseWriter, request *http.Request) {
+	u, _, err := util.AuthInfo(request, a.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	// var input struct {
+	// 	Query string `json:"query"`
+	// }
+	// err = json.NewDecoder(request.Body).Decode(&input)
+	// if err != nil {
+	// 	log.Printf("json.Decode() Error: %v", err)
+	// 	http.Error(response, "Internal server error", 500)
+	// 	return
+	// }
+
+	log.Printf("RunQuery(%q): %v", request.FormValue("query"), RunSQL(request.Context(), a.DB, request.FormValue("query"), u.UID)) //TODO: input.Query
+}
 
 // EntryURL implements app.
 func (a *TerminalApp) EntryURL() string {
