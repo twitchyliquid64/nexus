@@ -11,6 +11,7 @@ app.controller('BodyController', ["$scope", "$rootScope", "$location", function 
         if ($scope.page == 'home')
           $scope.dashUpdated = Date.now();
         $location.hash(pageName);
+        window.document.title = 'Nexus - ' + pageName.charAt(0).toUpperCase() + pageName.slice(1);;
     };
 
     $rootScope.$on('$locationChangeSuccess', function(event, args, args2) {
