@@ -3,7 +3,7 @@ package terminal
 import (
 	"context"
 	"database/sql"
-	//"encoding/json"
+	"encoding/json"
 	"log"
 	"net/http"
 	//"nexus/data/fs"
@@ -79,7 +79,29 @@ func (a *TerminalApp) HandleQuery(response http.ResponseWriter, request *http.Re
 	// 	return
 	// }
 
-	log.Printf("RunQuery(%q): %v", request.FormValue("query"), RunSQL(request.Context(), a.DB, request.FormValue("query"), u.UID)) //TODO: input.Query
+	var output struct {
+		Success bool       `json:"success"`
+		Error   string     `json:"error"`
+		Result  *sqlResult `json:"result"`
+	}
+
+	res, err := RunSQL(request.Context(), a.DB, request.FormValue("query"), u.UID)
+	log.Printf("RunQuery(%q) = %+v, err = %v", request.FormValue("query"), res, err) //TODO: input.Query
+	if err == nil {
+		output.Result = res
+		output.Success = true
+	} else {
+		output.Error = err.Error()
+	}
+
+	b, errMarshal := json.Marshal(output)
+	if errMarshal != nil {
+		log.Printf("json.Marshal() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
 }
 
 // EntryURL implements app.
