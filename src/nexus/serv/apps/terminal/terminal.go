@@ -69,15 +69,21 @@ func (a *TerminalApp) HandleQuery(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	// var input struct {
-	// 	Query string `json:"query"`
-	// }
-	// err = json.NewDecoder(request.Body).Decode(&input)
-	// if err != nil {
-	// 	log.Printf("json.Decode() Error: %v", err)
-	// 	http.Error(response, "Internal server error", 500)
-	// 	return
-	// }
+	if shouldShow, err2 := a.ShouldShowIcon(request.Context(), u.UID); !shouldShow || err2 != nil {
+		log.Printf("ShouldShowIcon() = %v, err = %v", shouldShow, err2)
+		http.Error(response, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	var input struct {
+		Query string `json:"query"`
+	}
+	err = json.NewDecoder(request.Body).Decode(&input)
+	if err != nil {
+		log.Printf("json.Decode() Error: %v", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
 
 	var output struct {
 		Success bool       `json:"success"`
@@ -85,8 +91,8 @@ func (a *TerminalApp) HandleQuery(response http.ResponseWriter, request *http.Re
 		Result  *sqlResult `json:"result"`
 	}
 
-	res, err := RunSQL(request.Context(), a.DB, request.FormValue("query"), u.UID)
-	log.Printf("RunQuery(%q) = %+v, err = %v", request.FormValue("query"), res, err) //TODO: input.Query
+	res, err := runSQL(request.Context(), a.DB, input.Query, u.UID)
+	log.Printf("RunQuery(%q) = %+v, err = %v", input.Query, res, err)
 	if err == nil {
 		output.Result = res
 		output.Success = true

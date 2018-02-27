@@ -16,12 +16,12 @@ type sqlResult struct {
 	Columns []string        `json:"columns"`
 	Rows    [][]interface{} `json:"rows"`
 
-	Affected int64 `sql:"affected"`
+	Affected int64 `json:"affected"`
 }
 
-// RunSQL executes an SQL query in the context of a user and the
+// runSQL executes an SQL query in the context of a user and the
 // datastores they can access.
-func RunSQL(ctx context.Context, db *sql.DB, query string, uid int) (*sqlResult, error) {
+func runSQL(ctx context.Context, db *sql.DB, query string, uid int) (*sqlResult, error) {
 	stmt, err := sqlparser.Parse(query)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func dynamicQuery(ctx context.Context, db *sql.DB, sanitizedQuery string) (*sqlR
 			return nil, err
 		}
 
-		for i, _ := range cols {
+		for i := range cols {
 			var value interface{}
 			switch v := values[i].(type) {
 			case []byte:

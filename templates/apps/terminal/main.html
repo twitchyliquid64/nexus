@@ -16,6 +16,17 @@
     [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
       display: none !important;
     }
+
+    .command-marker {
+      margin-left: 3px;
+      min-width: 3rem;
+      padding: 0 6px;
+      text-align: center;
+      font-size: 1rem;
+      line-height: inherit;
+      color: #757575;
+      box-sizing: border-box;
+    }
     </style>
 
     <script type="text/javascript" src="/static/js/libs/jquery-3.0.0.min.js"></script>
@@ -24,10 +35,9 @@
     <script type="text/javascript" src="/static/js/libs/moment.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular-moment.min.js"></script>
     <script type="text/javascript" src="/static/js/libs/angular-materialize.min.js"></script>
-
-    <script type="text/javascript" src="/static/js/libs/terminal.js"></script>
+    <script type="text/javascript" src="/static/js/apps/terminal/main.js"></script>
 </head>
-<body ng-cloak ng-app="terminal">
+<body ng-cloak ng-app="terminal" ng-controller="BodyController">
   <nav class="grey darken-4" role="navigation">
     <div class="nav-wrapper">
       <a id="logo-container" href="#" class="brand-logo"><i class="material-icons">text_fields</i> Terminal</a>
@@ -37,8 +47,36 @@
     </div>
   </nav>
 
-    <div id="term-container" class="container row section" style="margin: auto; width: 50%;">
-    <script type="text/javascript" src="/static/js/apps/terminal/main.js"></script>
+    <div class="section" style="margin: 0px 16px;">
+      <div style="height: 12px; width: 100%; overflow: hidden;">
+        <loader loading="loading" error="error" ></loader>
+      </div>
+      <div id="messages-container" style="overflow-y: auto; height: 76%; margin: 4px 8px;">
+        <command-display result="cmd.result" sql="cmd.sql" cmd="cmd.cmd" when="cmd.when" ng-repeat="cmd in commands track by $index"></command-display>
+
+        <div ng-if="loading">
+          Running: {{lastCommand}}
+        </div>
+      </div>
+      <div class="row valign-wrapper">
+        <div class="col s10 input-field">
+          <input id="messengerMsg" type="text" ng-model="command" ng-keyup="$event.keyCode == 13 && run()">
+          <label for="messengerMsg">Command</label>
+        </div>
+        <div class="col s2">
+          <a class="waves-effect waves-light btn right-align" ng-click="run()"><i class="material-icons left">settings_applications</i> Execute</a>
+          <div class="switch valign-wrapper align-center" style="margin-top: 6px;">
+            <label ng-click="sqlEnabled = !sqlEnabled">
+              Raw
+              <shortcut></shortcut>
+              <input disabled type="checkbox" ng-model="sqlEnabled">
+              <span class="lever"></span>
+              SQL
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 </body>
