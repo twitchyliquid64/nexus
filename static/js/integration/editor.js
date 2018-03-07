@@ -192,6 +192,17 @@ var codeGlobals = [
       detail: 'Contains methods to interact with Google Cloud Platform.',
     },
   },
+  {
+    name: 'cal',
+    value: 'cal',
+    meta: 'gCalendar',
+    score: 110,
+    reference: {
+      heading: 'cal',
+      kind: 'global object',
+      detail: 'Contains methods to list calendars and their events.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -1069,6 +1080,51 @@ var codeSubs = [
       heading: 'message.get_header()',
       kind: 'method',
       detail: 'Returns the header field with the given name.',
+    },
+  },
+  {
+    prefix: 'cal.',
+    name: 'load_oauth_credentials',
+    value: 'load_oauth_credentials()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'cal.load_oauth_credentials()',
+      kind: 'method',
+      detail: 'cal.load_oauth_credentials(<config file path>). Consumes a Oauth client configuration , and returns an object.',
+      more: '<h4>Methods</h4><br><label>.interactive_oauth_url()</label><br>Returns a URL which a logged in Google user can use to get an authorization code.'+
+      '<br><label>.get_tok_from_interactive_auth_code(&lt;Authorization token&gt;)</label><br>Returns a JSON blob that represents the oauth tokens of the user. This should be saved to the filesystem.'+
+      '<br><label>.from_token_file(&lt;oauth token blob&gt;)</label><br>Returns a client from which events and calendars can be queried.<br><br>' +
+      'The client has the following methods:<br><label>.calendars()</label><br>' +
+      '<label>.upcoming_events(&lt;calendar ID&gt;)</label><br><br>Events are structured like the following:' +
+      jsonPrettyPrint.toHtml({
+         created: "2018-03-05T19:32:14.000Z",
+         creator: {
+            displayName: "",
+            email: "",
+            self: true
+         },
+         end: {
+            date: "2018-03-07"
+         },
+         htmlLink: "",
+         iCalUID: "",
+         id: "",
+         kind: "calendar#event",
+         organizer: {
+            displayName: "",
+            email: "",
+            self: true
+         },
+         "reminders": {},
+         start: {
+            date: "2018-03-06"
+         },
+         status: "confirmed",
+         summary: "",
+         transparency: "transparent",
+         updated: "2018-03-05T19:32:14.196Z"
+      }),
     },
   },
 ]
