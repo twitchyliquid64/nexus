@@ -62,6 +62,7 @@ type logConfig struct {
 	Items []struct {
 		Type     string `json:"type"`
 		Sections []struct {
+			Type  string `json:"type"`
 			Class string `json:"class"`
 			Text  string `json:"text"`
 		} `json:"sections"`

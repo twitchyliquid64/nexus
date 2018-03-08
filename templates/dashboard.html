@@ -64,13 +64,16 @@
 
         <li class="collection-item log-data-section" style="min-height: {!{logSize .Height}!};">
           {!{range .Items}!}
-            <div class="log-data-entry">
               {!{if eq .Type `log-line`}!}
+                <div class="log-data-entry">
                 {!{range .Sections}!}
-                <span class="{!{.Class}!}">{!{.Text}!}</span>
+                  {!{if eq .Type `date-display`}!}
+                  {!{else}!}
+                    <span class="{!{.Class}!}">{!{.Text}!}</span>
+                  {!{end}!}
                 {!{end}!}
+                </div>
               {!{end}!}
-            </div>
           {!{end}!}
         </li>
       </ul>
