@@ -61,6 +61,12 @@ type logConfig struct {
 
 	Items []struct {
 		Type     string `json:"type"`
+
+		// type == `collection-item`
+		Title 		string `json:"title"`
+		Icon   		string `json:"icon"`
+		IconColor string `json:"icon-color"`
+
 		Sections []struct {
 			Type  string `json:"type"`
 			Class string `json:"class"`

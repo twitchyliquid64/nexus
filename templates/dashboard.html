@@ -74,6 +74,25 @@
                 {!{end}!}
                 </div>
               {!{end}!}
+
+              {!{if eq .Type `collection-item`}!}
+                <div class="log-collection-entry">
+                  <div class="collection-item log-collection-entry-section">
+                      <span class="log-collection-entry-title valign-wrapper">
+                        <i class="material-icons {!{if .IconColor}!}{!{.IconColor}!}{!{end}!}" style="padding: 2;">{!{.Icon}!}</i> {!{.Title}!}
+                      </span>
+                      <label style="margin: 2px 28px;">
+                        {!{range .Sections}!}
+                          {!{if eq .Type `date-display`}!}
+                          {!{else}!}
+                            <span class="{!{.Class}!}">{!{.Text}!}</span>
+                          {!{end}!}
+                        {!{end}!}
+                      </label>
+                  </div>
+                </div>
+              {!{end}!}
+
           {!{end}!}
         </li>
       </ul>

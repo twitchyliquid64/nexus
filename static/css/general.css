@@ -165,6 +165,20 @@ nav .brand-logo {
     margin: 0;
     font-weight: 400;
 }
+
+.log-data-section {
+  padding: 3px 5px !important;
+}
+.log-collection-entry {
+  border-bottom: 1px solid #e0e0e0;
+}
+.log-collection-entry:last-child {
+  border-bottom: none;
+}
+.log-collection-entry-section {
+  padding: 2px 10px !important;
+}
+
 .task-cat {
     padding: 2px 4px;
     color: #fff;
@@ -226,8 +240,4 @@ input[type=range] {
 
 .actions a {
   margin-right: 4px;
-}
-
-.log-data-section {
-  padding: 3px 5px !important;
 }
