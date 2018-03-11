@@ -98,6 +98,15 @@ func (t *WebTriggers) makeRequestVMObj(trig *integration.Trigger, r *http.Reques
 		resp.Write([]byte(call.Argument(0).String()))
 		return otto.Value{}
 	})
+	requestObj.Set("set_header", func(call otto.FunctionCall) otto.Value {
+		resp.Header().Set(call.Argument(0).String(), call.Argument(1).String())
+		return otto.Value{}
+	})
+	requestObj.Set("add_header", func(call otto.FunctionCall) otto.Value {
+		resp.Header().Add(call.Argument(0).String(), call.Argument(1).String())
+		return otto.Value{}
+	})
+
 	requestObj.Set("write_header", func(call otto.FunctionCall) otto.Value {
 		i, err := call.Argument(0).ToInteger()
 		if err != nil {

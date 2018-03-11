@@ -497,6 +497,30 @@ var codeSubs = [
   },
   {
     prefix: 'request.',
+    name: 'set_header',
+    value: 'set_header()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.set_header(<key>, <value>)',
+      kind: 'method',
+      detail: 'Sets a header in the response.',
+    },
+  },
+  {
+    prefix: 'request.',
+    name: 'add_header',
+    value: 'add_header()',
+    meta: 'method',
+    score: 111,
+    reference: {
+      heading: 'request.add_header(<key>, <value>)',
+      kind: 'method',
+      detail: 'Adds a header in the response.',
+    },
+  },
+  {
+    prefix: 'request.',
     name: 'done',
     value: 'done()',
     meta: 'method',
