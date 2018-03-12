@@ -1,0 +1,61 @@
+<!-- Modal Trigger -->
+<a class='btn' style="display: none;" data-target='dataIndexModal' open="open" modal>show Modal</a>
+<!-- Modal Structure -->
+<div id="dataIndexModal" class="modal" style="max-height: 85%;">
+  <div class="modal-content">
+    <h4>Indexes for <i>{{ds.Name}}</i></h4>
+
+    <div class="fields-container">
+      <div class="row" style="margin-bottom: 24px;">
+        <div class="col s12">
+          <loader loading="loading" error="error"></loader>
+          <table class="highlight" ng-if="indexes.length">
+            <thead>
+              <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Columns</th>
+                  <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="i in indexes">
+                <td>{{i.UID}}</td>
+                <td>{{i.Name}}</td>
+                <td>{{i.Columns}}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <p ng-if="!indexes.length && !loading">There are no indexes on this table.</p>
+        </div>
+      </div>
+
+      <h5 style="margin-bottom: 0px;">Add Index</h5>
+
+      <div class="row" style="margin-bottom: 3px;">
+        <div class="input-field col s4">
+          <input id="name_accSelector3" type="text" ng-model="new_index_name" ng-class="nameVldn">
+          <label for="name_accSelector3">Name</label>
+        </div>
+        <div class="input-field col s7">
+          <input id="icols_selector" type="text" ng-model="new_index_cols" ng-class="colsVldn">
+          <label for="icols_selector">Columns</label>
+        </div>
+        <div class="input-field col s1">
+          <a href="#!" class="btn-floating"><i class="material-icons">add</i></a>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom: 6px;">
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <div style="font-size: 10; display: inline-block; float: left; line-height: 36px; height: 36px;">
+      <span>UID={{ds.UID}}</span>, <span>OwnerUID={{ds.OwnerID}}</span>, Datastore created <span am-time-ago="ds.CreatedAt"></span>
+    </div>
+    <a href="#!" class="modal-action waves-effect waves-green btn-flat" ng-click="onDone()"><span>Done</span></a>
+  </div>
+</div>

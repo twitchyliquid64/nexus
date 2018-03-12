@@ -68,6 +68,10 @@ app.controller('DatastoreController', ["$scope", "$rootScope", "$http", function
     }});
   }
 
+  $scope.indexes = function(ds) {
+    $rootScope.$broadcast('datastore-indexes', {ds: ds});
+  }
+
   $scope.create = function(){
     $rootScope.$broadcast('create-datastore', {cb: function(ds, cols){
       ds.Cols = cols;

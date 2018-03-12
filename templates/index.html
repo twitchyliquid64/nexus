@@ -34,6 +34,7 @@
     <script type="text/javascript" src="/static/js/accounts/accountsAuth.js"></script>
     <script type="text/javascript" src="/static/js/data/controller.js"></script>
     <script type="text/javascript" src="/static/js/data/editModal.js"></script>
+    <script type="text/javascript" src="/static/js/data/indexModal.js"></script>
     <script type="text/javascript" src="/static/js/data/exploreController.js"></script>
     <script type="text/javascript" src="/static/js/data/inserterController.js"></script>
     <script type="text/javascript" src="/static/js/data/filterDirective.js"></script>
@@ -379,9 +380,12 @@
             <td ng-click="edit(ds)" style="cursor: pointer;">{{ds.Name}}</td>
             <td am-time-ago="ds.CreatedAt"></td>
             <td>
-              <a class="btn-floating" href="#" ng-click="delete(ds.UID)"><i class="material-icons">delete</i></a>
+              <a class="btn-floating" href="#" ng-click="delete(ds.UID)" style="margin-right: 12px;"><i class="material-icons">delete</i></a>
+
               <a class="btn-floating" href="#" ng-click="explore(ds)"><i class="material-icons">search</i></a>
               <a class="btn-floating" href="#" ng-click="insert(ds)"><i class="material-icons">add</i></a>
+
+              <a class="btn-floating" href="#" ng-click="indexes(ds)" style="margin-left: 12px;"><i class="material-icons">list</i></a>
             </td>
           </tr>
         </tbody>
@@ -395,6 +399,7 @@
     </div>
 
     <datastore-edit-modal></datastore-edit-modal>
+    <datastore-index-modal></datastore-index-modal>
   </div>
 
   <div ng-show="page == 'data-explorer'" style="margin: 0px 9px;">
