@@ -199,7 +199,7 @@ func (h *DashboardHandler) Render(response http.ResponseWriter, request *http.Re
 			return out
 		},
 		"logSize": func(height float64) string {
-			return fmt.Sprintf("%dpx", int(height*64.5))
+			return fmt.Sprintf("%dpx", int(height*64.1))
 		}}).Delims("{!{", "}!}").ParseFiles(path.Join(h.TemplatePath, "templates", "dashboard.html"))
 
 	if util.InternalHandlerError("template.Parse()", response, request, err) {
