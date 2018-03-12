@@ -51,6 +51,8 @@
             $scope.open = true;
             $scope.ds = args.ds;
             $scope.indexes = [];
+            $scope.new_index_name = '';
+            $scope.new_index_cols = '';
             $scope.getIndexes().then(function(response){
               $scope.indexes = response.data;
             })
@@ -60,6 +62,22 @@
             $scope.ds = {};
             $scope.open = false;
             $scope.error = undefined;
+          }
+
+          $scope.onNew = function(){
+            $scope.loading = true;
+            $http({
+              method: 'POST',
+              url: '/web/v1/data/indexes/new',
+              data: {UID: $scope.ds.UID, Name: $scope.new_index_name, Cols: $scope.new_index_cols.split(',').map(s => s.trim())},
+            }).then(function(result){
+              $scope.getIndexes().then(function(response){
+                $scope.indexes = response.data;
+              })
+            }, function(e){
+              $scope.loading = false;
+              $scope.error = e;
+            });
           }
 
           //Checks and applies validation classes. Returns true if fields are valid.

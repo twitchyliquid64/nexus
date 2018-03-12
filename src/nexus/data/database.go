@@ -26,6 +26,7 @@ var tables = []DatabaseTable{
 	&datastore.MetaTable{},
 	&datastore.ColumnMetaTable{},
 	&datastore.StoreGrant{},
+	&datastore.IndexMetaTable{},
 
 	&messaging.SourceTable{},
 	&messaging.ConversationTable{},

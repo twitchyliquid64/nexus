@@ -33,6 +33,9 @@ func (h *DatastoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *
 	mux.HandleFunc("/api/v1/data/query", h.HandleQueryV1)
 	mux.HandleFunc("/web/v1/data/insert", h.HandleInsertV1)
 	mux.HandleFunc("/api/v1/data/insert", h.HandleInsertV1)
+
+	mux.HandleFunc("/web/v1/data/indexes/get", h.HandleGetIndexesV1)
+	mux.HandleFunc("/web/v1/data/indexes/new", h.HandleCreateIndexV1)
 	return nil
 }
 
@@ -246,4 +249,88 @@ func (h *DatastoreHandler) HandleDeleteRowV1(response http.ResponseWriter, reque
 		return
 	}
 
+}
+
+// HandleGetIndexesV1 handles a HTTP request to list indexes associated with a datastore.
+func (h *DatastoreHandler) HandleGetIndexesV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var data struct {
+		UID int
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&data)
+	if util.InternalHandlerError("json.Decode(struct{UID int})", response, request, err) {
+		return
+	}
+
+	storedDS, err := datastore.GetDatastore(request.Context(), data.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
+	}
+
+	indexes, err := datastore.GetIndexes(request.Context(), storedDS.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetIndexes()", response, request, err) {
+		return
+	}
+
+	b, errMarshal := json.Marshal(indexes)
+	if util.InternalHandlerError("json.Marshal()", response, request, errMarshal) {
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(200)
+	response.Write(b)
+}
+
+// HandleCreateIndexV1 handles a HTTP request to create an index associated with a datastore.
+func (h *DatastoreHandler) HandleCreateIndexV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var data struct {
+		UID  int
+		Name string
+		Cols []string
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&data)
+	if util.InternalHandlerError("json.Decode(struct{})", response, request, err) {
+		return
+	}
+
+	storedDS, err := datastore.GetDatastore(request.Context(), data.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
+	}
+
+	errCreate := datastore.DoCreateIndex(request.Context(), storedDS.UID, data.Name, data.Cols, h.DB)
+	if util.InternalHandlerError("datastore.DoCreateIndex()", response, request, errCreate) {
+		return
+	}
 }

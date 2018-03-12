@@ -22,7 +22,7 @@
               <tr ng-repeat="i in indexes">
                 <td>{{i.UID}}</td>
                 <td>{{i.Name}}</td>
-                <td>{{i.Columns}}</td>
+                <td>{{i.Cols}}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -40,10 +40,10 @@
         </div>
         <div class="input-field col s7">
           <input id="icols_selector" type="text" ng-model="new_index_cols" ng-class="colsVldn">
-          <label for="icols_selector">Columns</label>
+          <label for="icols_selector">Columns (comma-separated)</label>
         </div>
         <div class="input-field col s1">
-          <a href="#!" class="btn-floating"><i class="material-icons">add</i></a>
+          <a href="#!" class="btn-floating" ng-click="onNew();"><i class="material-icons">add</i></a>
         </div>
       </div>
       <div class="row" style="margin-bottom: 6px;">

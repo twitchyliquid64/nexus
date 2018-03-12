@@ -11,6 +11,7 @@ import (
 	"nexus/data/dlock"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -387,6 +388,12 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		return err
 	}
 
+	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_index_meta WHERE datastore=?;`, ds.UID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	for _, col := range cols {
 		_, err = tx.ExecContext(ctx, `DELETE FROM datastore_col_meta WHERE rowid=?;`, col.UID)
 		if err != nil {
@@ -406,6 +413,45 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 		tx.Rollback()
 		return err
 	}
+	return tx.Commit()
+}
+
+// DoCreateIndex implements all the logic needed to create an index on a datastore.
+func DoCreateIndex(ctx context.Context, dsID int, name string, cols []string, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	indexUID, err := makeIndex(ctx, tx, &Index{
+		Datastore: dsID,
+		Name:      name,
+		Cols:      strings.Join(cols, ","),
+	}, db)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	createQuery := "CREATE INDEX ds_index_" + strconv.Itoa(indexUID) + " ON ds_" + strconv.Itoa(dsID) + "("
+	for i, col := range cols {
+		createQuery += columnName(col)
+		if i < (len(cols) - 1) {
+			createQuery += ", "
+		}
+	}
+	createQuery += ");\n"
+	log.Println("[Datastore] Create index:", createQuery)
+
+	_, err = tx.Exec(createQuery)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	return tx.Commit()
 }
 

@@ -171,7 +171,7 @@ nav .brand-logo {
 }
 .log-collection-entry {
   border-bottom: 1px solid #e0e0e0;
-  min-height: 64.5px;
+  min-height: 64.1px;
 }
 .log-collection-entry:last-child {
   border-bottom: none;
