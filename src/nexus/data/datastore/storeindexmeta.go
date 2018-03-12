@@ -47,6 +47,7 @@ func (t *IndexMetaTable) Forms() []*util.FormDescriptor {
 type Index struct {
 	UID       int
 	Datastore int
+	Unique    bool
 	Name      string
 	Cols      string
 	CreatedAt time.Time
@@ -55,10 +56,10 @@ type Index struct {
 func makeIndex(ctx context.Context, tx *sql.Tx, ind *Index, db *sql.DB) (int, error) {
 	x, err := tx.ExecContext(ctx, `
 		INSERT INTO
-			datastore_index_meta (datastore, name, cols)
+			datastore_index_meta (datastore, name, cols, unique_index)
 			VALUES (
-				?, ?, ?
-			);`, ind.Datastore, ind.Name, ind.Cols)
+				?, ?, ?, ?
+			);`, ind.Datastore, ind.Name, ind.Cols, ind.Unique)
 	id, err := x.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -68,7 +69,7 @@ func makeIndex(ctx context.Context, tx *sql.Tx, ind *Index, db *sql.DB) (int, er
 
 // GetIndexes gets all the indexes for a datastore.
 func GetIndexes(ctx context.Context, datastoreID int, db *sql.DB) ([]*Index, error) {
-	res, err := db.QueryContext(ctx, `SELECT rowid, name, cols, created_at FROM datastore_index_meta WHERE datastore=?;`, datastoreID)
+	res, err := db.QueryContext(ctx, `SELECT rowid, name, cols, unique_index, created_at FROM datastore_index_meta WHERE datastore=?;`, datastoreID)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func GetIndexes(ctx context.Context, datastoreID int, db *sql.DB) ([]*Index, err
 	var output []*Index
 	for res.Next() {
 		var out Index
-		if err := res.Scan(&out.UID, &out.Name, &out.Cols, &out.CreatedAt); err != nil {
+		if err := res.Scan(&out.UID, &out.Name, &out.Cols, &out.Unique, &out.CreatedAt); err != nil {
 			return nil, err
 		}
 		out.Datastore = datastoreID
@@ -88,7 +89,7 @@ func GetIndexes(ctx context.Context, datastoreID int, db *sql.DB) ([]*Index, err
 
 // GetIndex gets a specific index.
 func GetIndex(ctx context.Context, uid int, db *sql.DB) (*Index, error) {
-	res, err := db.QueryContext(ctx, `SELECT rowid, datastore, name, cols, created_at FROM datastore_index_meta WHERE rowid=?;`, uid)
+	res, err := db.QueryContext(ctx, `SELECT rowid, datastore, name, cols, unique_index, created_at FROM datastore_index_meta WHERE rowid=?;`, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,7 @@ func GetIndex(ctx context.Context, uid int, db *sql.DB) (*Index, error) {
 	}
 
 	var out Index
-	if err := res.Scan(&out.UID, &out.Datastore, &out.Name, &out.Cols, &out.CreatedAt); err != nil {
+	if err := res.Scan(&out.UID, &out.Datastore, &out.Name, &out.Cols, &out.Unique, &out.CreatedAt); err != nil {
 		return nil, err
 	}
 	return &out, nil

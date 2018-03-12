@@ -330,7 +330,7 @@ func (h *DatastoreHandler) HandleCreateIndexV1(response http.ResponseWriter, req
 		}
 	}
 
-	errCreate := datastore.DoCreateIndex(request.Context(), storedDS.UID, data.Name, data.Cols, h.DB)
+	errCreate := datastore.DoCreateIndex(request.Context(), storedDS.UID, data.Name, data.Cols, false, h.DB)
 	if util.InternalHandlerError("datastore.DoCreateIndex()", response, request, errCreate) {
 		return
 	}

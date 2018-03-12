@@ -417,7 +417,7 @@ func DoDelete(ctx context.Context, ds *Datastore, db *sql.DB) error {
 }
 
 // DoCreateIndex implements all the logic needed to create an index on a datastore.
-func DoCreateIndex(ctx context.Context, dsID int, name string, cols []string, db *sql.DB) error {
+func DoCreateIndex(ctx context.Context, dsID int, name string, cols []string, isUnique bool, db *sql.DB) error {
 	dlock.Lock().Lock()
 	defer dlock.Lock().Unlock()
 
@@ -430,13 +430,18 @@ func DoCreateIndex(ctx context.Context, dsID int, name string, cols []string, db
 		Datastore: dsID,
 		Name:      name,
 		Cols:      strings.Join(cols, ","),
+		Unique:    isUnique,
 	}, db)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	createQuery := "CREATE INDEX ds_index_" + strconv.Itoa(indexUID) + " ON ds_" + strconv.Itoa(dsID) + "("
+	createQuery := "CREATE "
+	if isUnique {
+		createQuery += "UNIQUE "
+	}
+	createQuery += "INDEX ds_index_" + strconv.Itoa(indexUID) + " ON ds_" + strconv.Itoa(dsID) + "("
 	for i, col := range cols {
 		createQuery += columnName(col)
 		if i < (len(cols) - 1) {
