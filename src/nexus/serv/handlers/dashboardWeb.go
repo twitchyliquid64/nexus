@@ -85,6 +85,7 @@ type listConfig struct {
 	Items         []struct {
 		Title     string `json:"title"`
 		Text      string `json:"text"`
+		TextColor string `json:"text-color"`
 		Tag       string `json:"tag"`
 		TagColor  string `json:"tag-color"`
 		Icon      string `json:"icon"`

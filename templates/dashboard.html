@@ -32,7 +32,7 @@
                 {!{- end}!}
                 <div class="col  {!{- if and .Tag .ChartType}!} s6 {!{else}!} {!{if or .Tag .ChartType}!}s8{!{else}!}s12{!{end -}!} {!{end}!}">
                     <p class="collections-title">{!{.Title}!}</p>
-                    <p class="collections-content">{!{.Text}!}</p>
+                    <p class="collections-content {!{if .TextColor}!}{!{.TextColor}!}{!{end}!}">{!{.Text}!}</p>
                 </div>
                 {!{if .Tag -}!}
                 <div class="col {!{if .ChartType}!}s3{!{else}!}s4{!{end}!}" style="text-align:right;">
