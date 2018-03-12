@@ -64,6 +64,22 @@
             $scope.error = undefined;
           }
 
+          $scope.onDelete = function(uid){
+            $scope.loading = true;
+            $http({
+              method: 'POST',
+              url: '/web/v1/data/indexes/delete',
+              data: {UID: uid},
+            }).then(function(result){
+              $scope.getIndexes().then(function(response){
+                $scope.indexes = response.data;
+              })
+            }, function(e){
+              $scope.loading = false;
+              $scope.error = e;
+            });
+          }
+
           $scope.onNew = function(){
             $scope.loading = true;
             $http({

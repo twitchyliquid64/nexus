@@ -497,3 +497,28 @@ func DoCreate(ctx context.Context, ds *Datastore, db *sql.DB) error {
 
 	return tx.Commit()
 }
+
+// DoDeleteIndex implements all the logic to delete a datastore index.
+func DoDeleteIndex(ctx context.Context, indexUID int, db *sql.DB) error {
+	dlock.Lock().Lock()
+	defer dlock.Lock().Unlock()
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `DELETE FROM datastore_index_meta WHERE rowid=?;`, indexUID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, "DROP INDEX ds_index_"+strconv.Itoa(indexUID)+";")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}

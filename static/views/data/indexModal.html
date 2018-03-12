@@ -23,7 +23,9 @@
                 <td>{{i.UID}}</td>
                 <td>{{i.Name}}</td>
                 <td>{{i.Cols}}</td>
-                <td></td>
+                <td>
+                  <a href="#!" class="btn-floating" ng-click="onDelete(i.UID);"><i class="material-icons">delete</i></a>
+                </td>
               </tr>
             </tbody>
           </table>

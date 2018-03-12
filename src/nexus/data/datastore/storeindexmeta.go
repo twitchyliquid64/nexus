@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"nexus/data/util"
 	"time"
 )
@@ -83,4 +84,23 @@ func GetIndexes(ctx context.Context, datastoreID int, db *sql.DB) ([]*Index, err
 		output = append(output, &out)
 	}
 	return output, nil
+}
+
+// GetIndex gets a specific index.
+func GetIndex(ctx context.Context, uid int, db *sql.DB) (*Index, error) {
+	res, err := db.QueryContext(ctx, `SELECT rowid, datastore, name, cols, created_at FROM datastore_index_meta WHERE rowid=?;`, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, errors.New("no such index")
+	}
+
+	var out Index
+	if err := res.Scan(&out.UID, &out.Datastore, &out.Name, &out.Cols, &out.CreatedAt); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }

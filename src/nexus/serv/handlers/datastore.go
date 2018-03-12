@@ -36,6 +36,7 @@ func (h *DatastoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *
 
 	mux.HandleFunc("/web/v1/data/indexes/get", h.HandleGetIndexesV1)
 	mux.HandleFunc("/web/v1/data/indexes/new", h.HandleCreateIndexV1)
+	mux.HandleFunc("/web/v1/data/indexes/delete", h.HandleDeleteIndexV1)
 	return nil
 }
 
@@ -331,6 +332,48 @@ func (h *DatastoreHandler) HandleCreateIndexV1(response http.ResponseWriter, req
 
 	errCreate := datastore.DoCreateIndex(request.Context(), storedDS.UID, data.Name, data.Cols, h.DB)
 	if util.InternalHandlerError("datastore.DoCreateIndex()", response, request, errCreate) {
+		return
+	}
+}
+
+// HandleDeleteIndexV1 handles a HTTP request to delete a datastore index.
+func (h *DatastoreHandler) HandleDeleteIndexV1(response http.ResponseWriter, request *http.Request) {
+	_, usr, err := util.AuthInfo(request, h.DB)
+	if util.UnauthenticatedOrError(response, request, err) {
+		return
+	}
+
+	var data struct {
+		UID  int
+	}
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&data)
+	if util.InternalHandlerError("json.Decode(struct{UID int})", response, request, err) {
+		return
+	}
+
+	storedIndex, err := datastore.GetIndex(request.Context(), data.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetIndex()", response, request, err) {
+		return
+	}
+
+	storedDS, err := datastore.GetDatastore(request.Context(), storedIndex.Datastore, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+	if storedDS.OwnerID != usr.UID && !usr.AdminPerms.Data {
+		canAccess, errAccess := datastore.CheckAccess(request.Context(), usr.UID, storedDS.UID, false, h.DB)
+		if util.InternalHandlerError("datastore.CheckAccess()", response, request, errAccess) {
+			return
+		}
+		if !canAccess {
+			http.Error(response, "You do not own this datastore.", 403)
+			return
+		}
+	}
+
+	errCreate := datastore.DoDeleteIndex(request.Context(), data.UID, h.DB)
+	if util.InternalHandlerError("datastore.DoDeleteIndex()", response, request, errCreate) {
 		return
 	}
 }
