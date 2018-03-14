@@ -89,7 +89,7 @@
     <h5>Apps</h5>
     <loader loading="loading" error="error"></loader>
     <div class="row">
-      <a class="col s12 m3 app-icon-container" ng-repeat="app in apps" href="{{app.URL}}">
+      <a class="col s12 m3 app-icon-container" ng-repeat="app in apps" ng-click="appClick(app)">
         <div class="app-icon center-align">
           <i class="material-icons medium">{{app.Icon}}</i><br>
           {{app.Name}}

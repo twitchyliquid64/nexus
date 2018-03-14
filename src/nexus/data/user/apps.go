@@ -3,11 +3,18 @@ package user
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"nexus/data/dlock"
 	"nexus/data/util"
 	"strconv"
 	"time"
+)
+
+// Different kinds of external apps.
+const (
+	ExternAppURLKind = 0
+	ExternAppJWTKind = 1
 )
 
 // ExternalAppsTable (ext_apps) implements the databaseTable interface.
@@ -50,8 +57,8 @@ func (t *ExternalAppsTable) Forms() []*util.FormDescriptor {
 			Desc:          "External apps are additional links shown the in the users application list.",
 			Forms: []*util.ActionDescriptor{
 				&util.ActionDescriptor{
-					Name:   "New External App",
-					ID:     "usr_ext_app_add",
+					Name:   "New External App (URL)",
+					ID:     "usr_ext_app_add_url",
 					IcoStr: "add",
 					Fields: []*util.Field{
 						&util.Field{
@@ -72,14 +79,44 @@ func (t *ExternalAppsTable) Forms() []*util.FormDescriptor {
 							Kind: "text",
 						},
 					},
-					OnSubmit: t.addExtAppActionHandler,
+					OnSubmit: t.addExtAppURLActionHandler,
+				},
+				&util.ActionDescriptor{
+					Name:   "New External App (JWT)",
+					ID:     "usr_ext_app_add_jwt",
+					IcoStr: "add",
+					Fields: []*util.Field{
+						&util.Field{
+							Name:              "Name",
+							ID:                "name",
+							Kind:              "text",
+							ValidationPattern: "[A-Za-z_\\s]{1,18}",
+						},
+						&util.Field{
+							Name:              "Icon",
+							ID:                "icon",
+							Kind:              "text",
+							ValidationPattern: "[A-Za-z_\\s]{1,18}",
+						},
+						&util.Field{
+							Name: "Post URL",
+							ID:   "url",
+							Kind: "text",
+						},
+						&util.Field{
+							Name: "HS256 Secret",
+							ID:   "secret",
+							Kind: "text",
+						},
+					},
+					OnSubmit: t.addExtAppJWTActionHandler,
 				},
 			},
 			Tables: []*util.TableDescriptor{
 				&util.TableDescriptor{
 					Name: "Existing External Apps",
 					ID:   "usr_ext_app_list",
-					Cols: []string{"#", "Name", "Icon", "URL"},
+					Cols: []string{"#", "Name", "Icon", "URL", "Kind"},
 					Actions: []*util.TableAction{
 						&util.TableAction{
 							Action:       "Delete",
@@ -95,7 +132,13 @@ func (t *ExternalAppsTable) Forms() []*util.FormDescriptor {
 						}
 						out := make([]interface{}, len(data))
 						for i, s := range data {
-							out[i] = []interface{}{s.UID, s.Name, s.Icon, s.Val}
+							out[i] = []interface{}{s.UID, s.Name, s.Icon, s.Val, ""}
+							switch s.Kind {
+							case ExternAppJWTKind:
+								out[i].([]interface{})[4] = "JWT"
+							case ExternAppURLKind:
+								out[i].([]interface{})[4] = "URL"
+							}
 						}
 						return out, nil
 					},
@@ -120,13 +163,33 @@ func (t *ExternalAppsTable) deleteExtAppActionHandler(rowID, formID, actionUID s
 	return DeleteExtApp(context.Background(), src.UID, db)
 }
 
-func (t *ExternalAppsTable) addExtAppActionHandler(ctx context.Context, vals map[string]string, userID int, db *sql.DB) error {
+func (t *ExternalAppsTable) addExtAppURLActionHandler(ctx context.Context, vals map[string]string, userID int, db *sql.DB) error {
 	return CreateExtApp(ctx, &ExtApp{
 		UserID: userID,
-		Kind:   0,
+		Kind:   ExternAppURLKind,
 		Name:   vals["name"],
 		Icon:   vals["icon"],
 		Val:    vals["url"],
+	}, db)
+}
+
+func (t *ExternalAppsTable) addExtAppJWTActionHandler(ctx context.Context, vals map[string]string, userID int, db *sql.DB) error {
+	enc, err := json.Marshal(struct {
+		Secret string `json:"secret"`
+	}{
+		Secret: vals["secret"],
+	})
+	if err != nil {
+		return err
+	}
+
+	return CreateExtApp(ctx, &ExtApp{
+		UserID: userID,
+		Kind:   ExternAppJWTKind,
+		Name:   vals["name"],
+		Icon:   vals["icon"],
+		Val:    vals["url"],
+		Extra:  string(enc),
 	}, db)
 }
 

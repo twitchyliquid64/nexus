@@ -63,7 +63,7 @@ app.directive('loader', function($rootScope){
 
 
 
-app.controller('AppController', ["$scope", "$rootScope", "$http", function ($scope, $rootScope, $http) {
+app.controller('AppController', ["$scope", "$rootScope", "$http", "$window", function ($scope, $rootScope, $http, $window) {
   $scope.loading = false;
   $scope.apps = [];
   $scope.update = function(){
@@ -78,6 +78,28 @@ app.controller('AppController', ["$scope", "$rootScope", "$http", function ($sco
       $scope.loading = false;
       $scope.error = response;
     });
+  }
+
+  $scope.appClick = function(app){
+    switch (app.Kind) {
+      case 0:
+        $window.location.href = app.URL;
+        break;
+      case 1:
+        $scope.loading = false;
+        $http({
+          method: 'POST',
+          url: '/apps/getJWT',
+          data: {name: app.Name},
+        }).then(function successCallback(response) {
+          $scope.loading = false;
+          $window.location.href = app.URL + "?jwt=" + response.data;
+        }, function errorCallback(response) {
+          $scope.loading = false;
+          $scope.error = response;
+        });
+        break;
+    }
   }
 
   $rootScope.$on('page-change', function(event, args) {

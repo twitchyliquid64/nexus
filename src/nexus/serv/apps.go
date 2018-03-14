@@ -12,6 +12,9 @@ import (
 	"nexus/serv/apps/mc"
 	"nexus/serv/apps/terminal"
 	"nexus/serv/util"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type app interface {
@@ -39,6 +42,7 @@ type appsInternalHandler struct {
 func (h *appsInternalHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.DB) error {
 	h.db = db
 	mux.HandleFunc("/apps/list", h.serveAppsListForUser)
+	mux.HandleFunc("/apps/getJWT", h.createJWTForUser)
 	return nil
 }
 
@@ -55,6 +59,7 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 
 	type appInfo struct {
 		Name  string
+		Kind  int
 		Icon  string
 		URL   string
 		Extra string
@@ -73,6 +78,7 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 				Name: app.Name(),
 				Icon: app.Icon(),
 				URL:  app.EntryURL(),
+				Kind: user.ExternAppURLKind,
 			})
 		}
 	}
@@ -84,10 +90,10 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 	}
 	for _, app := range extApps {
 		out = append(out, appInfo{
-			Name:  app.Name,
-			Icon:  app.Icon,
-			URL:   app.Val,
-			Extra: app.Extra,
+			Name: app.Name,
+			Icon: app.Icon,
+			URL:  app.Val,
+			Kind: app.Kind,
 		})
 	}
 
@@ -98,4 +104,73 @@ func (h *appsInternalHandler) serveAppsListForUser(response http.ResponseWriter,
 	}
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(b)
+}
+
+type jwtClaim struct {
+	UID      int    `json:"uid"`
+	Username string `json:"username"`
+	AppName  string `json:"app_name"`
+	IsAdmin  bool   `json:"is_admin"`
+	jwt.StandardClaims
+}
+
+func (h *appsInternalHandler) createJWTForUser(response http.ResponseWriter, request *http.Request) {
+	_, u, authErr := util.AuthInfo(request, h.db)
+	if authErr == session.ErrInvalidSession || authErr == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if authErr != nil {
+		log.Printf("AuthInfo() Error: %s", authErr)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	var input struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(request.Body).Decode(&input); err != nil {
+		log.Printf("json.Decode() Error: %v", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	extApps, err := user.GetExtAppsForUser(request.Context(), u.UID, h.db)
+	if err != nil {
+		http.Error(response, "Internal server error", 500)
+		log.Printf("GetExtAppsForUser(%q) Error: %v", u.Username, err)
+		return
+	}
+
+	for _, app := range extApps {
+		if app.Name == input.Name && app.Kind == user.ExternAppJWTKind {
+			// get the secret.
+			var extra map[string]string
+			if err := json.Unmarshal([]byte(app.Extra), &extra); err != nil {
+				log.Printf("json.Unmarshal() Error: %v", err)
+				http.Error(response, "Internal server error", 500)
+				return
+			}
+
+			// build and sign the assertion.
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaim{
+				UID:      u.UID,
+				Username: u.Username,
+				IsAdmin:  u.AdminPerms.Accounts,
+				AppName:  app.Name,
+				StandardClaims: jwt.StandardClaims{
+					Issuer:    "NEXUS",
+					ExpiresAt: time.Now().Add(120 * time.Second).Unix(),
+				},
+			})
+			ss, err := token.SignedString([]byte(extra["secret"]))
+			if err != nil {
+				http.Error(response, "Internal server error", 500)
+				log.Printf("token.SignedString() Error: %v", err)
+				return
+			}
+			response.Write([]byte(ss))
+			return
+		}
+	}
+	http.Error(response, "No such JWT app", http.StatusBadRequest)
 }
