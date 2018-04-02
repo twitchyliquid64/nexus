@@ -94,6 +94,8 @@ func runSQL(ctx context.Context, db *sql.DB, query string, uid int) (*sqlResult,
 	switch sqlparser.Preview(sanitizedQuery) {
 	case sqlparser.StmtSelect:
 		return dynamicQuery(ctx, db, sanitizedQuery)
+	case sqlparser.StmtDelete:
+		fallthrough
 	case sqlparser.StmtUpdate:
 		fallthrough
 	case sqlparser.StmtInsert:
