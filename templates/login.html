@@ -83,6 +83,16 @@
               </div>
               {!{end}!}
 
+              <div id="soe_integration_disabled" style="display:none;">
+                <p class="red-text" style="text-align: center;">SOE integration is supported but not available.</p>
+              </div>
+              <div id="soe_integration_enabled" style="display:none;">
+                <p class="green-text" style="text-align: center;">Generating SOE assertion...</p>
+              </div>
+              <div id="soe_integration_finished" style="display:none;">
+                <p class="green-text" style="text-align: center;">SOE assertion attached.</p>
+              </div>
+
               <br />
               <center>
                 <div class='row'>
@@ -90,7 +100,7 @@
                 </div>
               </center>
 
-              <div id="soe_login_assertion_section">
+              <div id="soe_login_assertion_section" soe-login-enabled-hook soe-login-disabled-hook>
                 <input type="hidden" name="soe_assertion" id="soe_assertion" />
               </div>
             </form>
@@ -101,5 +111,32 @@
       <div class="section"></div>
       <div class="section"></div>
     </main>
+
+    <script>
+    var wait_assertion = false;
+    var iterations = 0;
+    var ivl = setInterval(function(){
+      var v = $('#soe_assertion')[0].value;
+      console.log(v);
+      iterations++;
+      if (iterations > 12 && !wait_assertion) {
+        clearInterval(ivl);
+        return;
+      }
+
+      if (v == '::!%soe_denied') {
+        clearInterval(ivl);
+        $('#soe_integration_disabled').show();
+      } else if (v == '::!%soe_ready') {
+        wait_assertion = true;
+        $('#soe_integration_enabled').show();
+        $('#soe_assertion')[0].value = '::!%soe_proceed';
+      } else if (wait_assertion && v != '::!%soe_proceed') {
+        clearInterval(ivl);
+        $('#soe_integration_enabled').hide();
+        $('#soe_integration_finished').show();
+      }
+    }, 350);
+    </script>
 
 </body>
