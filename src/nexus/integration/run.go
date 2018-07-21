@@ -31,6 +31,7 @@ var initialisers = []builtin{
 	&tInitialiser{},
 	&gcpInitialiser{},
 	&gcalInitialiser{},
+	&computeInitialiser{},
 }
 
 // Run contains the state of a running runnable.

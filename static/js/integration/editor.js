@@ -203,6 +203,17 @@ var codeGlobals = [
       detail: 'Contains methods to list calendars and their events.',
     },
   },
+  {
+    name: 'compute',
+    value: 'compute',
+    meta: 'VPS',
+    score: 110,
+    reference: {
+      heading: 'compute',
+      kind: 'global object',
+      detail: 'Contains methods to operate temporary VMs.',
+    },
+  },
 ];
 
 var codeSubs = [
@@ -1149,6 +1160,53 @@ var codeSubs = [
          transparency: "transparent",
          updated: "2018-03-05T19:32:14.196Z"
       }),
+    },
+  },
+  {
+    prefix: 'compute.',
+    name: 'new_instance',
+    value: 'new_instance()',
+    meta: 'method',
+    score: 110,
+    reference: {
+      heading: 'compute.new_instance()',
+      kind: 'method',
+      detail: 'compute.new_instance(<cred file path>, <project>, <zone>, <duration-seconds>, <machine-type>, <imageURL>). Creates a new temporary instance, and returns an object.',
+      more: '<h4>compute.new_instance() reference</h4><br><label>.new_instance(cred file path, project, zone, duration-seconds, machine-type, imageURL) returns:</label><br>' +
+      jsonPrettyPrint.toHtml({
+         success: true,
+         compute_id: 123,
+         instance_name: "",
+         instance_expiry: "time object",
+         instance_expiry_nano: "milliseconds since epoch",
+       }) + "<br><br><label>Methods on the returned instance:</label><br>" +
+       "<i>.run_status()</i> - Returns a structure describing the current booted state of the instance. EG:<br>" +
+       jsonPrettyPrint.toHtml({
+          success: true,
+          booted: false,
+          pending: false,
+          serial_data: "...",
+        }) +
+        "<br><br><i>.getIP()</i> - Returns the instance public IP. EG:<br>" +
+        jsonPrettyPrint.toHtml({
+           success: true,
+           ip: "1.2.3.4",
+         }) + "<br><br><i>.run(command)</i> - Runs a command on the instance, returning a structure describing the result of the operation. EG:<br>" +
+        jsonPrettyPrint.toHtml({
+           success: true,
+           error: undefined,
+           output: "...",
+           output_raw: "...",
+         }) + "<br><br><i>.write_file(path, contents)</i> - Writes a file on the instance, returning a structure describing the result of the operation. EG:<br>" +
+        jsonPrettyPrint.toHtml({
+           success: true,
+           error: "...",
+         }) + "<br><br><i>.read_file(path)</i> - Reads a file on the instance, returning a structure describing the result of the operation. EG:<br>" +
+        jsonPrettyPrint.toHtml({
+           success: true,
+           contents: "...",
+           contents_raw: "...",
+         }),
     },
   },
 ]

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"nexus/data/compute"
 	"nexus/data/datastore"
 	"nexus/data/fs"
 	"nexus/data/integration"
@@ -43,6 +44,8 @@ var tables = []DatabaseTable{
 	&mc.APIKeyTable{},
 	&mc.StatusTable{},
 	&mc.LocationTable{},
+
+	&compute.InstanceTable{},
 }
 
 var sqlite3conn = []*sqlite3.SQLiteConn{}

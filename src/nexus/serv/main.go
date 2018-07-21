@@ -7,6 +7,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"nexus/compute"
 	"nexus/data"
 	"nexus/fs"
 	"nexus/integration"
@@ -66,6 +67,11 @@ func main() {
 	defer messaging.Deinit()
 
 	err = fs.Initialize(ctx, db)
+	if err != nil {
+		die(err.Error())
+	}
+
+	err = compute.Initialise(ctx, db)
 	if err != nil {
 		die(err.Error())
 	}
