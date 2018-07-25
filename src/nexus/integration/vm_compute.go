@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -28,6 +27,54 @@ func (c *computeInitialiser) Apply(r *Run) error {
 	obj, errMake := makeObject(r.VM)
 	if errMake != nil {
 		return errMake
+	}
+
+	if err := obj.Set("get", func(call otto.FunctionCall) otto.Value {
+		gcpProject := call.Argument(1).String()
+		gcpZone := call.Argument(2).String()
+		instance, err := computedb.Get(r.Ctx, call.Argument(0).String(), r.Base.OwnerID, db)
+		if err != nil {
+			return r.VM.MakeCustomError("not-found-error", err.Error())
+		}
+
+		conf, err := google.JWTConfigFromJSON([]byte(instance.Auth), compute.CloudPlatformScope)
+		if err != nil {
+			return r.VM.MakeCustomError("oauth-error", err.Error())
+		}
+		computeService, err := compute.New(conf.Client(oauth2.NoContext))
+		if err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+
+		output, errMake := makeObject(r.VM)
+		if errMake != nil {
+			return r.VM.MakeCustomError("internal-error", errMake.Error())
+		}
+
+		output.Set("success", true)
+		output.Set("compute_id", instance.UID)
+		output.Set("instance_name", instance.Name)
+		output.Set("instance_expiry", instance.ExpiresAt)
+		output.Set("instance_expiry_nano", instance.ExpiresAt.UnixNano())
+		if err := c.makeRunClosure(r, output, computeService.Instances, *instance, instance.SSH, gcpProject, gcpZone); err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+		if err := c.makeWriteFileClosure(r, output, computeService.Instances, *instance, instance.SSH, gcpProject, gcpZone); err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+		if err := c.makeReadFileClosure(r, output, computeService.Instances, *instance, instance.SSH, gcpProject, gcpZone); err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+		if err := c.makeBootedClosure(r, output, computeService.Instances, *instance, gcpProject, gcpZone); err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+		if err := c.makeGetIPClosure(r, output, computeService.Instances, *instance, gcpProject, gcpZone); err != nil {
+			return r.VM.MakeCustomError("internal-error", err.Error())
+		}
+
+		return output.Value()
+	}); err != nil {
+		return err
 	}
 
 	if err := obj.Set("new_instance", func(call otto.FunctionCall) otto.Value {
@@ -64,7 +111,7 @@ func (c *computeInitialiser) Apply(r *Run) error {
 		}
 		var privateKeyBytes bytes.Buffer
 		privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
-		if err := pem.Encode(&privateKeyBytes, privateKeyPEM); err != nil {
+		if err = pem.Encode(&privateKeyBytes, privateKeyPEM); err != nil {
 			return r.VM.MakeCustomError("internal-error", err.Error())
 		}
 		pub, err := ssh.NewPublicKey(&privateKey.PublicKey)
@@ -124,7 +171,7 @@ func (c *computeInitialiser) Apply(r *Run) error {
 			Metadata:  string(instanceMeta),
 			SSH:       privateKeyBytes.String(),
 		}
-		cid, err := computedb.New(context.Background(), inst, db)
+		cid, err := computedb.New(r.Ctx, inst, db)
 		if err != nil {
 			// TODO: Delete instance. on error
 			return r.VM.MakeCustomError("db-error", err.Error())

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"nexus/data/dlock"
 	"nexus/data/util"
+	"os"
 	"time"
 )
 
@@ -59,6 +60,26 @@ type Instance struct {
 	Metadata  string
 	Auth      string
 	SSH       string
+}
+
+// Get returns an instance with the specified name + OwnerID.
+func Get(ctx context.Context, name string, ownerID int, db *sql.DB) (*Instance, error) {
+	dlock.Lock().RLock()
+	defer dlock.Lock().RUnlock()
+
+	res, err := db.QueryContext(ctx, `
+		SELECT rowid, owner_uid, created_at, expires_at, kind, name, id, metadata, auth_credentials, ssh_data FROM compute_instances WHERE name = ? AND owner_uid = ?;`, name, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		return nil, os.ErrNotExist
+	}
+
+	var o Instance
+	return &o, res.Scan(&o.UID, &o.OwnerID, &o.CreatedAt, &o.ExpiresAt, &o.Kind, &o.Name, &o.ID, &o.Metadata, &o.Auth, &o.SSH)
 }
 
 // GetAll returns all Instances.
