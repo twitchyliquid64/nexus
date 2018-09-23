@@ -176,13 +176,33 @@ func (h *DatastoreHandler) HandleQueryV1(response http.ResponseWriter, request *
 
 // HandleEditV1 handles a HTTP request to edit a datastore.
 func (h *DatastoreHandler) HandleEditV1(response http.ResponseWriter, request *http.Request) {
-	_, _, err := util.AuthInfo(request, h.DB)
+	_, usr, err := util.AuthInfo(request, h.DB)
 	if util.UnauthenticatedOrError(response, request, err) {
 		return
 	}
 
-	http.Error(response, "Editing of datastores is not supported. Delete and re-create the datastore.", 501)
-	return
+	var ds datastore.Datastore
+	decoder := json.NewDecoder(request.Body)
+	err = decoder.Decode(&ds)
+	if util.InternalHandlerError("json.Decode(struct)", response, request, err) {
+		return
+	}
+	ds.OwnerID = usr.UID
+
+	storedDS, err := datastore.GetDatastore(request.Context(), ds.UID, h.DB)
+	if util.InternalHandlerError("datastore.GetDatastore()", response, request, err) {
+		return
+	}
+
+	// Check 1. Ownership, 2. changeable fields were changed.
+	if storedDS.OwnerID != usr.UID || (storedDS.Description == ds.Description && storedDS.Name == ds.Name) {
+		http.Error(response, "Editing of datastores is not supported. Delete and re-create the datastore.", 501)
+		return
+	}
+
+	if util.InternalHandlerError("datastore.UpdateChangableFields()", response, request, datastore.UpdateChangableFields(request.Context(), &ds, h.DB)) {
+		return
+	}
 }
 
 // HandleListV1 handles a HTTP request to list all the datastores that user has access to.
@@ -344,7 +364,7 @@ func (h *DatastoreHandler) HandleDeleteIndexV1(response http.ResponseWriter, req
 	}
 
 	var data struct {
-		UID  int
+		UID int
 	}
 	decoder := json.NewDecoder(request.Body)
 	err = decoder.Decode(&data)

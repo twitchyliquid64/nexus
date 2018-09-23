@@ -18,8 +18,14 @@
 
       <div class="row" style="margin-bottom: 6px;"> <!-- Name -->
         <div class="input-field col s12">
-          <input id="name_accSelector2" type="text" ng-model="ds.Name" ng-class="nameVldn" ng-keyup="$event.keyCode == 13 && onFinish()">
+          <input id="name_accSelector2" type="text" ng-model="ds.Name" ng-class="nameVldn" ng-keyup="$event.keyCode == 13 && onFinish()" />
           <label for="name_accSelector2">Name</label>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom: 6px;"> <!-- Description -->
+        <div class="input-field col s12">
+          <textarea id="description_accSelector2" class="materialize-textarea" ng-model="ds.Description" ng-keyup="$event.keyCode == 13 && onFinish()"></textarea>
+          <label for="description_accSelector2">Description</label>
         </div>
       </div>
 
@@ -33,11 +39,11 @@
       </div>
       <div class="row" style="margin-bottom: 2px;" ng-repeat="col in cols"> <!-- Columns Actual -->
         <div class="input-field col s6">
-          <input id="c_name_{{$index}}" ng-model="col.Name" type="text">
+          <input id="c_name_{{$index}}" ng-model="col.Name" type="text" />
           <label for="c_name_{{$index}}">Name</label>
         </div>
         <div class="input-field col s3">
-          <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number">
+          <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number" />
           <label class="active" for="c_order_{{$index}}">Ordering</label>
         </div>
         <div class="col s3 input-field" style="height: 3rem;">
