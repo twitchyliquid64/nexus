@@ -45,7 +45,37 @@ func (t *InstanceTable) Setup(ctx context.Context, db *sql.DB) error {
 
 // Forms is called by the form renderer to get any settings forms relevant to this table.
 func (t *InstanceTable) Forms() []*util.FormDescriptor {
-	return nil
+	return []*util.FormDescriptor{
+		&util.FormDescriptor{
+			SettingsTitle: "Compute Instances",
+			ID:            "computeInstances",
+			Desc:          "Instances created & managed by Nexus.",
+			Forms:         []*util.ActionDescriptor{},
+			Tables: []*util.TableDescriptor{
+				&util.TableDescriptor{
+					Name:    "Compute Instances",
+					ID:      "compute_instances",
+					Cols:    []string{"#", "Name", "ID", "Kind", "Expiry"},
+					Actions: []*util.TableAction{},
+					FetchContent: func(ctx context.Context, userID int, db *sql.DB) ([]interface{}, error) {
+						data, err := GetAll(ctx, db)
+						if err != nil {
+							return nil, err
+						}
+
+						var out []interface{}
+						for _, s := range data {
+							if s.OwnerID == userID {
+								out = append(out, []interface{}{s.UID, s.Name, s.ID, s.Kind, s.ExpiresAt})
+							}
+						}
+
+						return out, nil
+					},
+				},
+			},
+		},
+	}
 }
 
 // Instance represents the information associated with a cloud instance.
