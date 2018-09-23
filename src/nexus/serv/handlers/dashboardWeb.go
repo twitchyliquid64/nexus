@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"nexus/buildvar"
 	"nexus/fs"
 	"nexus/serv/util"
 	"os"
@@ -101,6 +102,12 @@ type renderData struct {
 	Cards []cardConfig
 	Lists []listConfig
 	Logs  []logConfig
+
+	BuildInfo struct {
+		Hash   string
+		Date   string
+		IsProd bool
+	}
 }
 
 type byName []fs.ListResultItem
@@ -118,6 +125,10 @@ func contents(ctx context.Context, path string, userID int) ([]byte, error) {
 func loadRenderData(ctx context.Context, files []fs.ListResultItem, userID int) (*renderData, error) {
 	out := &renderData{}
 	sort.Sort(byName(files))
+
+	out.BuildInfo.Hash = buildvar.GitHash()
+	out.BuildInfo.Date = buildvar.BuildDate()
+	out.BuildInfo.IsProd = buildvar.IsProd()
 
 	for _, file := range files {
 		s := strings.Index(file.Name, "-")

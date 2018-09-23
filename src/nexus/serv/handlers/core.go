@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
+	"nexus/buildvar"
 	"nexus/data/session"
 	"nexus/data/user"
 	"nexus/serv/util"
@@ -37,6 +39,7 @@ func (h *CoreHandler) BindMux(ctx context.Context, mux *http.ServeMux, db *sql.D
 	mux.HandleFunc("/", h.HandleIndex)
 	mux.HandleFunc("/login", h.HandleLogin)
 	mux.HandleFunc("/logout", h.HandleLogout)
+	mux.HandleFunc("/core/build", h.HandleBuildInfo)
 	return nil
 }
 
@@ -143,4 +146,37 @@ func (h *CoreHandler) HandleLogin(response http.ResponseWriter, request *http.Re
 			http.Redirect(response, request, "/login?msg=Invalid%20credentials,%20please%20try%20again.", 303) //303 = must GET
 		}
 	}
+}
+
+// HandleBuildInfo handles a HTTP request to /core/build.
+func (h *CoreHandler) HandleBuildInfo(response http.ResponseWriter, request *http.Request) {
+	_, _, err := util.AuthInfo(request, h.DB)
+	if err == session.ErrInvalidSession || err == http.ErrNoCookie {
+		http.Redirect(response, request, "/login", 303)
+		return
+	} else if err != nil {
+		log.Printf("AuthInfo() Error: %s", err)
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+
+	var out struct {
+		Git struct {
+			Hash string `json:"hash"`
+		} `json:"git"`
+		BuildDate string `json:"build_date"`
+		IsProd    bool   `json:"production_build"`
+	}
+
+	out.Git.Hash = buildvar.GitHash()
+	out.BuildDate = buildvar.BuildDate()
+	out.IsProd = buildvar.IsProd()
+
+	b, errMarshal := json.Marshal(out)
+	if errMarshal != nil {
+		http.Error(response, "Internal server error", 500)
+		return
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.Write(b)
 }

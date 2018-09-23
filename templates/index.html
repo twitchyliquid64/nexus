@@ -264,6 +264,15 @@
           <li><a class="btn-floating red tooltipped" data-position="left" data-delay="50" data-tooltip="Cleanup" href="/admin/cleanup"><i class="material-icons">build</i></a></li>
         </ul>
       </div>
+
+      <div id="bottom-left-info" ng-if="buildInfo" ng-class="{'red-text': !buildInfo.production_build, 'green-text': buildInfo.production_build}">
+        <p>
+          <strong ng-if="!buildInfo.production_build">Development Build</strong>
+          <strong ng-if="buildInfo.production_build">Production Build</strong>
+          <br>Git commit: {{buildInfo.git.hash}}
+          <br>Built on: {{buildInfo.build_date}}
+        </p>
+      </div>
     </div>
 
     <account-edit-modal></account-edit-modal>

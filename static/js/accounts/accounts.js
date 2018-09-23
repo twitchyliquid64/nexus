@@ -107,6 +107,19 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
     }});
   }
 
+  $scope.updateBuildInfo = function() {
+    $http({
+      method: 'GET',
+      url: '/core/build'
+    }).then(function successCallback(response) {
+      $scope.loading = false;
+      $scope.buildInfo = response.data;
+    }, function errorCallback(response) {
+      $scope.loading = false;
+      $scope.error = response;
+    });
+  }
+
   $scope.update = function(){
     $scope.loading = true;
     $scope.error = null;
@@ -114,8 +127,8 @@ app.controller('AccountViewController', ["$scope", "$rootScope", "$http", functi
       method: 'GET',
       url: '/web/v1/accounts'
     }).then(function successCallback(response) {
-      $scope.loading = false;
       $scope.accounts = response.data;
+      $scope.updateBuildInfo();
     }, function errorCallback(response) {
       $scope.loading = false;
       $scope.error = response;

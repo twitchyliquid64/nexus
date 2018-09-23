@@ -242,3 +242,12 @@ input[type=range] {
 .actions a {
   margin-right: 4px;
 }
+
+
+#bottom-left-info{
+  position: fixed;
+  bottom: 5px;
+  left: 7px;
+  padding: 6px;
+  text-align: left;
+}

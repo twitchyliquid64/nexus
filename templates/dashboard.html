@@ -107,6 +107,16 @@
   </a>
 </div>
 
+{!{if not .BuildInfo.IsProd}!}
+<div id="bottom-left-info" class="red-text">
+  <p>
+    <strong>Development Build</strong><br>
+    Git commit: {!{.BuildInfo.Hash}!}<br>
+    Built on: {!{.BuildInfo.Date}!}
+  </p>
+</div>
+{!{end}!}
+
 <script>
   $("#main-dash-row .inlinesparkline").sparkline('html', { enableTagOptions: true });
 </script>
