@@ -31,23 +31,26 @@
 
       <div class="row" style="margin-bottom: 2px;"> <!-- Columns -->
         <label>Add columns</label>
-        <a class="btn-floating" ng-click="newCol(3)"><i class="material-icons">text_fields</i></a>
-        <a class="btn-floating" ng-click="newCol(0)"><i class="material-icons">format_list_numbered</i></a>
-        <a class="btn-floating" ng-click="newCol(2)"><i class="material-icons">functions</i></a>
-        <a class="btn-floating" ng-click="newCol(4)"><i class="material-icons">texture</i></a>
-        <a class="btn-floating" ng-click="newCol(5)"><i class="material-icons">timer</i></a>
+        <a class="btn-floating" ng-click="newCol(3)" ng-disabled="isEditMode"><i class="material-icons">text_fields</i></a>
+        <a class="btn-floating" ng-click="newCol(0)" ng-disabled="isEditMode"><i class="material-icons">format_list_numbered</i></a>
+        <a class="btn-floating" ng-click="newCol(2)" ng-disabled="isEditMode"><i class="material-icons">functions</i></a>
+        <a class="btn-floating" ng-click="newCol(4)" ng-disabled="isEditMode"><i class="material-icons">texture</i></a>
+        <a class="btn-floating" ng-click="newCol(5)" ng-disabled="isEditMode"><i class="material-icons">timer</i></a>
+      </div>
+      <div class="row" ng-if="isEditMode">
+          <strong class="red-text">Columns cannot be created or edited.</strong>
       </div>
       <div class="row" style="margin-bottom: 2px;" ng-repeat="col in cols"> <!-- Columns Actual -->
         <div class="input-field col s6">
-          <input id="c_name_{{$index}}" ng-model="col.Name" type="text" />
+          <input id="c_name_{{$index}}" ng-model="col.Name" type="text" ng-disabled="isEditMode" />
           <label for="c_name_{{$index}}">Name</label>
         </div>
         <div class="input-field col s3">
-          <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number" />
+          <input id="c_order_{{$index}}" ng-model="col.Ordering" type="number" ng-disabled="isEditMode" />
           <label class="active" for="c_order_{{$index}}">Ordering</label>
         </div>
         <div class="col s3 input-field" style="height: 3rem;">
-          <a class="btn-floating red" ng-click="deleteCol($index)"><i class="material-icons left">delete</i></a>
+          <a class="btn-floating red" ng-click="deleteCol($index)" ng-disabled="isEditMode"><i class="material-icons left">delete</i></a>
         </div>
         <span class="badge blue" style="color: white;">{{kind(col.Datatype)}}</span>
       </div>
