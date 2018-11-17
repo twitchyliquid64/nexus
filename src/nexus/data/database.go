@@ -46,6 +46,7 @@ var tables = []DatabaseTable{
 	&mc.LocationTable{},
 
 	&compute.InstanceTable{},
+	&compute.UserInstanceTable{},
 }
 
 var sqlite3conn = []*sqlite3.SQLiteConn{}
