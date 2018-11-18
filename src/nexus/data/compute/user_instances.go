@@ -253,7 +253,7 @@ func GetAllPersonal(ctx context.Context, userID int, db *sql.DB) ([]PersonalInst
 		 			 c.name, c.expires_at
 		FROM compute_personal p
 		INNER JOIN compute_instances c ON p.instance_uid = c.rowid
-		WHERE p.rowid=?;`, userID)
+		WHERE p.owner_uid=?;`, userID)
 	if err != nil {
 		return nil, err
 	}
