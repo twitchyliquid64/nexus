@@ -19,7 +19,7 @@ import (
 	"sync"
 	"syscall"
 
-	"rsc.io/letsencrypt"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 func die(msg string) {
@@ -37,7 +37,7 @@ var (
 	mailDomain        = flag.String("mail-domain", "", "Domain to run a mail server on")
 )
 
-var letsEncryptManager letsencrypt.Manager
+var letsEncryptManager *autocert.Manager
 
 func main() {
 	flag.Parse()
@@ -84,14 +84,15 @@ func main() {
 
 	// if we are doing the TLS thing, setup our state
 	if *tlsCacheFileFlag != "" {
+		letsEncryptManager = &autocert.Manager{
+			Cache:      autocert.DirCache(*tlsCacheFileFlag),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist("nexus.ciphersink.net"),
+		}
 		if *allowedDomains != "" {
-			letsEncryptManager.SetHosts(strings.Split(*allowedDomains, ","))
+			letsEncryptManager.HostPolicy = autocert.HostWhitelist(strings.Split(*allowedDomains, ",")...)
 		}
-		err = letsEncryptManager.CacheFile(*tlsCacheFileFlag)
-		if err != nil {
-			die(err.Error())
-		}
-		go http.ListenAndServe(":80", http.HandlerFunc(redirect))
+		go http.ListenAndServe(":80", letsEncryptManager.HTTPHandler(http.HandlerFunc(redirect)))
 	}
 
 	mux := makeMux(ctx, db)
